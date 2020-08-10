@@ -12,3 +12,6 @@ ua-parser==0.10.0
 user-agents==2.1
 mysqlclient==1.4.6
 Pillow==7.1.2
+djangorestframework-simplejwt==4.4.0
+djoser==2.0.3
+uWSGI==2.0.18

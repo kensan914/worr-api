@@ -1,8 +1,7 @@
-from django.shortcuts import render
-from rest_framework import viewsets, filters, status, permissions
+from rest_framework import viewsets, filters, status, views
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from main.models import User, Connection, Voice
+from main.models import User, Voice
 from .serializers import UserSerializer, UserMiniSerializer, VoiceSerializer
 
 
@@ -75,3 +74,10 @@ class VoiceViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'voice_id'
     filter_backends = [filters.SearchFilter]
     search_fields = ['voice_id']
+
+
+class Test(views.APIView):
+    def get(self, request, *args, **kwargs):
+        return Response({'test': 'test'}, status.HTTP_200_OK)
+
+test = Test.as_view()

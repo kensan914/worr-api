@@ -9,6 +9,6 @@ router.register('users', views.UserViewSet)
 router.register('voices', views.VoiceViewSet)
 
 urlpatterns = [
-    # path('test/', views.test, name='test'),
+    path('test/', views.test, name='test'),
     path('', include(router.urls)),
 ]
