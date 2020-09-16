@@ -1,37 +1,24 @@
 from rest_framework import serializers
-from main.models import User, Voice
+from account.serializers import UserSerializer
+from main.models import Notification, NotificationType
 
 
-class UserMiniSerializer(serializers.ModelSerializer):
+class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ('user_id', 'name', 'description', 'icon')
+        model = Notification
+        exclude = ['recipient']
 
+    subject = UserSerializer()
+    message = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
 
-class UserSerializer(serializers.ModelSerializer):
-    followings_count = serializers.SerializerMethodField()
-    followers_count = serializers.SerializerMethodField()
-    # is_following = serializers.SerializerMethodField()
+    def get_message(self, obj):
+        if obj.message:
+            return obj.message
+        elif obj.type == NotificationType.CHAT_REQUEST:
+            return '{}さんからリクエストが届きました。トーク画面で確認しましょう。'.format(obj.subject.username)
+        elif obj.type == NotificationType.CHAT_RESPONSE:
+            return '{}さんがリクエストに答えました。トークを開始します。'.format(obj.subject.username)
 
-    class Meta:
-        model = User
-        fields = ('user_id', 'name', 'description', 'icon', 'followings_count', 'followers_count')
-
-    def get_followings_count(self, obj):
-        return obj.following.count()
-
-    def get_followers_count(self, obj):
-        return obj.follower.count()
-
-    # def get_is_following(self, obj):
-    #     user = self.context['request'].user
-    #
-    #     if user.is_authenticated:
-    #         return obj in user.get_followings()
-    #     else:
-    #         return False
-
-class VoiceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Voice
-        fields = '__all__'
+    def get_date(self, obj):
+        return obj.date.strftime('%Y/%m/%d %H:%M:%S')

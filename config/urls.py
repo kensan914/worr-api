@@ -16,8 +16,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from . import settings
+
 urlpatterns = [
-    path('api/', include('api.urls')),
+    path('api/v1/', include('api.urls')),
 ]
 
 if settings.DEBUG:

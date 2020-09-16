@@ -1,37 +1,25 @@
+import uuid
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import PermissionsMixin
 from django.db import models
+from django.utils import timezone
+
+from account.models import ParamsModel
 
 
-def get_upload_to(instance):
-    return 'user_icons/{0}' .format(instance.id_user)
+class NotificationType(models.TextChoices):
+    CHAT_REQUEST = 'chat_request', 'チャットリクエスト'
+    CHAT_RESPONSE = 'chat_response', 'チャットレスポンス'
 
 
-class User(models.Model):
-    class Meta:
-        db_table = 'user'
-
-    user_id = models.CharField(verbose_name='ユーザID', max_length=10, primary_key=True)
-    name = models.CharField(verbose_name='ユーザ名', max_length=20)
-    description = models.CharField(verbose_name='紹介文', max_length=100)
-    icon = models.ImageField(verbose_name='アイコン', null=True, blank=True, upload_to=get_upload_to)
-
+class Notification(models.Model):
     def __str__(self):
-        return '{}, {}'.format(self.user_id, self.name)
+        return str(self.id)
 
-class Connection(models.Model):
-    follower = models.ForeignKey(User, related_name='follower', on_delete=models.CASCADE)
-    following = models.ForeignKey(User, related_name='following', on_delete=models.CASCADE)
-
-    def __str__(self):
-        return "{} ⇒ {}".format(self.following.name, self.follower.name)
-
-class Voice(models.Model):
-    class Meta:
-        db_table = 'voice'
-
-    voice_id = models.CharField(verbose_name='ボイスID', max_length=10, primary_key=True)
-    message = models.CharField(verbose_name='メッセージ', max_length=100, null=True)
-    like = models.IntegerField(verbose_name='いいね', default=0)
-    speaker = models.ForeignKey(User, verbose_name='投稿者', on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.voice_id
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    recipient = models.ForeignKey('account.Account', verbose_name='受取人', on_delete=models.CASCADE, related_name='recipient_notification')
+    subject = models.ForeignKey('account.Account', verbose_name='主語', null=True, on_delete=models.CASCADE, related_name='subject_notification')
+    type = models.CharField(verbose_name='タイプ', max_length=20, choices=NotificationType.choices, default=NotificationType.CHAT_REQUEST)
+    message = models.CharField(verbose_name='メッセージ', max_length=250, blank=True)
+    read = models.BooleanField(verbose_name='既読', default=False)
+    date = models.DateTimeField(verbose_name='登録日', default=timezone.now)

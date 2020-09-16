@@ -1,7 +1,4 @@
 from django.contrib import admin
-from .models import User, Connection, Voice
+from main.models import *
 
-
-admin.site.register(User)
-admin.site.register(Connection)
-admin.site.register(Voice)
+admin.site.register(Notification)

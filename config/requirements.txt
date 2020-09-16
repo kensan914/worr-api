@@ -1,7 +1,6 @@
 asgiref==3.2.7
 beautifulsoup4==4.9.0
 Django==3.0.6
-django-bootstrap4==1.1.1
 django-environ==0.4.5
 djangorestframework==3.11.0
 environ==1.0
@@ -12,6 +11,6 @@ ua-parser==0.10.0
 user-agents==2.1
 mysqlclient==1.4.6
 Pillow==7.1.2
-djangorestframework-simplejwt==4.4.0
 djoser==2.0.3
 uWSGI==2.0.18
+djangorestframework-jwt==1.11.0
