@@ -15,9 +15,9 @@ class NotificationSerializer(serializers.ModelSerializer):
     def get_message(self, obj):
         if obj.message:
             return obj.message
-        elif obj.type == NotificationType.CHAT_REQUEST:
+        elif obj.type == NotificationType.TALK_REQUEST:
             return '{}さんからリクエストが届きました。トーク画面で確認しましょう。'.format(obj.subject.username)
-        elif obj.type == NotificationType.CHAT_RESPONSE:
+        elif obj.type == NotificationType.TALK_RESPONSE:
             return '{}さんがリクエストに答えました。トークを開始します。'.format(obj.subject.username)
 
     def get_date(self, obj):

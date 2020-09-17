@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework_jwt.views import ObtainJSONWebToken
 from account.serializers import LoginSerializer
 from account.views import signupAPIView, meAPIView, profileImageAPIView
-from api.views import profileParamsAPIView, usersAPIView, chatRequestAPIView
+from api.views import profileParamsAPIView, usersAPIView, talkRequestAPIView, cancelTalkRequestAPIView
 
 app_name = 'api'
 
@@ -14,5 +14,6 @@ urlpatterns = [
     path('profile-params/', profileParamsAPIView),
     path('users/', usersAPIView),
     path('users/<uuid:user_id>/', usersAPIView),
-    path('chat-request/<uuid:user_id>/', chatRequestAPIView),
+    path('users/<uuid:user_id>/talk-request/', talkRequestAPIView),
+    path('rooms/<uuid:room_id>/cancel/', cancelTalkRequestAPIView),
 ]

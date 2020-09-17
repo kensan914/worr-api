@@ -1,5 +1,5 @@
 import uuid
-
+from django.db.models import Q
 from rest_framework import views, status, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -65,25 +65,51 @@ class UsersAPIView(views.APIView):
 usersAPIView = UsersAPIView.as_view()
 
 
-class ChatRequestAPIView(views.APIView):
-    def get(self, request, *args, **kwargs):
+class TalkRequestAPIView(views.APIView):
+    def post(self, request, *args, **kwargs):
         target_user_id = self.kwargs.get('user_id')
         room_id = uuid.uuid4()
 
         # create room
         target_user = get_object_or_404(Account, id=target_user_id)
-        room = Room(
-            id=room_id,
-            request_user=request.user,
-            response_user=target_user,
-        )
-        room.save()
+        if not Room.objects.filter(
+                Q(request_user=request.user, response_user=target_user) |
+                Q(request_user=target_user, response_user=request.user)).exists():
+            room = Room(
+                id=room_id,
+                request_user=request.user,
+                response_user=target_user,
+            )
+            room.save()
+        else:
+            return Response({'type': 'conflict', 'message': 'the room already exists'}, status=status.HTTP_409_CONFLICT)
 
         # set notification to target user
-        NotificationConsumer.send_notification(recipient=target_user, subject=request.user, notification_type=NotificationType.CHAT_REQUEST, reference_id=room_id)
+        NotificationConsumer.send_notification(recipient=target_user, subject=request.user, notification_type=NotificationType.TALK_REQUEST, reference_id=room_id)
 
         target_user_data = UserSerializer(target_user).data
         return Response({'room_id': room_id, 'target_user': target_user_data}, status=status.HTTP_200_OK)
 
+talkRequestAPIView = TalkRequestAPIView.as_view()
 
-chatRequestAPIView = ChatRequestAPIView.as_view()
+
+class CancelTalkRequestAPIView(views.APIView):
+    def post(self, request, *args, **kwargs):
+        room_id = self.kwargs.get('room_id')
+        room = get_object_or_404(Room, id=room_id)
+
+        # check if the request.user is a room member
+        if request.user.id != room.request_user.id:
+            return Response({'type': 'conflict', 'message': "you are not the room's request user."}, status=status.HTTP_409_CONFLICT)
+
+        request_user = request.user
+        response_user = room.response_user
+
+        # delete room
+        room.delete()
+
+        # set notification to target user
+        NotificationConsumer.send_notification(recipient=response_user, subject=request_user, notification_type=NotificationType.CANCEL_TALK_REQUEST, reference_id=room_id)
+        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+
+cancelTalkRequestAPIView = CancelTalkRequestAPIView.as_view()

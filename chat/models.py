@@ -25,3 +25,5 @@ class Message(models.Model):
     content = models.TextField(verbose_name='メッセージ内容', max_length=1000, blank=True)
     time = models.DateTimeField(verbose_name='投稿時間', default=timezone.now)
     user = models.ForeignKey('account.Account', verbose_name='投稿者', on_delete=models.CASCADE)
+    is_stored_on_request = models.BooleanField(verbose_name='リクエストユーザ側の保存状況', default=False)
+    is_stored_on_response = models.BooleanField(verbose_name='レスポンスユーザ側の保存状況', default=False)
