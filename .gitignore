@@ -130,3 +130,5 @@ media/
 .env
 
 migrations
+
+!fullfii/lib
