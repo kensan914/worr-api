@@ -5,13 +5,12 @@ from django.utils import timezone
 
 class Room(models.Model):
     def __str__(self):
-        if self.response_user:
-            return '{} - {}'.format(self.request_user.username, self.response_user.username)
-        else:
-            return '{}(待機中)'.format(self.request_user.username)
+        return '{} - {}'.format(self.request_user.username, self.response_user.username)
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    created_at = models.DateTimeField(verbose_name='作成日', default=timezone.now)
+    is_start = models.BooleanField(verbose_name='開始状況', default=False)
+    created_at = models.DateTimeField(verbose_name='作成時間', default=timezone.now)
+    started_at = models.DateTimeField(verbose_name='トーク開始時間', null=True)
     request_user = models.ForeignKey('account.Account', verbose_name='リクエストユーザ', on_delete=models.CASCADE, related_name='request_room')
     response_user = models.ForeignKey('account.Account', verbose_name='レスポンスユーザ', on_delete=models.CASCADE, related_name='response_room')
 

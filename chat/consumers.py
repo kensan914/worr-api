@@ -1,7 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 import json
-
 from chat.serializers import MessageSerializer
 from main.consumers import JWTAsyncWebsocketConsumer, NotificationConsumer
 from main.models import NotificationType
@@ -46,12 +45,12 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
             self.target_user = room_users['request_user']
             # If init is true, set response notification to request user
             if received_data['init']:
+                await self.start_talk(self.room) # start talk
                 await NotificationConsumer.send_notification_async(recipient=self.target_user, subject=self.me, notification_type=NotificationType.TALK_RESPONSE, reference_id=self.room_id)
         else:
             raise
 
         target_user_data = await self.get_user_data(user=self.target_user)
-
         await self.send(text_data=json.dumps({
             'type': 'auth', 'room_id': str(self.room_id), 'target_user': target_user_data,
         }))
@@ -185,3 +184,10 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
             return MessageSerializer(messages, many=True, context={'me': me}).data
         except Exception as e:
             raise
+
+    @database_sync_to_async
+    def start_talk(self, room):
+        if not room.is_start:
+            room.is_start = True
+            room.started_at = timezone.now()
+            room.save()

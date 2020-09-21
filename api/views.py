@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, \
     WorriesToSympathizeSerializer
 from chat.models import Room
+from chat.serializers import RoomSerializer
 from fullfii.db.account import get_all_accounts
 from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account
 from main.consumers import NotificationConsumer
@@ -113,3 +114,23 @@ class CancelTalkRequestAPIView(views.APIView):
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 
 cancelTalkRequestAPIView = CancelTalkRequestAPIView.as_view()
+
+
+class TalkInfoAPIView(views.APIView):
+    def get(self, request, *args, **kwargs):
+        # send objects
+        rooms_i_sent = Room.objects.filter(is_start=False, request_user__id=request.user.id)
+        rooms_i_sent_data = RoomSerializer(rooms_i_sent, many=True, context={'me': request.user}).data
+
+        # in objects
+        rooms_i_received = Room.objects.filter(is_start=False, response_user_id=request.user.id)
+        rooms_i_received_data = RoomSerializer(rooms_i_received, many=True, context={'me': request.user}).data
+
+        # talk rooms
+        # talking_rooms = Room.objects.filter(Q(request_user__id=request.user.id) | Q(response_user_id=request.user.id), is_start=True)
+        # talking_room_ids = [str(talking_room.id) for talking_room in talking_rooms]
+
+        # return Response({'send_objects': rooms_i_sent_data, 'in_objects': rooms_i_received_data, 'talking_room_ids': talking_room_ids}, status=status.HTTP_200_OK)
+        return Response({'send_objects': rooms_i_sent_data, 'in_objects': rooms_i_received_data})
+
+talkInfoAPIView = TalkInfoAPIView.as_view()
