@@ -15,7 +15,6 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
-from main import views
 from . import settings
 
 urlpatterns = [
@@ -26,5 +25,5 @@ if settings.DEBUG:
     urlpatterns += [path('admin/', admin.site.urls)]
 
 # catch all other URL
-urlpatterns += [re_path(r'^.*/$', views.top, name='indexView')]
-urlpatterns += [path('', views.terms_of_service, name='indexView')]
+urlpatterns += [re_path(r'^.*/$', include('main.urls'))]
+urlpatterns += [path('', include('main.urls'))]
