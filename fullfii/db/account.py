@@ -10,3 +10,8 @@ def get_all_accounts(me=None):
         return accounts.exclude(id=me.id)
     else:
         return accounts
+
+
+def increment_num_of_thunks(user):
+    user.num_of_thunks += 1
+    user.save()

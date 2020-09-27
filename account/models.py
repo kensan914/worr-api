@@ -51,6 +51,7 @@ class ParamsModel(models.Model):
 def get_default_status():
     return get_default_obj('static/courpus/statusList.txt', ['key', 'label', 'color'], Status)
 
+
 class Status(ParamsModel):
     color = models.CharField(verbose_name='カラー', max_length=30, null=True)
 
@@ -91,7 +92,7 @@ class Account(AbstractBaseUser):
     introduction = models.CharField(verbose_name='自己紹介', max_length=250, blank=True)
     num_of_thunks = models.IntegerField(verbose_name='ありがとう', default=0)
     status = models.ForeignKey(Status, verbose_name='ステータス', on_delete=models.SET_DEFAULT, default=get_default_status)
-    # status = models.ForeignKey(Status, verbose_name='ステータス', on_delete=models.PROTECT, null=True) # when init migration
+    # status = models.ForeignKey(Status, verbose_name='ステータス', on_delete=models.PROTECT, null=True)  # when init migration
     plan = models.CharField(verbose_name='プラン', max_length=10, choices=Plan.choices, default=Plan.LIGHT)
     features = models.ManyToManyField(Feature, verbose_name='特徴', blank=True)
     genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='対応できる悩みのジャンル', blank=True)
@@ -126,6 +127,7 @@ def get_upload_to(instance, filename):
     pass
     media_dir_1 = str(instance.user.id)
     return 'profile_images/{0}/{1}' .format(media_dir_1, filename)
+
 
 class ProfileImage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -8,11 +8,19 @@ class Room(models.Model):
         return '{} - {}'.format(self.request_user.username, self.response_user.username)
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    is_start = models.BooleanField(verbose_name='開始状況', default=False)
-    created_at = models.DateTimeField(verbose_name='作成時間', default=timezone.now)
-    started_at = models.DateTimeField(verbose_name='トーク開始時間', null=True)
     request_user = models.ForeignKey('account.Account', verbose_name='リクエストユーザ', on_delete=models.CASCADE, related_name='request_room')
     response_user = models.ForeignKey('account.Account', verbose_name='レスポンスユーザ', on_delete=models.CASCADE, related_name='response_room')
+    created_at = models.DateTimeField(verbose_name='作成時間', default=timezone.now)
+    is_start = models.BooleanField(verbose_name='トーク開始状況', default=False)
+    started_at = models.DateTimeField(verbose_name='トーク開始時間', null=True)
+    is_alert = models.BooleanField(verbose_name='アラート済み', default=False)
+    is_end = models.BooleanField(verbose_name='トーク終了状況', default=False)
+    ended_at = models.DateTimeField(verbose_name='トーク終了時間', null=True)
+    is_time_out = models.BooleanField(verbose_name='トーク終了理由(time out)', default=False)
+    is_end_request = models.BooleanField(verbose_name='リクエストユーザ側のend状況', default=False)
+    is_end_response = models.BooleanField(verbose_name='レスポンスユーザ側のend状況', default=False)
+    is_closed_request = models.BooleanField(verbose_name='リクエストユーザ側のclose状況', default=False)
+    is_closed_response = models.BooleanField(verbose_name='レスポンスユーザ側のclose状況', default=False)
 
 
 class Message(models.Model):

@@ -1,13 +1,15 @@
 import uuid
 from django.db.models import Q
+from django.utils import timezone
 from rest_framework import views, status, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, \
     WorriesToSympathizeSerializer
+from chat.consumers import ChatConsumer
 from chat.models import Room
 from chat.serializers import RoomSerializer
-from fullfii.db.account import get_all_accounts
+from fullfii.db.account import get_all_accounts, increment_num_of_thunks
 from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account
 from main.consumers import NotificationConsumer
 from main.models import NotificationType
@@ -35,10 +37,12 @@ class ProfileParamsAPIView(views.APIView):
             'worries_to_sympathize': worries_to_sympathize_obj,
         }, status.HTTP_200_OK)
 
+
 profileParamsAPIView = ProfileParamsAPIView.as_view()
 
 
 class UsersAPIView(views.APIView):
+    permission_classes = (permissions.AllowAny,)
     paginate_by = 10
 
     def get(self, request, *args, **kwargs):
@@ -63,6 +67,7 @@ class UsersAPIView(views.APIView):
             users_data = UserSerializer(users, many=True).data
             return Response(users_data, status=status.HTTP_200_OK)
 
+
 usersAPIView = UsersAPIView.as_view()
 
 
@@ -73,9 +78,10 @@ class TalkRequestAPIView(views.APIView):
 
         # create room
         target_user = get_object_or_404(Account, id=target_user_id)
-        if not Room.objects.filter(
-                Q(request_user=request.user, response_user=target_user) |
-                Q(request_user=target_user, response_user=request.user)).exists():
+        rooms = Room.objects\
+            .filter(Q(request_user=request.user, response_user=target_user) | Q(request_user=target_user, response_user=request.user))\
+            .exclude(is_end_request=True, is_end_response=True)
+        if not rooms.exists():
             room = Room(
                 id=room_id,
                 request_user=request.user,
@@ -83,7 +89,10 @@ class TalkRequestAPIView(views.APIView):
             )
             room.save()
         else:
-            return Response({'type': 'conflict', 'message': 'the room already exists'}, status=status.HTTP_409_CONFLICT)
+            if rooms.first().is_end:
+                return Response({'type': 'conflict_end', 'message': 'the room already exists'}, status=status.HTTP_409_CONFLICT)
+            else:
+                return Response({'type': 'conflict', 'message': 'the room already exists'}, status=status.HTTP_409_CONFLICT)
 
         # set notification to target user
         NotificationConsumer.send_notification(recipient=target_user, subject=request.user, notification_type=NotificationType.TALK_REQUEST, reference_id=room_id)
@@ -91,17 +100,33 @@ class TalkRequestAPIView(views.APIView):
         target_user_data = UserSerializer(target_user).data
         return Response({'room_id': room_id, 'target_user': target_user_data}, status=status.HTTP_200_OK)
 
+
 talkRequestAPIView = TalkRequestAPIView.as_view()
 
 
-class CancelTalkRequestAPIView(views.APIView):
+class TalkAPIView(views.APIView):
+    def validate_request_user(self, request, room):
+        # check if the request.user is a room request user
+        if request.user.id != room.request_user.id:
+            return Response({'type': 'conflict', 'message': "you are not the room's request user."}, status=status.HTTP_409_CONFLICT)
+
+    def validate_room_member(self, request, room):
+        # check if the request.user is a room member
+        if request.user.id != room.request_user.id and request.user.id != room.response_user.id:
+            return Response({'type': 'conflict', 'message': 'you are not the room member.'}, status=status.HTTP_409_CONFLICT)
+
+
+class CancelTalkAPIView(TalkAPIView):
     def post(self, request, *args, **kwargs):
         room_id = self.kwargs.get('room_id')
         room = get_object_or_404(Room, id=room_id)
 
-        # check if the request.user is a room member
-        if request.user.id != room.request_user.id:
-            return Response({'type': 'conflict', 'message': "you are not the room's request user."}, status=status.HTTP_409_CONFLICT)
+        error_response = self.validate_request_user(request, room)
+        if error_response:
+            return error_response
+
+        if room.is_start:
+            return Response({'status': 'conflict_room_has_started', 'message': 'the room has already started.'}, status=status.HTTP_409_CONFLICT)
 
         request_user = request.user
         response_user = room.response_user
@@ -110,10 +135,82 @@ class CancelTalkRequestAPIView(views.APIView):
         room.delete()
 
         # set notification to target user
-        NotificationConsumer.send_notification(recipient=response_user, subject=request_user, notification_type=NotificationType.CANCEL_TALK_REQUEST, reference_id=room_id)
+        NotificationConsumer.send_notification(recipient=response_user, subject=request_user, notification_type=NotificationType.CANCEL_TALK_REQUEST_TO_RES, reference_id=room_id)
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 
-cancelTalkRequestAPIView = CancelTalkRequestAPIView.as_view()
+
+cancelTalkAPIView = CancelTalkAPIView.as_view()
+
+
+class EndTalkAPIView(TalkAPIView):
+    def post(self, request, *args, **kwargs):
+        room_id = self.kwargs.get('room_id')
+        room = get_object_or_404(Room, id=room_id)
+
+        error_response = self.validate_room_member(request, room)
+        if error_response:
+            return error_response
+
+        is_first_time = not room.is_end_request and not room.is_end_response
+
+        # end talk for the first time
+        if is_first_time:
+            room.is_end = True
+            room.ended_at = timezone.now()
+
+        # turn on is_end_(req or res)
+        if request.user.id == room.request_user.id:
+            room.is_end_request = True
+        else:
+            room.is_end_response = True
+        room.save()
+
+        # send end talk
+        if is_first_time:
+            ChatConsumer.send_end_talk(room_id, sender_id=request.user.id)
+        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+
+
+endTalkAPIView = EndTalkAPIView.as_view()
+
+
+class CloseTalkAPIView(TalkAPIView):
+    def post(self, request, *args, **kwargs):
+        room_id = self.kwargs.get('room_id')
+        has_thunks = bool(request.data['has_thunks'])
+        room = get_object_or_404(Room, id=room_id)
+
+        error_response = self.validate_room_member(request, room)
+        if error_response:
+            return error_response
+
+        # check which request or response
+        if request.user.id == room.request_user.id:
+            is_request_user = True
+            target_user = room.response_user
+        else:
+            is_request_user = False
+            target_user = room.request_user
+
+        # send thunks
+        if has_thunks:
+            increment_num_of_thunks(target_user)
+
+        # turn on is_closed
+        if is_request_user:
+            room.is_closed_request = True
+        else:
+            room.is_closed_response = True
+
+        # close room
+        if room.is_closed_request and room.is_closed_response:
+            room.delete()
+        else:
+            room.save()
+        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+
+
+closeTalkAPIView = CloseTalkAPIView.as_view()
 
 
 class TalkInfoAPIView(views.APIView):
@@ -126,11 +223,26 @@ class TalkInfoAPIView(views.APIView):
         rooms_i_received = Room.objects.filter(is_start=False, response_user_id=request.user.id)
         rooms_i_received_data = RoomSerializer(rooms_i_received, many=True, context={'me': request.user}).data
 
-        # talk rooms
-        # talking_rooms = Room.objects.filter(Q(request_user__id=request.user.id) | Q(response_user_id=request.user.id), is_start=True)
-        # talking_room_ids = [str(talking_room.id) for talking_room in talking_rooms]
+        # talking rooms
+        talking_rooms = Room.objects.filter(Q(request_user__id=request.user.id) | Q(response_user_id=request.user.id), is_start=True, is_end=False)
+        talking_room_ids = [str(talking_room.id) for talking_room in talking_rooms]
 
-        # return Response({'send_objects': rooms_i_sent_data, 'in_objects': rooms_i_received_data, 'talking_room_ids': talking_room_ids}, status=status.HTTP_200_OK)
-        return Response({'send_objects': rooms_i_sent_data, 'in_objects': rooms_i_received_data})
+        # end rooms and end time out rooms
+        all_end_rooms = Room.objects.filter(Q(request_user__id=request.user.id, is_end_request=False) | Q(response_user_id=request.user.id, is_end_response=False), is_end=True)
+
+        end_rooms = all_end_rooms.filter(is_time_out=False)
+        end_room_ids = [str(end_room.id) for end_room in end_rooms]
+
+        end_time_out_rooms = all_end_rooms.filter(is_time_out=True)
+        end_time_out_room_ids = [str(end_time_out_room.id) for end_time_out_room in end_time_out_rooms]
+
+        return Response({
+            'send_objects': rooms_i_sent_data,
+            'in_objects': rooms_i_received_data,
+            'talking_room_ids': talking_room_ids,
+            'end_room_ids': end_room_ids,
+            'end_time_out_room_ids': end_time_out_room_ids,
+        }, status=status.HTTP_200_OK)
+
 
 talkInfoAPIView = TalkInfoAPIView.as_view()

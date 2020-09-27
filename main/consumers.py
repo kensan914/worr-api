@@ -31,12 +31,12 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
         await self.close()
 
     @abstractmethod
-    async def set_group_name(self, _id):
-        pass
+    async def get_group_name(self, _id):
+        return
 
     async def receive_auth(self, received_data):
         self.me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
-        await self.set_group_name(self.me.id)
+        self.group_name = await self.get_group_name(self.me.id)
         await self.channel_layer.group_add(
             self.group_name,
             self.channel_name
@@ -81,12 +81,12 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
 class NotificationConsumer(JWTAsyncWebsocketConsumer):
     paginate_by = 10
 
-    async def set_group_name(self, _id):
-        self.group_name = 'notification_{}'.format(str(_id))
+    async def get_group_name(self, _id):
+        return 'notification_{}'.format(str(_id))
 
     async def receive_auth(self, received_data):
         self.me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
-        await self.set_group_name(self.me.id)
+        self.group_name = await self.get_group_name(self.me.id)
         await self.channel_layer.group_add(
             self.group_name,
             self.channel_name
@@ -104,7 +104,7 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
         if received_type == 'get':
             page = received_data['page']
             newest_notifications = Notification.objects.filter(recipient=self.me).exclude(
-                type__in=[NotificationType.CANCEL_TALK_REQUEST]
+                type__in=[NotificationType.CANCEL_TALK_REQUEST_TO_RES, NotificationType.CANCEL_TALK_REQUEST_TO_REQ]
             )[self.paginate_by * (page - 1): self.paginate_by * page]
             newest_notifications_data = await self.get_notification_data(newest_notifications, many=True)
 
@@ -127,16 +127,17 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
             notification = await self.get_notification(notification_id)
             notification_data = await self.get_notification_data(notification)
 
-            ### talk request ###  or  ### talk response ### or ### cancel talk request ###
-            if notification.type == NotificationType.TALK_REQUEST or notification.type == NotificationType.TALK_RESPONSE or notification.type == NotificationType.CANCEL_TALK_REQUEST:
+            ### talk request ###  or  ### talk response ###  or  ### cancel talk request ###  or  ### end talk ###
+            if notification.type == NotificationType.TALK_REQUEST or notification.type == NotificationType.TALK_RESPONSE or\
+                    notification.type == NotificationType.CANCEL_TALK_REQUEST_TO_RES or notification.type == NotificationType.CANCEL_TALK_REQUEST_TO_REQ:
                 room_id = event['reference_id']
-                appended_data = { 'room_id': room_id }
+                appended_data = {'room_id': room_id}
 
             ### normal time ###
             else:
                 appended_data = {}
 
-            data = { 'type': 'notice', 'notification': notification_data }
+            data = {'type': 'notice', 'notification': notification_data}
             data.update(appended_data)
             await self.send(text_data=json.dumps(data))
         except Exception as e:
@@ -193,7 +194,7 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
     @classmethod
     def send_notification(cls, recipient, notification_type, subject=None, message='', reference_id=None):
         """
-        ex) NotificationConsumer.send_notification(recipient=response_user, subject=request_user, notification_type=NotificationType.CANCEL_TALK_REQUEST, reference_id=room_id)
+        ex) NotificationConsumer.send_notification(recipient=response_user, subject=request_user, notification_type=NotificationType.CANCEL_TALK_REQUEST_TO_RES, reference_id=room_id)
         """
         notification = async_to_sync(cls.create_notification)(recipient, subject, notification_type, message)
 

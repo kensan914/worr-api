@@ -1,6 +1,7 @@
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 import json
+from channels.layers import get_channel_layer
 from chat.serializers import MessageSerializer
 from main.consumers import JWTAsyncWebsocketConsumer, NotificationConsumer
 from main.models import NotificationType
@@ -18,12 +19,13 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
         self.room = None
         self.is_request_user = True
 
-    async def set_group_name(self, _id):
-        self.group_name = 'room_{}'.format(str(_id))
+    @classmethod
+    def get_group_name(cls, _id):
+        return 'room_{}'.format(str(_id))
 
     async def receive_auth(self, received_data):
         self.me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
-        await self.set_group_name(self.room_id)
+        self.group_name = self.get_group_name(self.room_id)
         await self.channel_layer.group_add(
             self.group_name,
             self.channel_name,
@@ -37,15 +39,15 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
             return
 
         room_users = await self.get_room_users(self.room)
-        if room_users['request_user'].id == self.me.id: # if I'm request user
+        if room_users['request_user'].id == self.me.id:  # if I'm request user
             self.is_request_user = True
             self.target_user = room_users['response_user']
-        elif room_users['response_user'].id == self.me.id: # if I'm response user
+        elif room_users['response_user'].id == self.me.id:  # if I'm response user
             self.is_request_user = False
             self.target_user = room_users['request_user']
             # If init is true, set response notification to request user
             if received_data['init']:
-                await self.start_talk(self.room) # start talk
+                await self.start_talk(self.room)  # start talk
                 await NotificationConsumer.send_notification_async(recipient=self.target_user, subject=self.me, notification_type=NotificationType.TALK_RESPONSE, reference_id=self.room_id)
         else:
             raise
@@ -91,6 +93,11 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
         elif received_type == 'store_by_room':
             await self.turn_on_message_stored(self.is_request_user, room_id=self.room_id)
 
+        elif received_type == 'end_talk':
+            pass
+        elif received_type == 'send_thunks':
+            pass
+
     async def chat_message(self, event):
         try:
             message_id = event['message_id']
@@ -109,23 +116,42 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
         except Exception as e:
             raise
 
+    async def end_talk(self, event):
+        try:
+            _type = None
+            if event['alert']:
+                _type = 'end_talk_alert'
+            elif event['time_out']:
+                _type = 'end_talk_time_out'
+            else:
+                if str(self.me.id) != event['sender_id']:
+                    _type = 'end_talk'
+            if _type is not None:
+                await self.send(text_data=json.dumps({
+                    'type': _type,
+                }))
+        except Exception as e:
+            raise
+
     @database_sync_to_async
-    def get_room(self):
+    def get_room(self, is_allow_send=True):
         rooms = Room.objects.filter(id=self.room_id)
         if rooms.count() == 1:
             return rooms.first()
         elif rooms.count() == 0:
-            async_to_sync(self.send)(text_data=json.dumps({
-                'type': 'error',
-                'error_type': 'not_found_room',
-                'message': 'お探しのトークルームは見つかりませんでした。相手がリクエストをキャンセルした可能性があります。',
-            }))
+            if is_allow_send:
+                async_to_sync(self.send)(text_data=json.dumps({
+                    'type': 'error',
+                    'error_type': 'not_found_room',
+                    'message': 'お探しのトークルームは見つかりませんでした。相手がリクエストをキャンセルした可能性があります。',
+                }))
             return
         else:
-            async_to_sync(self.send)(text_data=json.dumps({
-                'type': 'error',
-                'error_type': 'room_error',
-            }))
+            if is_allow_send:
+                async_to_sync(self.send)(text_data=json.dumps({
+                    'type': 'error',
+                    'error_type': 'room_error',
+                }))
             return
 
     @database_sync_to_async
@@ -149,17 +175,17 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
     @database_sync_to_async
     def turn_on_message_stored(self, is_request_user, message_id=None, room_id=None):
         try:
-            if message_id: # for one message
+            if message_id:  # for one message
                 message = Message.objects.get(id=message_id)
-                if is_request_user: # if I'm request user
+                if is_request_user:  # if I'm request user
                     message.is_stored_on_request = True
                 else:  # if I'm response user
                     message.is_stored_on_response = True
                 message.save()
 
-            elif room_id: # for all messages in the room
+            elif room_id:  # for all messages in the room
                 upd_messages = []
-                if is_request_user: # if I'm request user
+                if is_request_user:  # if I'm request user
                     messages = Message.objects.filter(room__id=room_id, is_stored_on_request=False)
                     for message in messages:
                         message.is_stored_on_request = True
@@ -177,9 +203,9 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
     @database_sync_to_async
     def get_not_stored_messages_data(self, room, is_request_user, me):
         try:
-            if is_request_user: # if I'm request user
+            if is_request_user:  # if I'm request user
                 messages = Message.objects.filter(room=room, is_stored_on_request=False).order_by('time')
-            else: # if I'm response user
+            else:  # if I'm response user
                 messages = Message.objects.filter(room=room, is_stored_on_response=False).order_by('time')
             return MessageSerializer(messages, many=True, context={'me': me}).data
         except Exception as e:
@@ -191,3 +217,14 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
             room.is_start = True
             room.started_at = timezone.now()
             room.save()
+
+    @classmethod
+    def send_end_talk(cls, room_id, time_out=False, alert=False, sender_id=None):
+        group_name = cls.get_group_name(room_id)
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(group_name, {
+            'type': 'end_talk',
+            'time_out': time_out,
+            'alert': alert,
+            'sender_id': str(sender_id) if sender_id else None,
+        })

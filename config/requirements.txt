@@ -1,3 +1,4 @@
+#uWSGI==2.0.18
 asgiref==3.2.7
 beautifulsoup4==4.9.0
 Django==3.0.6
@@ -12,5 +13,11 @@ user-agents==2.1
 mysqlclient==1.4.6
 Pillow==7.1.2
 djoser==2.0.3
-uWSGI==2.0.18
 djangorestframework-jwt==1.11.0
+pandas==1.1.1
+django-bootstrap4==2.2.0
+django-cleanup==5.0.0
+channels-redis==3.1.0
+channels==2.4.0
+daphne==2.5.0
+redis==3.5.3

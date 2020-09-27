@@ -4,6 +4,7 @@ from rest_framework import exceptions
 from account.models import Account
 from rest_framework_jwt.utils import jwt_decode_handler
 
+
 def authenticate_jwt(jwt_token, is_async=False):
     """
     jwt_tokenを受け取り、userを返す

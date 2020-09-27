@@ -118,6 +118,7 @@ class MeSerializer(UserSerializer):
     def get_plan(self, obj):
         return {'key': Plan(obj.plan).value, 'label': Plan(obj.plan).label}
 
+
 class PatchMeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account

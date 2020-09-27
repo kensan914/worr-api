@@ -83,6 +83,7 @@ class MeAPIView(views.APIView):
             else:
                 return record
 
+
 meAPIView = MeAPIView.as_view()
 
 
@@ -101,5 +102,6 @@ class ProfileImageAPIView(views.APIView):
             return Response(MeSerializer(request.user).data, status=status.HTTP_201_CREATED)
         else:
             return Response(profile_image_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 profileImageAPIView = ProfileImageAPIView.as_view()
