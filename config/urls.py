@@ -20,8 +20,9 @@ from . import settings
 
 urlpatterns = [
     path('api/v1/', include('api.urls')),
-    path('', views.top, name='top'),
-    path('terms-of-service/', views.terms_of_service, name='terms_of_service'),
+    path('', include('main.urls')),
+    # path('', views.top, name='top'),
+    # path('terms-of-service/', views.terms_of_service, name='terms_of_service'),
 ]
 
 if settings.DEBUG:
