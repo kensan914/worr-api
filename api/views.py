@@ -5,12 +5,12 @@ from rest_framework import views, status, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, \
-    WorriesToSympathizeSerializer
+    WorriesToSympathizeSerializer, MeSerializer
 from chat.consumers import ChatConsumer
 from chat.models import Room
 from chat.serializers import RoomSerializer
 from fullfii.db.account import get_all_accounts, increment_num_of_thunks
-from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account
+from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan
 from main.consumers import NotificationConsumer
 from main.models import NotificationType
 
@@ -246,3 +246,16 @@ class TalkInfoAPIView(views.APIView):
 
 
 talkInfoAPIView = TalkInfoAPIView.as_view()
+
+
+class PurchaseProductAPIView(views.APIView):
+    def post(self, request, *args, **kwargs):
+        product_id = self.kwargs.get('product_id')
+        if not product_id in Plan.values:
+            return Response({'type': 'not_found', 'message': "not found plan"}, status=status.HTTP_404_NOT_FOUND)
+
+        request.user.plan = product_id
+        request.user.save()
+        return Response({'status': 'success', 'profile': MeSerializer(request.user).data}, status=status.HTTP_200_OK)
+
+purchaseProductAPIView = PurchaseProductAPIView.as_view()
