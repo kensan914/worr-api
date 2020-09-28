@@ -21,4 +21,5 @@ urlpatterns = [
     path('rooms/<uuid:room_id>/end/', endTalkAPIView),
     path('rooms/<uuid:room_id>/close/', closeTalkAPIView),
     path('products/<str:product_id>/purchase/', purchaseProductAPIView),
+    path('products/notice/', noticeFromAppStoreAPIView),
 ]

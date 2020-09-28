@@ -259,3 +259,15 @@ class PurchaseProductAPIView(views.APIView):
         return Response({'status': 'success', 'profile': MeSerializer(request.user).data}, status=status.HTTP_200_OK)
 
 purchaseProductAPIView = PurchaseProductAPIView.as_view()
+
+
+class NoticeFromAppStoreAPIView(views.APIView):
+    def post(self, request, *args, **kwargs):
+        n_type = request.data['notification_type']
+        # if n_type == 'INITIAL_BUY':
+        #
+        # elif n_type == 'CANCEL':
+        #
+
+
+noticeFromAppStoreAPIView = NoticeFromAppStoreAPIView(views.APIView)

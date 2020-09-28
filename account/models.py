@@ -78,7 +78,8 @@ class Plan(models.TextChoices):
     """
     # LIGHT = 'light', 'ライト'
     # VIP = 'vip', 'VIP'
-    ONE_MONTH = '1_month_plan', '1monthプラン'
+
+    # ONE_MONTH = '1_month_plan', '1monthプラン'
     TRIAL = 'trial_plan', 'お試しプラン'
     NORMAL = 'normal_plan', 'ノーマルプラン'
 
