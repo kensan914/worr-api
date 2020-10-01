@@ -93,11 +93,6 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
         elif received_type == 'store_by_room':
             await self.turn_on_message_stored(self.is_request_user, room_id=self.room_id)
 
-        elif received_type == 'end_talk':
-            pass
-        elif received_type == 'send_thunks':
-            pass
-
     async def chat_message(self, event):
         try:
             message_id = event['message_id']

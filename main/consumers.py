@@ -24,6 +24,8 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
             raise
 
     async def disconnect(self, close_code):
+        print('xxxxxxxxxxxxx')
+        print(close_code)
         await self.channel_layer.group_discard(
             self.group_name,
             self.channel_name
