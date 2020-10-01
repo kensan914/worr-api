@@ -35,6 +35,7 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
         if result:
             self.room = result
         else:
+            print('2-1')
             await self.close()
             return
 
