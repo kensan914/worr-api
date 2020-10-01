@@ -3,7 +3,7 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 from account.serializers import LoginSerializer
 from account.views import signupAPIView, meAPIView, profileImageAPIView
 from api.views import profileParamsAPIView, usersAPIView, talkRequestAPIView, cancelTalkAPIView, talkInfoAPIView, \
-    endTalkAPIView, closeTalkAPIView, purchaseProductAPIView, noticeFromAppStoreAPIView
+    endTalkAPIView, closeTalkAPIView, purchaseProductAPIView
 
 app_name = 'api'
 
@@ -21,5 +21,5 @@ urlpatterns = [
     path('rooms/<uuid:room_id>/end/', endTalkAPIView),
     path('rooms/<uuid:room_id>/close/', closeTalkAPIView),
     path('products/<str:product_id>/purchase/', purchaseProductAPIView),
-    path('products/notice/', noticeFromAppStoreAPIView),
+    # path('products/notice/', noticeFromAppStoreAPIView),
 ]
