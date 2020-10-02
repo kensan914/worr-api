@@ -265,9 +265,12 @@ class NoticeFromAppStoreAPIView(views.APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request, *args, **kwargs):
+        print(request.data)
         n_type = request.data['notification_type']
         if n_type == 'DID_CHANGE_RENEWAL_STATUS':
-            print(request.data)
+            print('aaaaaaaaaaaaaaaaaaaaaaaa')
+
+        return Response(status=status.HTTP_200_OK)
 
 
 noticeFromAppStoreAPIView = NoticeFromAppStoreAPIView.as_view()
