@@ -276,6 +276,13 @@ class NoticeFromAppStoreAPIView(views.APIView):
         n_type = request.data['notification_type']
         if n_type == 'DID_CHANGE_RENEWAL_STATUS':
             print('aaaaaaaaaaaaaaaaaaaaaaaa')
+            users = Account.objects.filter(transaction_id=request.data['latest_receipt_info'].original_transaction_id)
+            if users.exists():
+                print('bbbbbbbbbbbbbbbbbbbb')
+                user = users.first()
+                product_id = request.data['auto_renew_product_id']
+                user.plan = Plan(product_id)
+                user.save()
 
         return Response(status=status.HTTP_200_OK)
 
