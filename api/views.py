@@ -268,4 +268,4 @@ class NoticeFromAppStoreAPIView(views.APIView):
             print(request.data)
 
 
-noticeFromAppStoreAPIView = NoticeFromAppStoreAPIView(views.APIView)
+noticeFromAppStoreAPIView = NoticeFromAppStoreAPIView.as_view()
