@@ -3,7 +3,7 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 from account.serializers import LoginSerializer
 from account.views import signupAPIView, meAPIView, profileImageAPIView
 from api.views import profileParamsAPIView, usersAPIView, talkRequestAPIView, cancelTalkAPIView, talkInfoAPIView, \
-    endTalkAPIView, closeTalkAPIView, purchaseProductAPIView
+    endTalkAPIView, closeTalkAPIView, purchaseProductAPIView, noticeFromAppStoreAPIView
 
 app_name = 'api'
 
