@@ -93,7 +93,7 @@ class Account(AbstractBaseUser):
     num_of_thunks = models.IntegerField(verbose_name='ありがとう', default=0)
     status = models.ForeignKey(Status, verbose_name='ステータス', on_delete=models.SET_DEFAULT, default=get_default_status)
     # status = models.ForeignKey(Status, verbose_name='ステータス', on_delete=models.PROTECT, null=True)  # when init migration
-    plan = models.CharField(verbose_name='プラン', max_length=30, choices=Plan.choices, default=Plan.FREE)
+    plan = models.CharField(verbose_name='プラン', max_length=100, choices=Plan.choices, default=Plan.FREE)
     features = models.ManyToManyField(Feature, verbose_name='特徴', blank=True)
     genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='対応できる悩みのジャンル', blank=True)
     scale_of_worries = models.ManyToManyField(ScaleOfWorries, verbose_name='対応できる悩みの大きさ', blank=True)
