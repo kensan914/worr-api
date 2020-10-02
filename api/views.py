@@ -284,7 +284,7 @@ class NoticeFromAppStoreAPIView(views.APIView):
                 print('cccccccccccccccccccccc')
                 transaction_id = request.data['latest_expired_receipt_info']['transaction_id']
 
-            users = Account.objects.filter(transaction_id=transaction_id)
+            users = Account.objects.filter(original_transaction_id=transaction_id)
             if users.exists():
                 print('fffffffffffffffffffff')
                 user = users.first()
