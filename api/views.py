@@ -276,7 +276,7 @@ class NoticeFromAppStoreAPIView(views.APIView):
         n_type = request.data['notification_type']
         if n_type == 'DID_CHANGE_RENEWAL_STATUS':
             print('aaaaaaaaaaaaaaaaaaaaaaaa')
-            users = Account.objects.filter(transaction_id=request.data['latest_receipt_info'].original_transaction_id)
+            users = Account.objects.filter(transaction_id=request.data['latest_receipt_info']['original_transaction_id'])
             if users.exists():
                 print('bbbbbbbbbbbbbbbbbbbb')
                 user = users.first()
