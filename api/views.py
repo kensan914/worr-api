@@ -252,15 +252,15 @@ class PurchaseProductAPIView(views.APIView):
     def post(self, request, *args, **kwargs):
         product_id = self.kwargs.get('product_id')
         receipt = request.data['receipt']
-        transaction_id = request.data['transaction_id']
+        original_transaction_id = request.data['original_transaction_id']
 
         if not product_id in Plan.values:
             return Response({'type': 'not_found', 'message': "not found plan"}, status=status.HTTP_404_NOT_FOUND)
 
         request.user.plan = product_id
-        if transaction_id:
-            print(transaction_id)
-            request.user.transaction_id = transaction_id
+        if original_transaction_id:
+            print(original_transaction_id)
+            request.user.original_transaction_id = original_transaction_id
 
         request.user.save()
         return Response({'status': 'success', 'profile': MeSerializer(request.user).data}, status=status.HTTP_200_OK)
