@@ -251,10 +251,15 @@ talkInfoAPIView = TalkInfoAPIView.as_view()
 class PurchaseProductAPIView(views.APIView):
     def post(self, request, *args, **kwargs):
         product_id = self.kwargs.get('product_id')
+        transaction_receipt = request.data['transactionReceipt']
+
         if not product_id in Plan.values:
             return Response({'type': 'not_found', 'message': "not found plan"}, status=status.HTTP_404_NOT_FOUND)
 
         request.user.plan = product_id
+        if transaction_receipt:
+            print(transaction_receipt)
+
         request.user.save()
         return Response({'status': 'success', 'profile': MeSerializer(request.user).data}, status=status.HTTP_200_OK)
 

@@ -98,6 +98,7 @@ class Account(AbstractBaseUser):
     genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='対応できる悩みのジャンル', blank=True)
     scale_of_worries = models.ManyToManyField(ScaleOfWorries, verbose_name='対応できる悩みの大きさ', blank=True)
     worries_to_sympathize = models.ManyToManyField(WorriesToSympathize, verbose_name='共感できる悩み', blank=True)
+    transaction_id = models.CharField(verbose_name="トランザクションID", max_length=1000, default="")
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
