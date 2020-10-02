@@ -147,12 +147,10 @@ class EndTalkAPIView(TalkAPIView):
         room_id = self.kwargs.get('room_id')
         room = get_object_or_404(Room, id=room_id)
 
-        print(1)
         error_response = self.validate_room_member(request, room)
         if error_response:
             return error_response
 
-        print(2)
         is_first_time = not room.is_end_request and not room.is_end_response
 
         # end talk for the first time
@@ -160,7 +158,6 @@ class EndTalkAPIView(TalkAPIView):
             room.is_end = True
             room.ended_at = timezone.now()
 
-        print(3)
         # turn on is_end_(req or res)
         if request.user.id == room.request_user.id:
             room.is_end_request = True
@@ -168,7 +165,6 @@ class EndTalkAPIView(TalkAPIView):
             room.is_end_response = True
         room.save()
 
-        print(4)
         # send end talk
         if is_first_time:
             ChatConsumer.send_end_talk(room_id, sender_id=request.user.id)

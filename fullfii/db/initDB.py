@@ -35,31 +35,31 @@ class InitDB(metaclass=ABCMeta):
 
 
 class InitStatus(InitDB):
-    file_path = 'static/courpus/statusList.txt'
+    file_path = 'static/corpus/statusList.txt'
     keyList = ['key', 'label', 'color']
     model = Status
 
 
 class InitFeature(InitDB):
-    file_path = 'static/courpus/featuresList.txt'
+    file_path = 'static/corpus/featuresList.txt'
     keyList = ['key', 'label']
     model = Feature
 
 
 class InitGenreOfWorries(InitDB):
-    file_path = 'static/courpus/genreOfWorriesList.txt'
+    file_path = 'static/corpus/genreOfWorriesList.txt'
     keyList = ['key', 'value', 'label']
     model = GenreOfWorries
 
 
 class InitScaleOfWorries(InitDB):
-    file_path = 'static/courpus/scaleOfWorriesList.txt'
+    file_path = 'static/corpus/scaleOfWorriesList.txt'
     keyList = ['key', 'label']
     model = ScaleOfWorries
 
 
 class InitWorriesToSympathize(InitDB):
-    file_path = 'static/courpus/worriesToSympathizeList.txt'
+    file_path = 'static/corpus/worriesToSympathizeList.txt'
     keyList = ['key', 'label']
     model = WorriesToSympathize
 

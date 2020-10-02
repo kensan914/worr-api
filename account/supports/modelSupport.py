@@ -6,7 +6,7 @@ fullfii/__init__.pyによるimport * を制限(循環importを引き起こす)
 def get_default_info(file_path, keyList):
     """
     statusList, planList の先頭（デフォルト）のobjを作成
-    :param file_path: ex) 'static/courpus/statusList.txt'
+    :param file_path: ex) 'static/corpus/statusList.txt'
     :param keyList: ex) ['key', 'label', 'color']
     :return: {'key': 'offline', 'label': 'オフライン', 'color': 'indianred'}
     """
