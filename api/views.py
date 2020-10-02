@@ -279,10 +279,10 @@ class NoticeFromAppStoreAPIView(views.APIView):
             transaction_id = ''
             if 'latest_receipt_info' in request.data:
                 print('bbbbbbbbbbbbbbbbbbbb')
-                transaction_id = request.data['latest_receipt_info']['original_transaction_id']
+                transaction_id = request.data['latest_receipt_info']['transaction_id']
             elif 'latest_expired_receipt_info' in request.data:
                 print('cccccccccccccccccccccc')
-                transaction_id = request.data['latest_expired_receipt_info']['original_transaction_id']
+                transaction_id = request.data['latest_expired_receipt_info']['transaction_id']
 
             users = Account.objects.filter(transaction_id=transaction_id)
             if users.exists():
