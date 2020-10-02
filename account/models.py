@@ -76,7 +76,7 @@ class Plan(models.TextChoices):
     """
     ex) Plan(user.plan).name: 'NORMAL', Plan(user.plan).value: 'normal_plan', Plan(user.plan).label: 'ノーマルプラン'
     """
-    NORMAL = 'com.fullfii.fullfii.normal_plan', 'ノーマルプラン'
+    NORMAL = 'com.fullfii.fullfii.normal_plan', 'ノーマル'
     FREE = 'com.fullfii.fullfii.free_plan', '未加入'
 
 
