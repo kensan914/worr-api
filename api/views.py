@@ -299,8 +299,7 @@ class NoticeFromAppStoreAPIView(views.APIView):
             if iaps.exists():
                 iap = iaps.first()
                 # 自動更新成功
-                # if request.data['auto_renew_status'] and not Iap.objects.filter(transaction_id=request.data['latest_receipt_info']['transaction_id']).exists():
-                if request.data['auto_renew_status']:
+                if request.data['auto_renew_status'] == 'true' and not Iap.objects.filter(transaction_id=request.data['latest_receipt_info']['transaction_id']).exists():
                     update_iap(
                         iap=iap,
                         transaction_id=request.data['latest_receipt_info']['transaction_id'],
@@ -311,7 +310,7 @@ class NoticeFromAppStoreAPIView(views.APIView):
                     iap.user.plan = request.data['auto_renew_product_id']
                     iap.user.save()
                 # 自動更新失敗状態で期限が切れた
-                elif not request.data['auto_renew_status']:
+                elif request.data['auto_renew_status'] == 'false':
                     update_iap(
                         iap=iap,
                         receipt=request.data['latest_receipt'],
