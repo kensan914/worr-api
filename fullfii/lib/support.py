@@ -25,4 +25,4 @@ def cvt_tz_str_to_datetime(tz_str, dt_format='%Y-%m-%d %H:%M:%S'):
     """
     dt, tz = tz_str.rsplit(maxsplit=1)
     _datetime = datetime.strptime(dt, dt_format).replace(tzinfo=pytz.timezone(tz))
-    return timezone.localtime(_datetime)
+    return timezone.localtime(_datetime).replace(tzinfo=None)
