@@ -48,7 +48,7 @@ def format_verify_receipt_json(res_json):
         }
     else:
         additional_receipt_data = {
-            'bundle_id': res_json['receipt']['bundle_id'],
+            'bundle_id': res_json['receipt']['bid'],
             'original_transaction_id': res_json['latest_receipt_info'][0]['original_transaction_id'],
             'transaction_id': res_json['latest_receipt_info'][0]['transaction_id'],
             'latest_receipt': res_json['latest_receipt'],
