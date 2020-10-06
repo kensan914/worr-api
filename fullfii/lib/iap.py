@@ -26,12 +26,13 @@ def request_post_receipt(receipt):
 
 
 def format_verify_receipt_json(res_json):
-    '''
+    """
     :param res_json:
     :return: {'status': ..., 'bundle_id': ..., 'original_transaction_id': ..., 'transaction_id': ...,
             'latest_receipt': ..., 'expires_date': ..., 'is_in_billing_retry_period': ...(if not exists, -1),
             'auto_renew_status': ...}
-    '''
+    """
+    print(res_json)
     receipt_data = {
         'status': res_json['status'],
         'bundle_id': res_json['receipt']['bundle_id'],
