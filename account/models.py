@@ -142,6 +142,6 @@ class ProfileImage(models.Model):
 
 class Iap(models.Model):
     # original_transaction_id = models.CharField(verbose_name='オリジナルトランザクションID', max_length=1000, primary_key=True, default='')
-    transaction_id = models.CharField(verbose_name='最新トランザクションID', max_length=1000, unique=True, default='')
+    transaction_id = models.CharField(verbose_name='最新トランザクションID', max_length=255, unique=True, default='')
     user = models.OneToOneField(Account, verbose_name='対象ユーザ', on_delete=models.PROTECT)
-    receipt = models.CharField(verbose_name='レシート', default='')
+    receipt = models.TextField(verbose_name='レシート', default='')
