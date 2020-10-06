@@ -18,7 +18,7 @@ def calc_age(birthday):
 def cvt_tz_str_to_datetime(tz_str, dt_format='%Y-%m-%d %H:%M:%S'):
     """
     timezoneを含むdatetimeのstring(ex: '2018-06-18 15:03:55 Etc/GMT')をsettings.TIME_ZONEで設定されているタイムゾーンに
-    ローカライズしたdatetimeに変換
+    ローカライズしたdatetime(naive)に変換
     :param tz_str:
     :param dt_format:
     :return: datetime

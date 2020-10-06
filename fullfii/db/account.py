@@ -1,4 +1,4 @@
-from account.models import Account
+from account.models import Account, Iap, IapStatus
 
 """
 fullfii/__init__.pyによるimport * を制限(循環importを引き起こす)
@@ -15,3 +15,16 @@ def get_all_accounts(me=None):
 def increment_num_of_thunks(user):
     user.num_of_thunks += 1
     user.save()
+
+
+def create_iap(original_transaction_id, transaction_id, user, receipt, expires_date):
+    iap = Iap(
+        original_transaction_id=original_transaction_id,
+        transaction_id=transaction_id,
+        user=user,
+        receipt=receipt,
+        expires_date=expires_date,
+        plan=IapStatus.SUBSCRIPTION,
+    )
+    iap.save()
+    return iap

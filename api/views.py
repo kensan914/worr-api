@@ -1,7 +1,4 @@
-from datetime import datetime
 import uuid
-import pytz
-import requests
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import views, status, permissions
@@ -14,7 +11,7 @@ from chat.consumers import ChatConsumer
 from chat.models import Room
 from chat.serializers import RoomSerializer
 from fullfii.db.account import get_all_accounts, increment_num_of_thunks
-from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan, Iap, IapStatus
+from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan
 from main.consumers import NotificationConsumer
 from main.models import NotificationType
 
@@ -258,46 +255,8 @@ class PurchaseProductAPIView(views.APIView):
         receipt = request.data['receipt']
 
         # verifyReceipt
-        if not product_id in Plan.values:
-            return Response({'type': 'not_found', 'message': "not found plan"}, status=status.HTTP_404_NOT_FOUND)
-        post_data = {
-            'receipt-data': receipt,
-            'password': fullfii.IAP_SHARED_SECRET,
-            'exclude-old-transactions': True,
-        }
-        res = requests.post(fullfii.IAP_STORE_API_URL, json=post_data)
-        res_json = res.json()
-
-        if res_json['status'] == 21007:  # sandbox
-            res = requests.post(fullfii.IAP_STORE_API_URL_SANDBOX, json=post_data)
-            res_json = res.json()
-
-        print(res_json)
-
-        if res_json['status'] != 0:
-            return Response({'type': 'failed_verify_receipt', 'message': "bad status"}, status=status.HTTP_409_CONFLICT)
-        if res_json['receipt']['bundle_id'] != fullfii.BUNDLE_ID:
-            return Response({'type': 'failed_verify_receipt', 'message': "bad bundle ID"}, status=status.HTTP_409_CONFLICT)
-        if Iap.objects.filter(original_transaction_id=res_json['latest_receipt_info'][0]['original_transaction_id']).exists():
-            return Response({'type': 'failed_verify_receipt', 'message': "the original transaction ID already exists"}, status=status.HTTP_409_CONFLICT)
-        if Iap.objects.filter(transaction_id=res_json['latest_receipt_info'][0]['transaction_id']).exists():
-            return Response({'type': 'failed_verify_receipt', 'message': "the transaction ID already exists"}, status=status.HTTP_409_CONFLICT)
-
-        expires_date = fullfii.cvt_tz_str_to_datetime(res_json['latest_receipt_info'][0]['expires_date'])
-        print(expires_date)
-        print(IapStatus.SUBSCRIPTION)
-
-        Iap.objects.create(
-            original_transaction_id=res_json['latest_receipt_info'][0]['original_transaction_id'],
-            transaction_id=res_json['latest_receipt_info'][0]['transaction_id'],
-            user=request.user,
-            receipt=res_json['latest_receipt'],
-            expires_date=expires_date,
-            plan=IapStatus.SUBSCRIPTION
-        )
-        request.user.plan = product_id
-        request.user.save()
-        return Response({'status': 'success', 'profile': MeSerializer(request.user).data}, status=status.HTTP_200_OK)
+        response = fullfii.verify_receipt_when_purchase(product_id, receipt, request.user)
+        return response
 
 purchaseProductAPIView = PurchaseProductAPIView.as_view()
 
