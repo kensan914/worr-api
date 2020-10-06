@@ -11,7 +11,7 @@ from chat.models import Room
 from chat.serializers import RoomSerializer
 from fullfii.db.account import get_all_accounts, increment_num_of_thunks
 from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan
-from fullfii.lib.iap import verify_receipt_when_purchase
+from fullfii.lib.iap import verify_receipt_at_first
 from main.consumers import NotificationConsumer
 from main.models import NotificationType
 
@@ -255,10 +255,22 @@ class PurchaseProductAPIView(views.APIView):
         receipt = request.data['receipt']
 
         # verify receipt
-        response = verify_receipt_when_purchase(product_id, receipt, request.user)
+        response = verify_receipt_at_first(product_id, receipt, request.user)
         return response
 
 purchaseProductAPIView = PurchaseProductAPIView.as_view()
+
+
+class RestoreProductAPIView(views.APIView):
+    def post(self, request, *args, **kwargs):
+        product_id = self.kwargs.get('product_id')
+        receipt = request.data['receipt']
+
+        # verify receipt
+        response = verify_receipt_at_first(product_id, receipt, request.userm, is_restore=True)
+        return response
+
+restoreProductAPIView = RestoreProductAPIView.as_view()
 
 
 class NoticeFromAppStoreAPIView(views.APIView):

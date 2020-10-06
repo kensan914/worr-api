@@ -47,25 +47,38 @@ def format_verify_receipt_json(res_json):
 
 
 
-def verify_receipt_when_purchase(product_id, receipt, user):
+def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
+    if is_restore:
+        base_error_message = '購入の復元に失敗しました。'
+    else:
+        base_error_message = '購入に失敗しました。'
+
     if not product_id in Plan.values:
-        return Response({'type': 'not_found_plan', 'message': 'プランの変更に失敗しました。不正なプランです。'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'type': 'not_found_plan', 'message': '{}不正なプランです。'.format(base_error_message)}, status=status.HTTP_404_NOT_FOUND)
 
     res_json = request_post_receipt(receipt)
     receipt_data = format_verify_receipt_json(res_json)
     print(receipt_data)
 
     if receipt_data['status'] != 0:
-        return Response({'type': 'bad_status', 'message': 'プランの変更に失敗しました。しばらく時間をおいて再度プランの変更を行ってください。'}, status=status.HTTP_409_CONFLICT)
+        return Response({'type': 'bad_status', 'message': '{}しばらく時間をおいて再度プランの変更を行ってください。'.format(base_error_message)}, status=status.HTTP_409_CONFLICT)
     if receipt_data['bundle_id'] != BUNDLE_ID:
-        return Response({'type': 'conflict_bundle_id', 'message': 'プランの変更に失敗しました。不正なバンドルIDです。'}, status=status.HTTP_409_CONFLICT)
-    if Iap.objects.filter(transaction_id=receipt_data['transaction_id']).exists():
-        return Response({'type': 'conflict_transaction_id', 'message': 'プランの変更に失敗しました。'},
+        return Response({'type': 'conflict_bundle_id', 'message': '{}不正なバンドルIDです。'.format(base_error_message)}, status=status.HTTP_409_CONFLICT)
+
+    if Iap.objects.filter(transaction_id=receipt_data['transaction_id']).exists() and not is_restore:
+        return Response({'type': 'conflict_transaction_id', 'message': '{}'.format(base_error_message)},
                         status=status.HTTP_409_CONFLICT)
     if Iap.objects.filter(original_transaction_id=receipt_data['original_transaction_id']).exists():
         iap = Iap.objects.filter(original_transaction_id=receipt_data['original_transaction_id']).first()
         if iap.status == IapStatus.SUBSCRIPTION:
-            return Response({'type': 'conflict_original_transaction_id', 'message': 'プランの変更に失敗しました。既に購入済みの自動購読があります。購入を復元して下さい。'},
+            # 購入の復元
+            if is_restore:
+                iap.receipt = receipt_data['latest_receipt']
+                iap.transaction_id = receipt_data['transaction_id']
+                iap.expires_date = cvt_tz_str_to_datetime(receipt_data['expires_date'])
+                iap.save()
+            else:
+                return Response({'type': 'conflict_original_transaction_id', 'message': '{}既に購入済みの自動購読があります。購入を復元して下さい。'.format(base_error_message)},
                             status=status.HTTP_409_CONFLICT)
         else:  # 購読中のサブスクリプションの期限が切れた後に同じサブスクリプションを再購読
             iap.receipt = receipt_data['latest_receipt']
