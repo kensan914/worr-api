@@ -70,7 +70,7 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
                         status=status.HTTP_409_CONFLICT)
 
     # 有効期限が過ぎている場合
-    if (timezone.now() - cvt_tz_str_to_datetime(receipt_data['expires_date'])) > 0:
+    if (timezone.now() - cvt_tz_str_to_datetime(receipt_data['expires_date'])).total_seconds() > 0:
         return Response({'type': 'expired', 'message': '{}更新の有効期限が切れています。新たにプランを購入してください'.format(base_error_message)},
                         status=status.HTTP_409_CONFLICT)
 
@@ -87,7 +87,7 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
             else:
                 return Response({'type': 'conflict_original_transaction_id', 'message': '{}既に購入済みの自動購読があります。購入を復元して下さい。'.format(base_error_message)},
                             status=status.HTTP_409_CONFLICT)
-        else:  # 購読中のサブスクリプションの期限が切れた後に同じサブスクリプションを再購読
+        else:  # 購読中のサブスクリプションの期限が切れた後にサブスクリプションを再購読
             iap.receipt = receipt_data['latest_receipt']
             iap.transaction_id = receipt_data['transaction_id']
             iap.expires_date = cvt_tz_str_to_datetime(receipt_data['expires_date'])
