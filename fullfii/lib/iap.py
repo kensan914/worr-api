@@ -102,7 +102,7 @@ def verify_receipt_when_update(verified_iap):
         verified_iap.receipt = receipt_data['latest_receipt']
         if verified_iap.status != IapStatus.FAILURE:
             verified_iap.status = IapStatus.FAILURE
-        else:
+        else:  # 自動更新失敗状態で期限が切れた
             verified_iap.status = IapStatus.EXPIRED
             verified_iap.user.plan = Plan.FREE
             verified_iap.user.save()
