@@ -283,12 +283,16 @@ class PurchaseProductAPIView(views.APIView):
         if Iap.objects.filter(transaction_id=res_json['latest_receipt_info'][0]['transaction_id']).exists():
             return Response({'type': 'failed_verify_receipt', 'message': "the transaction ID already exists"}, status=status.HTTP_409_CONFLICT)
 
+        expires_date = fullfii.cvt_tz_str_to_datetime(res_json['latest_receipt_info'][0]['expires_date'])
+        print(expires_date)
+        print(IapStatus.SUBSCRIPTION)
+
         Iap.objects.create(
             original_transaction_id=res_json['latest_receipt_info'][0]['original_transaction_id'],
             transaction_id=res_json['latest_receipt_info'][0]['transaction_id'],
             user=request.user,
             receipt=res_json['latest_receipt'],
-            expires_date=fullfii.cvt_tz_str_to_datetime(res_json['latest_receipt_info'][0]['expires_date']),
+            expires_date=expires_date,
             plan=IapStatus.SUBSCRIPTION
         )
         request.user.plan = product_id
