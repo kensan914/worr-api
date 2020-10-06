@@ -149,7 +149,7 @@ class IapStatus(models.TextChoices):
 class Iap(models.Model):
     original_transaction_id = models.CharField(verbose_name='オリジナルトランザクションID', max_length=255, unique=True, default='')
     transaction_id = models.CharField(verbose_name='最新トランザクションID', max_length=255, unique=True, default='')
-    user = models.OneToOneField(Account, verbose_name='対象ユーザ', on_delete=models.PROTECT)
+    user = models.ManyToManyField(Account, verbose_name='対象ユーザ', on_delete=models.PROTECT)
     receipt = models.TextField(verbose_name='レシート', default='')
     expires_date = models.DateTimeField(verbose_name='有効期限日時')
     status = models.CharField(verbose_name='ステータス', max_length=100, choices=IapStatus.choices, default=IapStatus.SUBSCRIPTION)
