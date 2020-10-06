@@ -28,3 +28,14 @@ def create_iap(original_transaction_id, transaction_id, user, receipt, expires_d
     )
     iap.save()
     return iap
+
+
+def update_iap(iap, original_transaction_id=None, transaction_id=None, user=None, receipt=None, expires_date=None, status=None):
+    iap.original_transaction_id = original_transaction_id if original_transaction_id is not None else iap.original_transaction_id
+    iap.transaction_id = transaction_id if transaction_id is not None else iap.transaction_id
+    iap.user = user if user is not None else iap.user
+    iap.receipt = receipt if receipt is not None else iap.receipt
+    iap.expires_date = expires_date if expires_date is not None else iap.expires_date
+    iap.status = status if status is not None else iap.status
+    iap.save()
+    return iap

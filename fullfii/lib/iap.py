@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from account.models import Plan, Iap, IapStatus
 import requests
 from account.serializers import MeSerializer
-from fullfii import create_iap
+from fullfii import create_iap, update_iap
 from fullfii.lib.constants import IAP_SHARED_SECRET, IAP_STORE_API_URL, IAP_STORE_API_URL_SANDBOX, BUNDLE_ID
 from fullfii.lib.support import cvt_tz_str_to_datetime
 
@@ -71,7 +71,7 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
 
     # 有効期限が過ぎている場合
     if (timezone.now() - cvt_tz_str_to_datetime(receipt_data['expires_date'])).total_seconds() > 0:
-        return Response({'type': 'expired', 'message': '{}更新の有効期限が切れています。新たにプランを購入してください'.format(base_error_message)},
+        return Response({'type': 'expired', 'message': '{}更新の有効期限が切れています。新たにプランを購入してください。'.format(base_error_message)},
                         status=status.HTTP_409_CONFLICT)
 
     if Iap.objects.filter(original_transaction_id=receipt_data['original_transaction_id']).exists():
@@ -79,21 +79,27 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
         if iap.status == IapStatus.SUBSCRIPTION:
             # 購入の復元
             if is_restore:
-                iap.receipt = receipt_data['latest_receipt']
-                iap.transaction_id = receipt_data['transaction_id']
-                iap.expires_date = cvt_tz_str_to_datetime(receipt_data['expires_date'])
-                iap.user = user
-                iap.save()
+                update_iap(
+                    iap=iap,
+                    original_transaction_id=receipt_data['original_transaction_id'],
+                    transaction_id=receipt_data['transaction_id'],
+                    user=user,
+                    receipt=receipt_data['latest_receipt'],
+                    expires_date=cvt_tz_str_to_datetime(receipt_data['expires_date']),
+                )
             else:
                 return Response({'type': 'conflict_original_transaction_id', 'message': '{}既に購入済みの自動購読があります。購入を復元して下さい。'.format(base_error_message)},
                             status=status.HTTP_409_CONFLICT)
         else:  # 購読中のサブスクリプションの期限が切れた後にサブスクリプションを再購読
-            iap.receipt = receipt_data['latest_receipt']
-            iap.transaction_id = receipt_data['transaction_id']
-            iap.expires_date = cvt_tz_str_to_datetime(receipt_data['expires_date'])
-            iap.user=user
-            iap.status = IapStatus.SUBSCRIPTION
-            iap.save()
+            update_iap(
+                iap=iap,
+                original_transaction_id=receipt_data['original_transaction_id'] if is_restore else None,
+                transaction_id=receipt_data['transaction_id'],
+                user=user,
+                receipt=receipt_data['latest_receipt'],
+                expires_date = cvt_tz_str_to_datetime(receipt_data['expires_date']),
+                status=IapStatus.SUBSCRIPTION,
+            )
     else:
         create_iap(
             original_transaction_id=receipt_data['original_transaction_id'],
@@ -119,30 +125,41 @@ def verify_receipt_when_update(verified_iap):
     # case 1. 自動更新に成功している
     if not Iap.objects.filter(transaction_id=receipt_data['transaction_id']).exists():
         print('case 1')
-        verified_iap.transaction_id = receipt_data['transaction_id']
-        verified_iap.receipt = receipt_data['latest_receipt']
-        verified_iap.expires_date = cvt_tz_str_to_datetime(receipt_data['expires_date'])
+        update_iap(
+            iap=verified_iap,
+            transaction_id=receipt_data['transaction_id'],
+            receipt=receipt_data['latest_receipt'],
+            expires_date=cvt_tz_str_to_datetime(receipt_data['expires_date']),
+        )
 
     # case 2. まだ更新に成功していないが、今後成功する可能性がある
     elif receipt_data['is_in_billing_retry_period'] == '1':
         print('case 2')
-        verified_iap.receipt = receipt_data['latest_receipt']
         if verified_iap.status != IapStatus.FAILURE:
-            verified_iap.status = IapStatus.FAILURE
+            update_iap(
+                iap=verified_iap,
+                receipt=receipt_data['latest_receipt'],
+                status=IapStatus.FAILURE,
+            )
         else:  # 自動更新失敗状態で期限が切れた
-            verified_iap.status = IapStatus.EXPIRED
+            update_iap(
+                iap=verified_iap,
+                receipt=receipt_data['latest_receipt'],
+                status=IapStatus.EXPIRED,
+            )
             verified_iap.user.plan = Plan.FREE
             verified_iap.user.save()
 
     # case 3. その購読は自動更新されない
     elif receipt_data['is_in_billing_retry_period'] == '0' or receipt_data['auto_renew_status'] == '0':
         print('case 3')
-        verified_iap.receipt = receipt_data['latest_receipt']
-        verified_iap.status = IapStatus.EXPIRED
+        update_iap(
+            iap=verified_iap,
+            receipt=receipt_data['latest_receipt'],
+            status=IapStatus.EXPIRED,
+        )
         verified_iap.user.plan = Plan.FREE
         verified_iap.user.save()
-
-    verified_iap.save()
 
 
 def manage_iap_expires_date(within_minutes=720):

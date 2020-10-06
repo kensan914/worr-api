@@ -9,8 +9,8 @@ from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorri
 from chat.consumers import ChatConsumer
 from chat.models import Room
 from chat.serializers import RoomSerializer
-from fullfii.db.account import get_all_accounts, increment_num_of_thunks
-from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan
+from fullfii.db.account import get_all_accounts, increment_num_of_thunks, update_iap
+from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan, Iap, IapStatus
 from fullfii.lib.iap import verify_receipt_at_first
 from main.consumers import NotificationConsumer
 from main.models import NotificationType
@@ -279,23 +279,44 @@ class NoticeFromAppStoreAPIView(views.APIView):
     def post(self, request, *args, **kwargs):
         print(request.data)
         n_type = request.data['notification_type']
-        if n_type == 'DID_CHANGE_RENEWAL_STATUS':
-            print('aaaaaaaaaaaaaaaaaaaaaaaa')
-            transaction_id = ''
-            if 'latest_receipt_info' in request.data:
-                print('bbbbbbbbbbbbbbbbbbbb')
-                transaction_id = request.data['latest_receipt_info']['transaction_id']
-            elif 'latest_expired_receipt_info' in request.data:
-                print('cccccccccccccccccccccc')
-                transaction_id = request.data['latest_expired_receipt_info']['transaction_id']
+        if n_type == 'DID_RECOVER':
+            iaps = Iap.objects.filter(original_transaction_id=request.data['latest_receipt_info']['original_transaction_id'])
+            if iaps.exists():
+                iap = iaps.first()
+                update_iap(
+                    iap=iap,
+                    transaction_id=request.data['latest_receipt_info']['transaction_id'],
+                    receipt=request.data['latest_receipt'],
+                    expires_date=request.data['latest_receipt_info']['expires_date_formatted'],
+                    status=IapStatus.SUBSCRIPTION,
+                )
+                iap.user.plan = request.data['latest_receipt_info']['product_id']
+                iap.user.save()
 
-            users = Account.objects.filter(original_transaction_id=transaction_id)
-            if users.exists():
-                print('fffffffffffffffffffff')
-                user = users.first()
-                product_id = request.data['auto_renew_product_id']
-                user.plan = Plan(product_id)
-                user.save()
+        elif n_type == 'DID_CHANGE_RENEWAL_STATUS':
+            iaps = Iap.objects.filter(original_transaction_id=request.data['latest_receipt_info']['original_transaction_id'])
+            if iaps.exists():
+                iap = iaps.first()
+                # 自動更新成功
+                if request.data['auto_renew_status']:
+                    update_iap(
+                        iap=iap,
+                        transaction_id=request.data['latest_receipt_info']['transaction_id'],
+                        receipt=request.data['latest_receipt'],
+                        expires_date=request.data['latest_receipt_info']['expires_date_formatted'],
+                        status=IapStatus.SUBSCRIPTION,
+                    )
+                    iap.user.plan = request.data['auto_renew_product_id']
+                    iap.user.save()
+                # 自動更新失敗状態で期限が切れた
+                else:
+                    update_iap(
+                        iap=iap,
+                        receipt=request.data['latest_receipt'],
+                        status=IapStatus.EXPIRED,
+                    )
+                    iap.user.plan = Plan.FREE
+                    iap.user.save()
 
         return Response(status=status.HTTP_200_OK)
 
