@@ -79,7 +79,7 @@ def verify_receipt_when_purchase(product_id, receipt, user):
 
 
 def verify_receipt_when_update(verified_iap):
-    res_json = request_post_receipt(verified_iap)
+    res_json = request_post_receipt(verified_iap.receipt)
     receipt_data = format_verify_receipt_json(res_json)
     print('verify_receipt_when_update')
     print(receipt_data)
