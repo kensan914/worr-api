@@ -35,17 +35,29 @@ def format_verify_receipt_json(res_json):
     print(res_json)
     receipt_data = {
         'status': res_json['status'],
-        'bundle_id': res_json['receipt']['bundle_id'],
-        'original_transaction_id': res_json['latest_receipt_info'][0]['original_transaction_id'],
-        'transaction_id': res_json['latest_receipt_info'][0]['transaction_id'],
-        'latest_receipt': res_json['latest_receipt'],
-        'expires_date': res_json['latest_receipt_info'][0]['expires_date'],
-        'is_in_billing_retry_period': res_json['pending_renewal_info'][0]['is_in_billing_retry_period'] if 'is_in_billing_retry_period' in res_json['pending_renewal_info'][0] else '-1',
-        'auto_renew_status': res_json['pending_renewal_info'][0]['auto_renew_status'],
     }
-
+    if receipt_data['status'] == 21006:
+        additional_receipt_data = {
+            'bundle_id': '',
+            'original_transaction_id': res_json['latest_expired_receipt_info']['original_transaction_id'],
+            'transaction_id': res_json['latest_expired_receipt_info']['transaction_id'],
+            'latest_receipt': '',
+            'expires_date': res_json['latest_expired_receipt_info']['expires_date_formatted'],
+            'is_in_billing_retry_period': res_json['is_in_billing_retry_period'],
+            'auto_renew_status': res_json['auto_renew_status'],
+        }
+    else:
+        additional_receipt_data = {
+            'bundle_id': res_json['receipt']['bundle_id'],
+            'original_transaction_id': res_json['latest_receipt_info'][0]['original_transaction_id'],
+            'transaction_id': res_json['latest_receipt_info'][0]['transaction_id'],
+            'latest_receipt': res_json['latest_receipt'],
+            'expires_date': res_json['latest_receipt_info'][0]['expires_date'],
+            'is_in_billing_retry_period': res_json['pending_renewal_info'][0]['is_in_billing_retry_period'] if 'is_in_billing_retry_period' in res_json['pending_renewal_info'][0] else '-1',
+            'auto_renew_status': res_json['pending_renewal_info'][0]['auto_renew_status'],
+        }
+    receipt_data.update(additional_receipt_data)
     return receipt_data
-
 
 
 def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
@@ -152,11 +164,10 @@ def verify_receipt_when_update(verified_iap):
             verified_iap.user.save()
 
     # case 3. その購読は自動更新されない
-    elif receipt_data['is_in_billing_retry_period'] == '0' or receipt_data['auto_renew_status'] == '0':
+    elif receipt_data['is_in_billing_retry_period'] == '0' or receipt_data['auto_renew_status'] == '0' or receipt_data['status'] == 21006:
         print('case 3')
         update_iap(
             iap=verified_iap,
-            receipt=receipt_data['latest_receipt'],
             status=IapStatus.EXPIRED,
         )
         verified_iap.user.plan = Plan.FREE
