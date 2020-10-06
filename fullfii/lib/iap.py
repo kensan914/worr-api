@@ -65,6 +65,9 @@ def verify_receipt_when_purchase(product_id, receipt, user):
     if Iap.objects.filter(transaction_id=receipt_data['transaction_id']).exists():
         return Response({'type': 'failed_verify_receipt', 'message': "the transaction ID already exists"},
                         status=status.HTTP_409_CONFLICT)
+    if Iap.objects.filter(user=user).exists():
+        return Response({'type': 'failed_verify_receipt', 'message': "the user already exists"},
+                        status=status.HTTP_409_CONFLICT)
 
     create_iap(
         original_transaction_id=receipt_data['original_transaction_id'],
