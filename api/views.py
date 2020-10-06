@@ -278,9 +278,9 @@ class NoticeFromAppStoreAPIView(views.APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request, *args, **kwargs):
-        print(request.data)
         n_type = request.data['notification_type']
         if n_type == 'DID_RECOVER':
+            print(request.data)
             iaps = Iap.objects.filter(original_transaction_id=request.data['latest_receipt_info']['original_transaction_id'])
             if iaps.exists():
                 iap = iaps.first()
@@ -295,6 +295,7 @@ class NoticeFromAppStoreAPIView(views.APIView):
                 iap.user.save()
 
         elif n_type == 'DID_CHANGE_RENEWAL_STATUS':
+            print(request.data)
             iaps = Iap.objects.filter(original_transaction_id=request.data['latest_receipt_info']['original_transaction_id'])
             if iaps.exists():
                 iap = iaps.first()
