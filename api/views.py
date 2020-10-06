@@ -315,7 +315,6 @@ class NoticeFromAppStoreAPIView(views.APIView):
                 if request.data['auto_renew_status'] == 'false':
                     update_iap(
                         iap=iap,
-                        receipt=request.data['latest_receipt'],
                         status=IapStatus.EXPIRED,
                     )
                     iap.user.plan = Plan.FREE
