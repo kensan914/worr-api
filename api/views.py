@@ -4,14 +4,14 @@ from django.utils import timezone
 from rest_framework import views, status, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-import fullfii
 from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, \
-    WorriesToSympathizeSerializer, MeSerializer
+    WorriesToSympathizeSerializer
 from chat.consumers import ChatConsumer
 from chat.models import Room
 from chat.serializers import RoomSerializer
 from fullfii.db.account import get_all_accounts, increment_num_of_thunks
 from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan
+from fullfii.lib.iap import verify_receipt_when_purchase
 from main.consumers import NotificationConsumer
 from main.models import NotificationType
 
@@ -255,7 +255,7 @@ class PurchaseProductAPIView(views.APIView):
         receipt = request.data['receipt']
 
         # verifyReceipt
-        response = fullfii.verify_receipt_when_purchase(product_id, receipt, request.user)
+        response = verify_receipt_when_purchase(product_id, receipt, request.user)
         return response
 
 purchaseProductAPIView = PurchaseProductAPIView.as_view()
