@@ -84,7 +84,7 @@ def verify_receipt_when_purchase(product_id, receipt, user):
 def verify_receipt_when_update(verified_iap):
     res_json = request_post_receipt(verified_iap.receipt)
     receipt_data = format_verify_receipt_json(res_json)
-    print(res_json)
+    # print(res_json)
 
     if receipt_data['status'] != 0:
         return
@@ -107,6 +107,8 @@ def verify_receipt_when_update(verified_iap):
         print('case 3')
         verified_iap.receipt = receipt_data['latest_receipt']
         verified_iap.status = IapStatus.EXPIRED
+        verified_iap.user.plan = Plan.FREE
+        verified_iap.user.save()
 
     verified_iap.save()
 
