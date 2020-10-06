@@ -32,7 +32,6 @@ def format_verify_receipt_json(res_json):
             'latest_receipt': ..., 'expires_date': ..., 'is_in_billing_retry_period': ...(if not exists, -1),
             'auto_renew_status': ...}
     """
-    print(res_json)
     receipt_data = {
         'status': res_json['status'],
     }
@@ -173,6 +172,7 @@ def verify_receipt_when_update(verified_iap):
         verified_iap.user.plan = Plan.FREE
         verified_iap.user.save()
 
+    print(receipt_data['status'])
 
 def manage_iap_expires_date(within_minutes=720):
     subscription_iaps = Iap.objects.filter(status=IapStatus.SUBSCRIPTION)
