@@ -12,6 +12,7 @@ from chat.serializers import RoomSerializer
 from fullfii.db.account import get_all_accounts, increment_num_of_thunks, update_iap
 from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan, Iap, IapStatus
 from fullfii.lib.iap import verify_receipt_at_first
+from fullfii.lib.support import cvt_tz_str_to_datetime
 from main.consumers import NotificationConsumer
 from main.models import NotificationType
 
@@ -287,7 +288,7 @@ class NoticeFromAppStoreAPIView(views.APIView):
                     iap=iap,
                     transaction_id=request.data['latest_receipt_info']['transaction_id'],
                     receipt=request.data['latest_receipt'],
-                    expires_date=request.data['latest_receipt_info']['expires_date_formatted'],
+                    expires_date=cvt_tz_str_to_datetime(request.data['latest_receipt_info']['expires_date_formatted']),
                     status=IapStatus.SUBSCRIPTION,
                 )
                 iap.user.plan = request.data['latest_receipt_info']['product_id']
@@ -298,18 +299,19 @@ class NoticeFromAppStoreAPIView(views.APIView):
             if iaps.exists():
                 iap = iaps.first()
                 # 自動更新成功
+                # if request.data['auto_renew_status'] and not Iap.objects.filter(transaction_id=request.data['latest_receipt_info']['transaction_id']).exists():
                 if request.data['auto_renew_status']:
                     update_iap(
                         iap=iap,
                         transaction_id=request.data['latest_receipt_info']['transaction_id'],
                         receipt=request.data['latest_receipt'],
-                        expires_date=request.data['latest_receipt_info']['expires_date_formatted'],
+                        expires_date=cvt_tz_str_to_datetime(request.data['latest_receipt_info']['expires_date_formatted']),
                         status=IapStatus.SUBSCRIPTION,
                     )
                     iap.user.plan = request.data['auto_renew_product_id']
                     iap.user.save()
                 # 自動更新失敗状態で期限が切れた
-                else:
+                elif not request.data['auto_renew_status']:
                     update_iap(
                         iap=iap,
                         receipt=request.data['latest_receipt'],
