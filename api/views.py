@@ -319,7 +319,7 @@ class NoticeFromAppStoreAPIView(views.APIView):
                 #     iap.user.plan = request.data['auto_renew_product_id']
                 #     iap.user.save()
                 # 自動更新失敗状態で期限が切れた
-                if request.data['auto_renew_status'] == 'false':
+                if request.data['auto_renew_status'] == 'false' and iap.status != IapStatus.EXPIRED:
                     update_iap(
                         iap=iap,
                         status=IapStatus.EXPIRED,
