@@ -60,8 +60,8 @@ def format_verify_receipt_json(res_json):
             'transaction_id': latest_receipt_info['transaction_id'],
             'latest_receipt': res_json['latest_receipt'],
             'expires_date': latest_receipt_info['expires_date'],
-            'is_in_billing_retry_period': latest_receipt_info['is_in_billing_retry_period'] if 'is_in_billing_retry_period' in res_json['pending_renewal_info'][0] else '-1',
-            'auto_renew_status': latest_receipt_info['auto_renew_status'],
+            'is_in_billing_retry_period': latest_receipt_info['is_in_billing_retry_period'] if 'is_in_billing_retry_period' in latest_receipt_info else '-1',
+            'auto_renew_status': latest_receipt_info['auto_renew_status'] if 'auto_renew_status' in latest_receipt_info else '-1',
         }
     receipt_data.update(additional_receipt_data)
     return receipt_data
