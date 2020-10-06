@@ -284,15 +284,16 @@ class NoticeFromAppStoreAPIView(views.APIView):
             iaps = Iap.objects.filter(original_transaction_id=request.data['latest_receipt_info']['original_transaction_id'])
             if iaps.exists():
                 iap = iaps.first()
-                update_iap(
-                    iap=iap,
-                    transaction_id=request.data['latest_receipt_info']['transaction_id'],
-                    receipt=request.data['latest_receipt'],
-                    expires_date=cvt_tz_str_to_datetime(request.data['latest_receipt_info']['expires_date_formatted']),
-                    status=IapStatus.SUBSCRIPTION,
-                )
-                iap.user.plan = request.data['latest_receipt_info']['product_id']
-                iap.user.save()
+                if request.data['auto_renew_status'] == 'true':
+                    update_iap(
+                        iap=iap,
+                        transaction_id=request.data['latest_receipt_info']['transaction_id'],
+                        receipt=request.data['latest_receipt'],
+                        expires_date=cvt_tz_str_to_datetime(request.data['latest_receipt_info']['expires_date_formatted']),
+                        status=IapStatus.SUBSCRIPTION,
+                    )
+                    iap.user.plan = request.data['latest_receipt_info']['product_id']
+                    iap.user.save()
 
         elif n_type == 'DID_CHANGE_RENEWAL_STATUS':
             print(request.data)
