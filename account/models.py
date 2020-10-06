@@ -152,7 +152,7 @@ class Iap(models.Model):
     user = models.OneToOneField(Account, verbose_name='対象ユーザ', on_delete=models.PROTECT)
     receipt = models.TextField(verbose_name='レシート', default='')
     expires_date = models.DateTimeField(verbose_name='有効期限日時')
-    plan = models.CharField(verbose_name='ステータス', max_length=100, choices=IapStatus.choices, default=IapStatus.SUBSCRIPTION)
+    status = models.CharField(verbose_name='ステータス', max_length=100, choices=IapStatus.choices, default=IapStatus.SUBSCRIPTION)
 
     def __str__(self):
         return str(self.user)

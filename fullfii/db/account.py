@@ -24,7 +24,7 @@ def create_iap(original_transaction_id, transaction_id, user, receipt, expires_d
         user=user,
         receipt=receipt,
         expires_date=expires_date,
-        plan=IapStatus.SUBSCRIPTION,
+        status=IapStatus.SUBSCRIPTION,
     )
     iap.save()
     return iap

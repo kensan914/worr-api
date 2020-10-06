@@ -254,7 +254,7 @@ class PurchaseProductAPIView(views.APIView):
         product_id = self.kwargs.get('product_id')
         receipt = request.data['receipt']
 
-        # verifyReceipt
+        # verify receipt
         response = verify_receipt_when_purchase(product_id, receipt, request.user)
         return response
 
