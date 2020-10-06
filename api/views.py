@@ -279,11 +279,11 @@ class PurchaseProductAPIView(views.APIView):
             return Response({'type': 'failed_verify_receipt', 'message': "bad status"}, status=status.HTTP_404_NOT_FOUND)
         if res_json['receipt']['bundle_id'] != fullfii.BUNDLE_ID:
             return Response({'type': 'failed_verify_receipt', 'message': "bad bundle ID"}, status=status.HTTP_404_NOT_FOUND)
-        if Iap.objects.filter(transaction_id=res_json['latest_receipt_info']['transaction_id']).exists():
+        if Iap.objects.filter(transaction_id=res_json['latest_receipt_info'][0]['transaction_id']).exists():
             return Response({'type': 'failed_verify_receipt', 'message': "the transaction ID already exists"}, status=status.HTTP_404_NOT_FOUND)
 
         Iap.objects.create(
-            transaction_id=res_json['latest_receipt_info']['transaction_id'],
+            transaction_id=res_json['latest_receipt_info'][0]['transaction_id'],
             user=request.user,
             receipt=receipt,
         )
