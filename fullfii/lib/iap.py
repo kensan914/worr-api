@@ -39,7 +39,7 @@ def format_verify_receipt_json(res_json):
         'transaction_id': res_json['latest_receipt_info'][0]['transaction_id'],
         'latest_receipt': res_json['latest_receipt'],
         'expires_date': res_json['latest_receipt_info'][0]['expires_date'],
-        'is_in_billing_retry_period': res_json['pending_renewal_info'][0]['is_in_billing_retry_period'] if 'is_in_billing_retry_period' in res_json['pending_renewal_info'][0] else -1,
+        'is_in_billing_retry_period': res_json['pending_renewal_info'][0]['is_in_billing_retry_period'] if 'is_in_billing_retry_period' in res_json['pending_renewal_info'][0] else '-1',
         'auto_renew_status': res_json['pending_renewal_info'][0]['auto_renew_status'],
     }
 
@@ -82,7 +82,7 @@ def verify_receipt_when_update(verified_iap):
     res_json = request_post_receipt(verified_iap.receipt)
     receipt_data = format_verify_receipt_json(res_json)
     print('verify_receipt_when_update')
-    print(receipt_data)
+    print(res_json)
 
     if receipt_data['status'] != 0:
         return
@@ -94,12 +94,12 @@ def verify_receipt_when_update(verified_iap):
         verified_iap.expires_date = receipt_data['expires_date']
 
     # case 2. まだ更新に成功していないが、今後成功する可能性がある
-    elif receipt_data['is_in_billing_retry_period'] == 1:
+    elif receipt_data['is_in_billing_retry_period'] == '1':
         verified_iap.receipt = receipt_data['latest_receipt']
         verified_iap.status = IapStatus.FAILURE
 
     # case 3. その購読は自動更新されない
-    elif receipt_data['is_in_billing_retry_period'] == 0 or receipt_data['auto_renew_status'] == 0:
+    elif receipt_data['is_in_billing_retry_period'] == '0' or receipt_data['auto_renew_status'] == '0':
         verified_iap.receipt = receipt_data['latest_receipt']
         verified_iap.status = IapStatus.EXPIRED
 
