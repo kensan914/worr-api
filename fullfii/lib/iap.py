@@ -47,21 +47,40 @@ def format_verify_receipt_json(res_json):
             'auto_renew_status': res_json['auto_renew_status'],
         }
     else:
+        # bundle_id
         if 'bid' in res_json['receipt']:
             bundle_id = res_json['receipt']['bid']
         elif 'bundle_id' in res_json['receipt']:
             bundle_id = res_json['receipt']['bundle_id']
         else:
             bundle_id = ''
+        # latest_receipt_info
         latest_receipt_info = res_json['latest_receipt_info'] if isinstance(res_json['latest_receipt_info'], dict) else res_json['latest_receipt_info'][0]
+
+        # is_in_billing_retry_period
+        if 'pending_renewal_info' in res_json and 'is_in_billing_retry_period' in res_json['pending_renewal_info']:
+            is_in_billing_retry_period = res_json['pending_renewal_info']['is_in_billing_retry_period']
+        elif 'is_in_billing_retry_period' in latest_receipt_info:
+            is_in_billing_retry_period = latest_receipt_info['is_in_billing_retry_period']
+        else:
+            is_in_billing_retry_period = '-1'
+
+        # auto_renew_status
+        if 'pending_renewal_info' in res_json and 'auto_renew_status' in res_json['pending_renewal_info']:
+            auto_renew_status = res_json['pending_renewal_info']['auto_renew_status']
+        elif 'auto_renew_status' in latest_receipt_info:
+            auto_renew_status = latest_receipt_info['auto_renew_status']
+        else:
+            auto_renew_status = '-1'
+
         additional_receipt_data = {
             'bundle_id': bundle_id,
             'original_transaction_id': latest_receipt_info['original_transaction_id'],
             'transaction_id': latest_receipt_info['transaction_id'],
             'latest_receipt': res_json['latest_receipt'],
             'expires_date': latest_receipt_info['expires_date'],
-            'is_in_billing_retry_period': latest_receipt_info['is_in_billing_retry_period'] if 'is_in_billing_retry_period' in latest_receipt_info else '-1',
-            'auto_renew_status': latest_receipt_info['auto_renew_status'] if 'auto_renew_status' in latest_receipt_info else '-1',
+            'is_in_billing_retry_period': is_in_billing_retry_period,
+            'auto_renew_status': auto_renew_status,
         }
     receipt_data.update(additional_receipt_data)
     return receipt_data
