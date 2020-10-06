@@ -76,6 +76,7 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
                 iap.receipt = receipt_data['latest_receipt']
                 iap.transaction_id = receipt_data['transaction_id']
                 iap.expires_date = cvt_tz_str_to_datetime(receipt_data['expires_date'])
+                iap.user = user
                 iap.save()
             else:
                 return Response({'type': 'conflict_original_transaction_id', 'message': '{}既に購入済みの自動購読があります。購入を復元して下さい。'.format(base_error_message)},
@@ -84,6 +85,7 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
             iap.receipt = receipt_data['latest_receipt']
             iap.transaction_id = receipt_data['transaction_id']
             iap.expires_date = cvt_tz_str_to_datetime(receipt_data['expires_date'])
+            iap.user=user
             iap.status = IapStatus.SUBSCRIPTION
             iap.save()
     else:
