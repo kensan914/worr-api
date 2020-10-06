@@ -1,6 +1,7 @@
 from datetime import datetime
 import pandas as pd
 import pytz
+from django.utils import timezone
 
 
 def calc_age(birthday):
@@ -16,10 +17,12 @@ def calc_age(birthday):
 
 def cvt_tz_str_to_datetime(tz_str, dt_format='%Y-%m-%d %H:%M:%S'):
     """
-    timezoneを含むdatetimeのstring(ex: '2018-06-18 15:03:55 Etc/GMT')をdatetimeに変換
+    timezoneを含むdatetimeのstring(ex: '2018-06-18 15:03:55 Etc/GMT')をsettings.TIME_ZONEで設定されているタイムゾーンに
+    ローカライズしたdatetimeに変換
     :param tz_str:
     :param dt_format:
     :return: datetime
     """
     dt, tz = tz_str.rsplit(maxsplit=1)
-    return datetime.strptime(dt, dt_format).replace(tzinfo=pytz.timezone(tz))
+    _datetime = datetime.strptime(dt, dt_format).replace(tzinfo=pytz.timezone(tz))
+    return timezone.localtime(_datetime)
