@@ -100,7 +100,12 @@ def verify_receipt_when_update(verified_iap):
     elif receipt_data['is_in_billing_retry_period'] == '1':
         print('case 2')
         verified_iap.receipt = receipt_data['latest_receipt']
-        verified_iap.status = IapStatus.FAILURE
+        if verified_iap.status != IapStatus.FAILURE:
+            verified_iap.status = IapStatus.FAILURE
+        else:
+            verified_iap.status = IapStatus.EXPIRED
+            verified_iap.user.plan = Plan.FREE
+            verified_iap.user.save()
 
     # case 3. その購読は自動更新されない
     elif receipt_data['is_in_billing_retry_period'] == '0' or receipt_data['auto_renew_status'] == '0':
@@ -115,7 +120,6 @@ def verify_receipt_when_update(verified_iap):
 
 def manage_iap_expires_date(within_minutes=720):
     subscription_iaps = Iap.objects.filter(status=IapStatus.SUBSCRIPTION)
-
     for subscription_iap in subscription_iaps:
         deadline_seconds = (subscription_iap.expires_date - timezone.now()).total_seconds()
         deadline_minutes = deadline_seconds / 60
@@ -124,3 +128,12 @@ def manage_iap_expires_date(within_minutes=720):
         if deadline_minutes <= within_minutes:
             # verify receipt
             verify_receipt_when_update(subscription_iap)
+
+    failure_iaps = Iap.objects.filter(status=IapStatus.FAILURE)
+    for failure_iap in failure_iaps:
+        elapsed_seconds = (timezone.now() - failure_iap.expires_date).total_seconds()
+        elapsed_minutes = elapsed_seconds / 60
+
+        if elapsed_minutes > 0:
+            # verify receipt
+            verify_receipt_when_update(failure_iap)
