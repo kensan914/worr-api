@@ -117,7 +117,8 @@ def manage_iap_expires_date(within_minutes=720):
     for subscription_iap in subscription_iaps:
         deadline_seconds = (subscription_iap.expires_date - timezone.now()).total_seconds()
         deadline_minutes = deadline_seconds / 60
-
+        print('deadline_minutes')
+        print(deadline_minutes)
         if deadline_minutes <= within_minutes:
             # verify receipt
             verify_receipt_when_update(subscription_iap)
