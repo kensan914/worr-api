@@ -267,7 +267,7 @@ class RestoreProductAPIView(views.APIView):
         receipt = request.data['receipt']
 
         # verify receipt
-        response = verify_receipt_at_first(product_id, receipt, request.userm, is_restore=True)
+        response = verify_receipt_at_first(product_id, receipt, request.user, is_restore=True)
         return response
 
 restoreProductAPIView = RestoreProductAPIView.as_view()
