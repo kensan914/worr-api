@@ -59,23 +59,32 @@ def verify_receipt_when_purchase(product_id, receipt, user):
         return Response({'type': 'failed_verify_receipt', 'message': "bad status"}, status=status.HTTP_409_CONFLICT)
     if receipt_data['bundle_id'] != BUNDLE_ID:
         return Response({'type': 'failed_verify_receipt', 'message': "bad bundle ID"}, status=status.HTTP_409_CONFLICT)
-    if Iap.objects.filter(original_transaction_id=receipt_data['original_transaction_id']).exists():
-        return Response({'type': 'failed_verify_receipt', 'message': "the original transaction ID already exists"},
-                        status=status.HTTP_409_CONFLICT)
     if Iap.objects.filter(transaction_id=receipt_data['transaction_id']).exists():
         return Response({'type': 'failed_verify_receipt', 'message': "the transaction ID already exists"},
                         status=status.HTTP_409_CONFLICT)
-    if Iap.objects.filter(user=user).exists():
-        return Response({'type': 'failed_verify_receipt', 'message': "the user already exists"},
-                        status=status.HTTP_409_CONFLICT)
+    if Iap.objects.filter(original_transaction_id=receipt_data['original_transaction_id']).exists():
+        iap = Iap.objects.filter(original_transaction_id=receipt_data['original_transaction_id']).first()
+        if iap.status == IapStatus.SUBSCRIPTION:
+            return Response({'type': 'failed_verify_receipt', 'message': "the original transaction ID already exists"},
+                            status=status.HTTP_409_CONFLICT)
+        else:  # 購読中のサブスクリプションの期限が切れた後に同じサブスクリプションを再購読
+            iap.receipt = receipt_data['latest_receipt']
+            iap.transaction_id = receipt_data['transaction_id']
+            iap.expires_date = cvt_tz_str_to_datetime(receipt_data['expires_date'])
+            iap.status = IapStatus.SUBSCRIPTION
+            iap.save()
+    else:
+        if Iap.objects.filter(user=user).exists():
+            return Response({'type': 'failed_verify_receipt', 'message': "the user already exists"},
+                            status=status.HTTP_409_CONFLICT)
+        create_iap(
+            original_transaction_id=receipt_data['original_transaction_id'],
+            transaction_id=receipt_data['transaction_id'],
+            user=user,
+            receipt=receipt_data['latest_receipt'],
+            expires_date=cvt_tz_str_to_datetime(receipt_data['expires_date']),
+        )
 
-    create_iap(
-        original_transaction_id=receipt_data['original_transaction_id'],
-        transaction_id=receipt_data['transaction_id'],
-        user=user,
-        receipt=receipt_data['latest_receipt'],
-        expires_date=cvt_tz_str_to_datetime(receipt_data['expires_date']),
-    )
     user.plan = product_id
     user.save()
     return Response({'status': 'success', 'profile': MeSerializer(user).data}, status=status.HTTP_200_OK)

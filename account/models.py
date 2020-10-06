@@ -147,7 +147,7 @@ class IapStatus(models.TextChoices):
     EXPIRED = 'expired', '期限切れ'
 
 class Iap(models.Model):
-    original_transaction_id = models.CharField(verbose_name='オリジナルトランザクションID', max_length=255, default='')
+    original_transaction_id = models.CharField(verbose_name='オリジナルトランザクションID', max_length=255, unique=True, default='')
     transaction_id = models.CharField(verbose_name='最新トランザクションID', max_length=255, unique=True, default='')
     user = models.OneToOneField(Account, verbose_name='対象ユーザ', on_delete=models.PROTECT)
     receipt = models.TextField(verbose_name='レシート', default='')
