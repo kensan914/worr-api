@@ -35,7 +35,7 @@ def format_verify_receipt_json(res_json):
     receipt_data = {
         'status': res_json['status'],
     }
-    if receipt_data['status'] == 21006:
+    if receipt_data['status'] == 21006:  # この領収書は有効だが、サブスクリプションの有効期限が切れている
         additional_receipt_data = {
             'bundle_id': '',
             'original_transaction_id': res_json['latest_expired_receipt_info']['original_transaction_id'],

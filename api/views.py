@@ -297,7 +297,14 @@ class NoticeFromAppStoreAPIView(views.APIView):
 
         elif n_type == 'DID_CHANGE_RENEWAL_STATUS':
             print(request.data)
-            iaps = Iap.objects.filter(original_transaction_id=request.data['latest_receipt_info']['original_transaction_id'])
+            if 'latest_receipt_info' in request.data:
+                original_transaction_id = request.data['latest_receipt_info']['original_transaction_id']
+            elif 'unified_receipt' in request.data:
+                original_transaction_id = request.data['unified_receipt']['latest_receipt_info'][0]['original_transaction_id']
+            else:
+                original_transaction_id = ''
+
+            iaps = Iap.objects.filter(original_transaction_id=original_transaction_id)
             if iaps.exists():
                 iap = iaps.first()
                 # 自動更新成功
