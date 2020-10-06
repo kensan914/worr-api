@@ -1,12 +1,12 @@
+from datetime import datetime
 import uuid
-
+import pytz
 import requests
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import views, status, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-
 import fullfii
 from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, \
     WorriesToSympathizeSerializer, MeSerializer
@@ -260,7 +260,6 @@ class PurchaseProductAPIView(views.APIView):
         # verifyReceipt
         if not product_id in Plan.values:
             return Response({'type': 'not_found', 'message': "not found plan"}, status=status.HTTP_404_NOT_FOUND)
-
         post_data = {
             'receipt-data': receipt,
             'password': fullfii.IAP_SHARED_SECRET,
@@ -289,7 +288,7 @@ class PurchaseProductAPIView(views.APIView):
             transaction_id=res_json['latest_receipt_info'][0]['transaction_id'],
             user=request.user,
             receipt=res_json['latest_receipt'],
-            expires_date=res_json['latest_receipt_info'][0]['expires_date'],
+            expires_date=fullfii.cvt_tz_str_to_datetime(res_json['latest_receipt_info'][0]['expires_date']),
             plan=IapStatus.SUBSCRIPTION
         )
         request.user.plan = product_id
