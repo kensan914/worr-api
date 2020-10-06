@@ -81,7 +81,6 @@ def verify_receipt_when_purchase(product_id, receipt, user):
 def verify_receipt_when_update(verified_iap):
     res_json = request_post_receipt(verified_iap.receipt)
     receipt_data = format_verify_receipt_json(res_json)
-    print('verify_receipt_when_update')
     print(res_json)
 
     if receipt_data['status'] != 0:
@@ -89,17 +88,20 @@ def verify_receipt_when_update(verified_iap):
 
     # case 1. 自動更新に成功している
     if not Iap.objects.filter(transaction_id=receipt_data['transaction_id']).exists():
+        print('case 1')
         verified_iap.transaction_id = receipt_data['transaction_id']
         verified_iap.receipt = receipt_data['latest_receipt']
         verified_iap.expires_date = receipt_data['expires_date']
 
     # case 2. まだ更新に成功していないが、今後成功する可能性がある
     elif receipt_data['is_in_billing_retry_period'] == '1':
+        print('case 2')
         verified_iap.receipt = receipt_data['latest_receipt']
         verified_iap.status = IapStatus.FAILURE
 
     # case 3. その購読は自動更新されない
     elif receipt_data['is_in_billing_retry_period'] == '0' or receipt_data['auto_renew_status'] == '0':
+        print('case 3')
         verified_iap.receipt = receipt_data['latest_receipt']
         verified_iap.status = IapStatus.EXPIRED
 

@@ -8,5 +8,4 @@ class Command(BaseCommand):
            'debug時、1分ごとに実行. 2分以内でレシート検証'
 
     def handle(self, *args, **options):
-        print('aaaaaaaaaa')
         manage_iap_expires_date(within_minutes=2)
