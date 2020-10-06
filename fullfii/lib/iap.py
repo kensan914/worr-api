@@ -129,7 +129,7 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
 def verify_receipt_when_update(verified_iap):
     res_json = request_post_receipt(verified_iap.receipt)
     receipt_data = format_verify_receipt_json(res_json)
-    # print(res_json)
+    print(res_json)
 
     if receipt_data['status'] != 0 and receipt_data['status'] != 21006:
         return
