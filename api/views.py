@@ -268,11 +268,12 @@ class PurchaseProductAPIView(views.APIView):
         }
         res = requests.post(fullfii.IAP_STORE_API_URL, json=post_data)
         res_json = res.json()
-        print(res_json)
 
         if res_json['status'] == 21007:  # sandbox
             res = requests.post(fullfii.IAP_STORE_API_URL_SANDBOX, json=post_data)
             res_json = res.json()
+
+        print(res_json)
 
         if res_json['status'] != 0:
             return Response({'type': 'failed_verify_receipt', 'message': "bad status"}, status=status.HTTP_404_NOT_FOUND)
