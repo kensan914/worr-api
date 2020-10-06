@@ -94,7 +94,7 @@ def verify_receipt_when_update(verified_iap):
         print('case 1')
         verified_iap.transaction_id = receipt_data['transaction_id']
         verified_iap.receipt = receipt_data['latest_receipt']
-        verified_iap.expires_date = receipt_data['expires_date']
+        verified_iap.expires_date = cvt_tz_str_to_datetime(receipt_data['expires_date'])
 
     # case 2. まだ更新に成功していないが、今後成功する可能性がある
     elif receipt_data['is_in_billing_retry_period'] == '1':
