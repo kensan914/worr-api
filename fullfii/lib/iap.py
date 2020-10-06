@@ -131,7 +131,7 @@ def verify_receipt_when_update(verified_iap):
     receipt_data = format_verify_receipt_json(res_json)
     # print(res_json)
 
-    if receipt_data['status'] != 0:
+    if receipt_data['status'] != 0 and receipt_data['status'] != 21006:
         return
 
     # case 1. 自動更新に成功している
@@ -172,7 +172,6 @@ def verify_receipt_when_update(verified_iap):
         verified_iap.user.plan = Plan.FREE
         verified_iap.user.save()
 
-    print(receipt_data['status'])
 
 def manage_iap_expires_date(within_minutes=720):
     subscription_iaps = Iap.objects.filter(status=IapStatus.SUBSCRIPTION)
