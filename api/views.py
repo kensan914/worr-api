@@ -289,7 +289,7 @@ class PurchaseProductAPIView(views.APIView):
             transaction_id=res_json['latest_receipt_info'][0]['transaction_id'],
             user=request.user,
             receipt=res_json['latest_receipt'],
-            expires_date=res_json['pending_renewal_info']['expires_date'],
+            expires_date=res_json['pending_renewal_info'][0]['expires_date'],
             plan=IapStatus.SUBSCRIPTION
         )
         request.user.plan = product_id
