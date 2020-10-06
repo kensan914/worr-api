@@ -14,7 +14,7 @@ from chat.consumers import ChatConsumer
 from chat.models import Room
 from chat.serializers import RoomSerializer
 from fullfii.db.account import get_all_accounts, increment_num_of_thunks
-from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan, Iap
+from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan, Iap, IapStatus
 from main.consumers import NotificationConsumer
 from main.models import NotificationType
 
@@ -276,16 +276,21 @@ class PurchaseProductAPIView(views.APIView):
         print(res_json)
 
         if res_json['status'] != 0:
-            return Response({'type': 'failed_verify_receipt', 'message': "bad status"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'type': 'failed_verify_receipt', 'message': "bad status"}, status=status.HTTP_409_CONFLICT)
         if res_json['receipt']['bundle_id'] != fullfii.BUNDLE_ID:
-            return Response({'type': 'failed_verify_receipt', 'message': "bad bundle ID"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'type': 'failed_verify_receipt', 'message': "bad bundle ID"}, status=status.HTTP_409_CONFLICT)
+        if Iap.objects.filter(original_transaction_id=res_json['latest_receipt_info'][0]['original_transaction_id']).exists():
+            return Response({'type': 'failed_verify_receipt', 'message': "the original transaction ID already exists"}, status=status.HTTP_409_CONFLICT)
         if Iap.objects.filter(transaction_id=res_json['latest_receipt_info'][0]['transaction_id']).exists():
-            return Response({'type': 'failed_verify_receipt', 'message': "the transaction ID already exists"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'type': 'failed_verify_receipt', 'message': "the transaction ID already exists"}, status=status.HTTP_409_CONFLICT)
 
         Iap.objects.create(
+            original_transaction_id=res_json['latest_receipt_info'][0]['original_transaction_id'],
             transaction_id=res_json['latest_receipt_info'][0]['transaction_id'],
             user=request.user,
-            receipt=receipt,
+            receipt=res_json['latest_receipt'],
+            expires_date=res_json['expires_date'],
+            plan=IapStatus.SUBSCRIPTION
         )
         request.user.plan = product_id
         request.user.save()

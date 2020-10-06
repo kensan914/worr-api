@@ -140,8 +140,19 @@ class ProfileImage(models.Model):
     def __str__(self):
         return str(self.user)
 
+
+class IapStatus(models.TextChoices):
+    SUBSCRIPTION = 'subscription', '購読中'
+    FAILURE = 'failure', '自動更新失敗中'
+    EXPIRED = 'expired', '期限切れ'
+
 class Iap(models.Model):
-    # original_transaction_id = models.CharField(verbose_name='オリジナルトランザクションID', max_length=1000, primary_key=True, default='')
+    original_transaction_id = models.CharField(verbose_name='オリジナルトランザクションID', max_length=255, default='')
     transaction_id = models.CharField(verbose_name='最新トランザクションID', max_length=255, unique=True, default='')
     user = models.OneToOneField(Account, verbose_name='対象ユーザ', on_delete=models.PROTECT)
     receipt = models.TextField(verbose_name='レシート', default='')
+    expires_date = models.DateTimeField(verbose_name='有効期限日時')
+    plan = models.CharField(verbose_name='ステータス', max_length=100, choices=IapStatus.choices, default=IapStatus.SUBSCRIPTION)
+
+    def __str__(self):
+        return str(self.user)
