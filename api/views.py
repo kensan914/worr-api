@@ -1,16 +1,20 @@
 import uuid
+
+import requests
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import views, status, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+
+import fullfii
 from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, \
     WorriesToSympathizeSerializer, MeSerializer
 from chat.consumers import ChatConsumer
 from chat.models import Room
 from chat.serializers import RoomSerializer
 from fullfii.db.account import get_all_accounts, increment_num_of_thunks
-from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan
+from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan, Iap
 from main.consumers import NotificationConsumer
 from main.models import NotificationType
 
@@ -252,16 +256,36 @@ class PurchaseProductAPIView(views.APIView):
     def post(self, request, *args, **kwargs):
         product_id = self.kwargs.get('product_id')
         receipt = request.data['receipt']
-        original_transaction_id = request.data['original_transaction_id']
 
+        # verifyReceipt
         if not product_id in Plan.values:
             return Response({'type': 'not_found', 'message': "not found plan"}, status=status.HTTP_404_NOT_FOUND)
 
-        request.user.plan = product_id
-        if original_transaction_id:
-            print(original_transaction_id)
-            request.user.original_transaction_id = original_transaction_id
+        post_data = {
+            'receipt-data': receipt,
+            'password': fullfii.IAP_SHARED_SECRET,
+            'exclude-old-transactions': True,
+        }
+        res = requests.post(fullfii.IAP_STORE_API_URL, json=post_data)
 
+        if res.status == 21007:  # sandbox
+            res = requests.post(fullfii.IAP_STORE_API_URL_SANDBOX, json=post_data)
+
+        print(res)
+
+        if res.status != 0:
+            return Response({'type': 'failed_verify_receipt', 'message': "bad status"}, status=status.HTTP_404_NOT_FOUND)
+        if res.receipt.bundle_id != fullfii.BUNDLE_ID:
+            return Response({'type': 'failed_verify_receipt', 'message': "bad bundle ID"}, status=status.HTTP_404_NOT_FOUND)
+        if Iap.objects.filter(transaction_id=res.latest_receipt_info.transaction_id).exists():
+            return Response({'type': 'failed_verify_receipt', 'message': "the transaction ID already exists"}, status=status.HTTP_404_NOT_FOUND)
+
+        Iap.objects.create(
+            transaction_id=res.latest_receipt_info.transaction_id,
+            user=request.user,
+            receipt=receipt,
+        )
+        request.user.plan = product_id
         request.user.save()
         return Response({'status': 'success', 'profile': MeSerializer(request.user).data}, status=status.HTTP_200_OK)
 

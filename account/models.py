@@ -98,7 +98,6 @@ class Account(AbstractBaseUser):
     genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='対応できる悩みのジャンル', blank=True)
     scale_of_worries = models.ManyToManyField(ScaleOfWorries, verbose_name='対応できる悩みの大きさ', blank=True)
     worries_to_sympathize = models.ManyToManyField(WorriesToSympathize, verbose_name='共感できる悩み', blank=True)
-    original_transaction_id = models.CharField(verbose_name="オリジナルトランザクションID", max_length=1000, default="", blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -140,3 +139,9 @@ class ProfileImage(models.Model):
 
     def __str__(self):
         return str(self.user)
+
+class Iap(models.Model):
+    # original_transaction_id = models.CharField(verbose_name='オリジナルトランザクションID', max_length=1000, primary_key=True, default='')
+    transaction_id = models.CharField(verbose_name='最新トランザクションID', max_length=1000, unique=True, default='')
+    user = models.OneToOneField(Account, verbose_name='対象ユーザ', on_delete=models.PROTECT)
+    receipt = models.CharField(verbose_name='レシート', default='')
