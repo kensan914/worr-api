@@ -7,4 +7,5 @@ class Command(BaseCommand):
            'end_roomを調べ、end後24時間(1440分)経過していたらend処理を行う'
 
     def handle(self, *args, **options):
+        print('2')
         manage_after_talk_time(close_minutes=1440)
