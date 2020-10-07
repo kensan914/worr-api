@@ -32,7 +32,6 @@ def format_verify_receipt_json(res_json):
             'latest_receipt': ..., 'expires_date': ..., 'is_in_billing_retry_period': ...(if not exists, -1),
             'auto_renew_status': ...}
     """
-    print(res_json)
     receipt_data = {
         'status': res_json['status'],
     }
