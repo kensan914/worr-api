@@ -1,3 +1,0 @@
-offline オフライン indianred
-online オンライン mediumseagreen
-talking 会話中 gold

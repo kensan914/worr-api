@@ -2,6 +2,7 @@ from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 import json
 from channels.layers import get_channel_layer
+from account.models import Status
 from chat.serializers import MessageSerializer
 from main.consumers import JWTAsyncWebsocketConsumer, NotificationConsumer
 from main.models import NotificationType
@@ -15,8 +16,6 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.room_id = self.scope['url_route']['kwargs']['room_id'] if 'room_id' in self.scope['url_route']['kwargs'] else ''
-        self.target_user = None
-        self.room = None
         self.is_request_user = True
 
     @classmethod
@@ -24,7 +23,9 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
         return 'room_{}'.format(str(_id))
 
     async def receive_auth(self, received_data):
-        self.me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+        me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+        self.me_id = me.id
+
         self.group_name = self.get_group_name(self.room_id)
         await self.channel_layer.group_add(
             self.group_name,
@@ -33,32 +34,38 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
 
         result = await self.get_room()
         if result:
-            self.room = result
+            room = result
         else:
             await self.close()
             return
 
-        room_users = await self.get_room_users(self.room)
-        if room_users['request_user'].id == self.me.id:  # if I'm request user
+        room_users = await self.get_room_users(room)
+        if room_users['request_user'].id == self.me_id:  # if I'm request user
             self.is_request_user = True
-            self.target_user = room_users['response_user']
-        elif room_users['response_user'].id == self.me.id:  # if I'm response user
+            target_user = room_users['response_user']
+        elif room_users['response_user'].id == self.me_id:  # if I'm response user
             self.is_request_user = False
-            self.target_user = room_users['request_user']
+            target_user = room_users['request_user']
             # If init is true, set response notification to request user
             if received_data['init']:
-                await self.start_talk(self.room)  # start talk
-                await NotificationConsumer.send_notification_async(recipient=self.target_user, subject=self.me, notification_type=NotificationType.TALK_RESPONSE, reference_id=self.room_id)
+                await self.start_talk(room)  # start talk
+                await NotificationConsumer.send_notification_async(recipient=target_user, subject=me, notification_type=NotificationType.TALK_RESPONSE, reference_id=self.room_id)
         else:
             raise
 
-        target_user_data = await self.get_user_data(user=self.target_user)
+        # change to talking
+        _me = await self.change_status(me, Status.TALKING)
+        me = _me if _me is not None else me
+        user_data = await self.get_me_data(me)
+
+        target_user.status = Status.TALKING
+        target_user_data = await self.get_user_data(user=target_user)
         await self.send(text_data=json.dumps({
-            'type': 'auth', 'room_id': str(self.room_id), 'target_user': target_user_data,
+            'type': 'auth', 'room_id': str(self.room_id), 'target_user': target_user_data, 'profile': user_data
         }))
 
         # Send messages that you haven't stored yet
-        not_stored_messages_data = await self.get_not_stored_messages_data(self.room, self.is_request_user, self.me)
+        not_stored_messages_data = await self.get_not_stored_messages_data(room, self.is_request_user, me)
         if not_stored_messages_data:
             await self.send(text_data=json.dumps({
                 'type': 'multi_chat_messages',
@@ -74,9 +81,9 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
             message = received_data['message']
             time = timezone.datetime.now()
 
-            self.me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+            me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
 
-            await self.create_message(received_data, time, self.me)
+            await self.create_message(received_data, time, me)
             await self.channel_layer.group_send(self.group_name, {
                     'type': 'chat_message',
                     'message_id': message_id,
@@ -87,7 +94,7 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
 
         elif received_type == 'store':
             message_id = received_data['message_id']
-            self.me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+            me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
             await self.turn_on_message_stored(self.is_request_user, message_id=message_id)
 
         elif received_type == 'store_by_room':
@@ -119,11 +126,14 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
             elif event['time_out']:
                 _type = 'end_talk_time_out'
             else:
-                if str(self.me.id) != event['sender_id']:
+                if str(self.me_id) != event['sender_id']:
                     _type = 'end_talk'
             if _type is not None:
+                me = await self.get_user(self.me_id)
+                user_data = await self.get_me_data(me)
                 await self.send(text_data=json.dumps({
                     'type': _type,
+                    'profile': user_data,
                 }))
         except Exception as e:
             raise

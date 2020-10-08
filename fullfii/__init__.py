@@ -1,3 +1,6 @@
+### chat ###
+from .chat.end import *
+
 ### db ###
 from .db.account import *
 from .db.initDB import *

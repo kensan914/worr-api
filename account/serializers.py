@@ -4,22 +4,39 @@ from rest_framework import serializers
 from rest_framework_jwt.serializers import JSONWebTokenSerializer, jwt_payload_handler, jwt_encode_handler
 import fullfii
 from account.models import Account, ProfileImage, Plan, Status, Feature, GenreOfWorries, ScaleOfWorries, \
-    WorriesToSympathize
+    WorriesToSympathize, StatusColor, Gender
 
 
-class SignupSerializer(serializers.ModelSerializer):
+class AuthSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'username', 'email', 'password', 'birthday')
+        fields = ('id', 'username', 'email', 'password', 'gender', 'birthday')
 
     password = serializers.CharField(write_only=True, min_length=8, max_length=30)
 
+
+class SignupSerializer(AuthSerializer):
     def validate_password(self, data):
         validators.validate_password(password=data, user=Account)
         return data
 
+    def validate_gender(self, data):
+        if not data in Gender.values:
+            raise serializers.ValidationError('不正な性別です。')
+        return data
+
     def create(self, validated_data):
         return Account.objects.create_user(**validated_data)
+
+
+class AuthUpdateSerializer(AuthSerializer):
+    def update(self, instance, validated_data):
+        if 'password' in validated_data:
+            instance.set_password(validated_data['password'])
+        else:
+            instance = super().update(instance, validated_data)
+        instance.save()
+        return instance
 
 
 class LoginSerializer(JSONWebTokenSerializer):
@@ -49,12 +66,6 @@ class ProfileImageSerializer(serializers.ModelSerializer):
         fields = ('picture', 'user')
 
 
-class StatusSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Status
-        exclude = ['id']
-
-
 class FeaturesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Feature
@@ -82,12 +93,13 @@ class WorriesToSympathizeSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'birthday', 'age', 'introduction', 'num_of_thunks', 'status', 'features', 'genre_of_worries', 'scale_of_worries', 'worries_to_sympathize', 'image', 'me')
+        fields = ('id', 'name', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'status', 'features', 'genre_of_worries', 'scale_of_worries', 'worries_to_sympathize', 'image', 'me')
 
     name = serializers.CharField(source='username')
     birthday = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
-    status = StatusSerializer()
+    gender = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     features = FeaturesSerializer(many=True)
     genre_of_worries = GenreOfWorriesSerializer(many=True)
     scale_of_worries = ScaleOfWorriesSerializer(many=True)
@@ -101,6 +113,12 @@ class UserSerializer(serializers.ModelSerializer):
     def get_age(self, obj):
         return fullfii.calc_age(birthday=obj.birthday)
 
+    def get_gender(self, obj):
+        return {'key': Gender(obj.gender).value, 'label': Gender(obj.gender).label}
+
+    def get_status(self, obj):
+        return {'key': Status(obj.status).value, 'label': Status(obj.status).label, 'color': StatusColor(obj.status).label}
+
     def get_image(self, obj):
         if ProfileImage.objects.filter(user=obj).exists():
             image_url = obj.image.picture.url
@@ -110,7 +128,7 @@ class UserSerializer(serializers.ModelSerializer):
 class MeSerializer(UserSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'email', 'birthday', 'age', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'worries_to_sympathize', 'image', 'me')
+        fields = ('id', 'name', 'email', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'worries_to_sympathize', 'image', 'me', 'can_talk_heterosexual')
 
     plan = serializers.SerializerMethodField()
     me = serializers.BooleanField(default=True)
@@ -122,6 +140,6 @@ class MeSerializer(UserSerializer):
 class PatchMeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('name', 'email', 'birthday', 'introduction')
+        fields = ('name', 'email', 'birthday', 'introduction', 'can_talk_heterosexual')
 
     name = serializers.CharField(source='username')

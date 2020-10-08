@@ -7,7 +7,6 @@ class Command(BaseCommand):
            'memberList.txtに変更を加え、コマンドを実行すれば、変更箇所だけDBに反映されます。'
 
     def handle(self, *args, **options):
-        fullfii.InitStatus().init()
         fullfii.InitFeature().init()
         fullfii.InitGenreOfWorries().init()
         fullfii.InitScaleOfWorries().init()

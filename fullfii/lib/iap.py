@@ -96,7 +96,6 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
 
     res_json = request_post_receipt(receipt)
     receipt_data = format_verify_receipt_json(res_json)
-    print(receipt_data)
 
     if receipt_data['status'] != 0:
         return Response({'type': 'bad_status', 'message': '{}しばらく時間をおいて再度プランの変更を行ってください。'.format(base_error_message)}, status=status.HTTP_409_CONFLICT)
@@ -155,14 +154,12 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
 def verify_receipt_when_update(verified_iap):
     res_json = request_post_receipt(verified_iap.receipt)
     receipt_data = format_verify_receipt_json(res_json)
-    # print(res_json)
 
     if receipt_data['status'] != 0 and receipt_data['status'] != 21006:
         return
 
     # case 1. 自動更新に成功している
     if not Iap.objects.filter(transaction_id=receipt_data['transaction_id']).exists():
-        print('case 1')
         update_iap(
             iap=verified_iap,
             transaction_id=receipt_data['transaction_id'],
@@ -172,7 +169,6 @@ def verify_receipt_when_update(verified_iap):
 
     # case 2. まだ更新に成功していないが、今後成功する可能性がある
     elif receipt_data['is_in_billing_retry_period'] == '1':
-        print('case 2')
         if verified_iap.status != IapStatus.FAILURE:
             update_iap(
                 iap=verified_iap,
@@ -190,7 +186,6 @@ def verify_receipt_when_update(verified_iap):
 
     # case 3. その購読は自動更新されない
     elif receipt_data['is_in_billing_retry_period'] == '0' or receipt_data['auto_renew_status'] == '0' or receipt_data['status'] == 21006:
-        print('case 3')
         update_iap(
             iap=verified_iap,
             status=IapStatus.EXPIRED,
@@ -204,8 +199,6 @@ def manage_iap_expires_date(within_minutes=720):
     for subscription_iap in subscription_iaps:
         deadline_seconds = (subscription_iap.expires_date - timezone.now()).total_seconds()
         deadline_minutes = deadline_seconds / 60
-        print('deadline_minutes')
-        print(deadline_minutes)
         if deadline_minutes <= within_minutes:
             # verify receipt
             verify_receipt_when_update(subscription_iap)

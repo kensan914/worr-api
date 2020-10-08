@@ -4,7 +4,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 import json
 from channels.layers import get_channel_layer
-from account.models import Account
+from account.models import Account, Status
 from account.serializers import MeSerializer, UserSerializer
 import fullfii
 from main.serializers import NotificationSerializer
@@ -15,7 +15,10 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.group_name = ''
-        self.me = None
+        self.me_id = None
+        # Consumerは寿命が長いため, selfで管理する変数は競合に注意する. 例えばAccountオブジェクトをselfで管理したとし, 外部で
+        # それが変更されたとき, 変更を反映することができない. 万が一Consumer内でsave()をしたら古い情報が上書き保存されてしまう.
+        # selfで管理するものは一貫して不変のものに制限し, Modelオブジェクトは管理せず, 代わりにそのIDを管理し都度getする.
 
     async def connect(self):
         try:
@@ -24,6 +27,7 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
             raise
 
     async def disconnect(self, close_code):
+        await self._disconnect(close_code)
         await self.channel_layer.group_discard(
             self.group_name,
             self.channel_name
@@ -34,17 +38,11 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
     async def get_group_name(self, _id):
         return
 
+    async def _disconnect(self, close_code):
+        pass # receive other than auth
+
     async def receive_auth(self, received_data):
-        self.me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
-        self.group_name = await self.get_group_name(self.me.id)
-        await self.channel_layer.group_add(
-            self.group_name,
-            self.channel_name
-        )
-        user_data = await self.get_me_data(self.me)
-        await self.send(text_data=json.dumps({
-            'type': 'auth', 'profile': user_data,
-        }))
+        pass # receive auth
 
     async def _receive(self, received_data):
         pass # receive other than auth
@@ -77,6 +75,20 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
     def get_user_data(self, user):
         return UserSerializer(user).data
 
+    @classmethod
+    @database_sync_to_async
+    def change_status(cls, me, status_val):
+        if status_val in Status.values:
+            me.status = status_val
+            if status_val == Status.ONLINE:
+                me.is_online = True
+            elif status_val == Status.OFFLINE:
+                me.is_online = False
+            me.save()
+            return me
+        else:
+            raise
+
 
 class NotificationConsumer(JWTAsyncWebsocketConsumer):
     paginate_by = 10
@@ -84,14 +96,24 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
     async def get_group_name(self, _id):
         return 'notification_{}'.format(str(_id))
 
+    async def _disconnect(self, close_code):
+        # change to offline
+        me = await self.get_user(self.me_id)
+        await self.change_status(me, Status.OFFLINE)
+
     async def receive_auth(self, received_data):
-        self.me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
-        self.group_name = await self.get_group_name(self.me.id)
+        me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+        self.me_id = me.id
+        self.group_name = await self.get_group_name(self.me_id)
         await self.channel_layer.group_add(
             self.group_name,
             self.channel_name
         )
-        user_data = await self.get_me_data(self.me)
+
+        # change to online
+        _me = await self.change_status(me, Status.ONLINE)
+        me = _me if _me is not None else me
+        user_data = await self.get_me_data(me)
 
         await self.send(text_data=json.dumps({
             'type': 'auth', 'profile': user_data
@@ -99,11 +121,11 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
 
     async def _receive(self, received_data):
         received_type = received_data['type']
-        self.me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+        me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
 
         if received_type == 'get':
             page = received_data['page']
-            newest_notifications = Notification.objects.filter(recipient=self.me).exclude(
+            newest_notifications = Notification.objects.filter(recipient=me).exclude(
                 type__in=[NotificationType.CANCEL_TALK_REQUEST_TO_RES, NotificationType.CANCEL_TALK_REQUEST_TO_REQ]
             )[self.paginate_by * (page - 1): self.paginate_by * page]
             newest_notifications_data = await self.get_notification_data(newest_notifications, many=True)

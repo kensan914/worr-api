@@ -1,5 +1,5 @@
 from abc import ABCMeta
-from account.models import Status, Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize
+from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize
 
 
 class InitDB(metaclass=ABCMeta):
@@ -32,12 +32,6 @@ class InitDB(metaclass=ABCMeta):
         for key in self.keyList:
             keyDict[key] = obj[key]
         self.model.objects.create(**keyDict)
-
-
-class InitStatus(InitDB):
-    file_path = 'static/corpus/statusList.txt'
-    keyList = ['key', 'label', 'color']
-    model = Status
 
 
 class InitFeature(InitDB):

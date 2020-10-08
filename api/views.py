@@ -4,8 +4,10 @@ from django.utils import timezone
 from rest_framework import views, status, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+
+import fullfii
 from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, \
-    WorriesToSympathizeSerializer
+    WorriesToSympathizeSerializer, MeSerializer
 from chat.consumers import ChatConsumer
 from chat.models import Room
 from chat.serializers import RoomSerializer
@@ -59,12 +61,13 @@ class UsersAPIView(views.APIView):
         else:
             page = int(self.request.GET.get('page')) if self.request.GET.get('page') is not None else 1
             genre = self.request.GET.get('genre')
-
             genre_of_worries = GenreOfWorries.objects.filter(value=genre)
+
+            viewable_users = fullfii.get_viewable_accounts(request.user.can_talk_heterosexual, request.user.gender, me=request.user)
             if genre_of_worries.exists():
-                users = get_all_accounts(me=request.user).filter(genre_of_worries=genre_of_worries.first())
+                users = viewable_users.filter(genre_of_worries=genre_of_worries.first())
             else:
-                users = get_all_accounts(me=request.user)
+                users = viewable_users
             users = users[self.paginate_by * (page - 1): self.paginate_by * page]
             users_data = UserSerializer(users, many=True).data
             return Response(users_data, status=status.HTTP_200_OK)
@@ -155,22 +158,14 @@ class EndTalkAPIView(TalkAPIView):
 
         is_first_time = not room.is_end_request and not room.is_end_response
 
-        # end talk for the first time
-        if is_first_time:
-            room.is_end = True
-            room.ended_at = timezone.now()
+        fullfii.end_talk(room, is_first_time, request.user)
+        me = fullfii.change_status_of_talk(room, user_id=request.user.id)
+        me_data = MeSerializer(me).data if me is not None else None
 
-        # turn on is_end_(req or res)
-        if request.user.id == room.request_user.id:
-            room.is_end_request = True
-        else:
-            room.is_end_response = True
-        room.save()
-
-        # send end talk
         if is_first_time:
+            # send end talk
             ChatConsumer.send_end_talk(room_id, sender_id=request.user.id)
-        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+        return Response({'status': 'success', 'profile': me_data}, status=status.HTTP_200_OK)
 
 
 endTalkAPIView = EndTalkAPIView.as_view()
@@ -280,7 +275,6 @@ class NoticeFromAppStoreAPIView(views.APIView):
     def post(self, request, *args, **kwargs):
         n_type = request.data['notification_type']
         if n_type == 'DID_RECOVER':
-            print(request.data)
             iaps = Iap.objects.filter(original_transaction_id=request.data['latest_receipt_info']['original_transaction_id'])
             if iaps.exists():
                 iap = iaps.first()
@@ -296,7 +290,6 @@ class NoticeFromAppStoreAPIView(views.APIView):
                     iap.user.save()
 
         elif n_type == 'DID_CHANGE_RENEWAL_STATUS':
-            print(request.data)
             if 'latest_receipt_info' in request.data:
                 original_transaction_id = request.data['latest_receipt_info']['original_transaction_id']
             elif 'unified_receipt' in request.data:

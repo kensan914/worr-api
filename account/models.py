@@ -3,7 +3,6 @@ from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.contrib.auth.models import _user_has_perm
 from django.db import models
 from django.utils import timezone
-from account.supports.modelSupport import get_default_obj
 
 
 class AccountManager(BaseUserManager):
@@ -48,14 +47,6 @@ class ParamsModel(models.Model):
     label = models.CharField(verbose_name='ラベル', max_length=30, null=True)
 
 
-def get_default_status():
-    return get_default_obj('static/corpus/statusList.txt', ['key', 'label', 'color'], Status)
-
-
-class Status(ParamsModel):
-    color = models.CharField(verbose_name='カラー', max_length=30, null=True)
-
-
 class Feature(ParamsModel):
     pass
 
@@ -72,12 +63,29 @@ class WorriesToSympathize(ParamsModel):
     pass
 
 
+class Status(models.TextChoices):
+    TALKING = 'talking', '会話中'
+    ONLINE = 'online', 'オンライン'
+    OFFLINE = 'offline', 'オフライン'
+
+
+class StatusColor(models.TextChoices):
+    TALKING = 'talking', 'gold'
+    ONLINE = 'online', 'mediumseagreen'
+    OFFLINE = 'offline', 'indianred'
+
+
 class Plan(models.TextChoices):
     """
-    ex) Plan(user.plan).name: 'NORMAL', Plan(user.plan).value: 'normal_plan', Plan(user.plan).label: 'ノーマルプラン'
+    ex) Plan(user.plan).name: 'NORMAL', Plan(user.plan).value: 'com.fullfii.fullfii.normal_plan', Plan(user.plan).label: 'ノーマル'
     """
     NORMAL = 'com.fullfii.fullfii.normal_plan', 'ノーマル'
     FREE = 'com.fullfii.fullfii.free_plan', '未加入'
+
+
+class Gender(models.TextChoices):
+    MALE = 'male', '男性'
+    FEMALE = 'female', '女性'
 
 
 class Account(AbstractBaseUser):
@@ -89,11 +97,13 @@ class Account(AbstractBaseUser):
     username = models.CharField(verbose_name='ユーザネーム', max_length=15)
     email = models.EmailField(verbose_name='メールアドレス', max_length=255, unique=True)
     birthday = models.DateField(verbose_name='生年月日', default=timezone.now)
+    gender = models.CharField(verbose_name='性別', max_length=100, choices=Gender.choices, default=Gender.FEMALE)
     introduction = models.CharField(verbose_name='自己紹介', max_length=250, blank=True)
     num_of_thunks = models.IntegerField(verbose_name='ありがとう', default=0)
-    status = models.ForeignKey(Status, verbose_name='ステータス', on_delete=models.SET_DEFAULT, default=get_default_status)
-    # status = models.ForeignKey(Status, verbose_name='ステータス', on_delete=models.PROTECT, null=True)  # when init migration
+    is_online = models.BooleanField(verbose_name='オンライン状況', default=False)
+    status = models.CharField(verbose_name='ステータス', max_length=100, choices=Status.choices, default=Status.OFFLINE)
     plan = models.CharField(verbose_name='プラン', max_length=100, choices=Plan.choices, default=Plan.FREE)
+    can_talk_heterosexual = models.BooleanField(verbose_name='異性との相談を許可', default=False)
     features = models.ManyToManyField(Feature, verbose_name='特徴', blank=True)
     genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='対応できる悩みのジャンル', blank=True)
     scale_of_worries = models.ManyToManyField(ScaleOfWorries, verbose_name='対応できる悩みの大きさ', blank=True)

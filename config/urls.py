@@ -22,5 +22,5 @@ urlpatterns = [
     path('', include('main.urls')),
 ]
 
-if settings.DEBUG:
+if settings.ADMIN:
     urlpatterns += [path('admin/', admin.site.urls)]

@@ -1,4 +1,5 @@
 from django.utils import timezone
+import fullfii
 from chat.consumers import ChatConsumer
 from chat.models import Room
 from main.consumers import NotificationConsumer
@@ -11,7 +12,6 @@ def manage_talking_time(end_minutes=1440, alert_minutes=1435):
     for talking_room in talking_rooms:
         elapsed_seconds = (timezone.now() - talking_room.started_at).total_seconds()
         elapsed_minutes = elapsed_seconds / 60
-        # print(str(elapsed_minutes) + '分経過しています')
 
         # end talk
         if elapsed_minutes > end_minutes:
@@ -20,6 +20,7 @@ def manage_talking_time(end_minutes=1440, alert_minutes=1435):
             talking_room.ended_at = timezone.now()
             upd_talking_rooms.append(talking_room)
             ChatConsumer.send_end_talk(talking_room.id, time_out=True)
+            fullfii.change_status_of_talk(talking_room)
         # alert end talk
         elif elapsed_minutes > alert_minutes:
             if not talking_room.is_alert:

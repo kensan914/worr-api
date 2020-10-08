@@ -4,9 +4,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from account.serializers import SignupSerializer, MeSerializer, PatchMeSerializer, ProfileImageSerializer, \
-    StatusSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, \
-    WorriesToSympathizeSerializer
-from account.models import ProfileImage, Status, Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Plan
+    FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, WorriesToSympathizeSerializer, \
+    AuthUpdateSerializer
+from account.models import ProfileImage, Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize
+from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
 
 class SignupAPIView(views.APIView):
@@ -20,7 +21,38 @@ class SignupAPIView(views.APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 signupAPIView = SignupAPIView.as_view()
+
+
+class AuthUpdateAPIView(views.APIView):
+    def patch(self, request, *args, **kwargs):
+        if 'email' in request.data:
+            email = request.data['email']
+            serializer = AuthUpdateSerializer(request.user, data={'email': email}, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                payload = jwt_payload_handler(request.user)
+                token = jwt_encode_handler(payload)
+                return Response({'profile': serializer.data, 'token': token}, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        elif 'password' in request.data and 'prev_password' in request.data:
+            password = request.data['password']
+            prev_password = request.data['prev_password']
+            if not request.user.check_password(prev_password):
+                return Response({'error': ['パスワードが正しくありません。']}, status=status.HTTP_400_BAD_REQUEST)
+            serializer = AuthUpdateSerializer(request.user, data={'password': password}, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                payload = jwt_payload_handler(request.user)
+                token = jwt_encode_handler(payload)
+                return Response({'profile': serializer.data, 'token': token}, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+authUpdateAPIView = AuthUpdateAPIView.as_view()
 
 
 class MeAPIView(views.APIView):
@@ -41,16 +73,8 @@ class MeAPIView(views.APIView):
 
     def patch_params(self, request_data, request_user):
         patch_type = list(request_data.keys())[0]
-        if patch_type in ['status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'worries_to_sympathize']:
-            if patch_type == 'status':
-                record = self._patch_params(request_data, StatusSerializer, Status, patch_type)
-                request_user.status = record
-            elif patch_type == 'plan':
-                pass
-                # TODO
-                # record = self._patch_params(request_data, PlanSerializer, Plan, patch_type)
-                # request_user.plan = record
-            elif patch_type == 'features':
+        if patch_type in ['features', 'genre_of_worries', 'scale_of_worries', 'worries_to_sympathize']:
+            if patch_type == 'features':
                 record = self._patch_params(request_data, FeaturesSerializer, Feature, patch_type, many=True)
                 request_user.features.set(record)
             elif patch_type == 'genre_of_worries':
@@ -82,6 +106,10 @@ class MeAPIView(views.APIView):
                 raise ValidationError('パラメータが見つかりません')
             else:
                 return record
+
+    def delete(self, request):
+        request.user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 meAPIView = MeAPIView.as_view()

@@ -1,3 +1,5 @@
+from django.db.models import Q
+
 from account.models import Account, Iap, IapStatus
 
 """
@@ -5,11 +7,28 @@ fullfii/__init__.pyによるimport * を制限(循環importを引き起こす)
 """
 
 def get_all_accounts(me=None):
+    """
+    全ての利用者アカウントを取得. me指定で除外可
+    """
     accounts = Account.objects.filter(is_active=True, is_staff=False, is_superuser=False)
     if me:
         return accounts.exclude(id=me.id)
     else:
         return accounts
+
+
+def get_viewable_accounts(can_talk_heterosexual, gender, me=None):
+    """
+    全ての利用者アカウント(性別を考慮)を取得. me指定で除外可
+    1. 自分の「異性との相談を許可」がFalseの場合, 同性のみ.
+    2. 自分の「異性との相談を許可」がTrueの場合, 全利用者アカウントから「異性との相談を許可」がTrue, または同性をfilter
+    """
+    all_accounts = get_all_accounts(me=me)
+    if not can_talk_heterosexual:  # 1
+        accounts = all_accounts.filter(gender=gender)
+    else:  # 2
+        accounts = all_accounts.filter(Q(can_talk_heterosexual=True) | Q(gender=gender))
+    return accounts
 
 
 def increment_num_of_thunks(user):

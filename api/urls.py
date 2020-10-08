@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_jwt.views import ObtainJSONWebToken
 from account.serializers import LoginSerializer
-from account.views import signupAPIView, meAPIView, profileImageAPIView
+from account.views import signupAPIView, meAPIView, profileImageAPIView, authUpdateAPIView
 from api.views import profileParamsAPIView, usersAPIView, talkRequestAPIView, cancelTalkAPIView, talkInfoAPIView, \
     endTalkAPIView, closeTalkAPIView, purchaseProductAPIView, noticeFromAppStoreAPIView, restoreProductAPIView
 
@@ -13,6 +13,8 @@ urlpatterns = [
     path('me/', meAPIView),
     path('me/profile-image/', profileImageAPIView),
     path('me/talk-info/', talkInfoAPIView),
+    path('me/email/', authUpdateAPIView),
+    path('me/password/', authUpdateAPIView),
     path('profile-params/', profileParamsAPIView),
     path('users/', usersAPIView),
     path('users/<uuid:user_id>/', usersAPIView),
