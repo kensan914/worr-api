@@ -314,13 +314,14 @@ class NoticeFromAppStoreAPIView(views.APIView):
                 #     iap.user.plan = request.data['auto_renew_product_id']
                 #     iap.user.save()
                 # 自動更新失敗状態で期限が切れた
-                if request.data['auto_renew_status'] == 'false' and iap.status != IapStatus.EXPIRED:
-                    update_iap(
-                        iap=iap,
-                        status=IapStatus.EXPIRED,
-                    )
-                    iap.user.plan = Plan.FREE
-                    iap.user.save()
+                # TODO ユーザが購読終了した時点で、　送られてくるから致命的バグ
+                # if request.data['auto_renew_status'] == 'false' and iap.status != IapStatus.EXPIRED:
+                #     update_iap(
+                #         iap=iap,
+                #         status=IapStatus.EXPIRED,
+                #     )
+                #     iap.user.plan = Plan.FREE
+                #     iap.user.save()
 
         return Response(status=status.HTTP_200_OK)
 
