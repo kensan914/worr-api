@@ -9,4 +9,4 @@ class Command(BaseCommand):
            '自動更新失敗中のIapは有効期限が過ぎた瞬間に期限切れに変更'
 
     def handle(self, *args, **options):
-        manage_iap_expires_date(within_minutes=720)
+        manage_iap_expires_date(within_minutes=2)
