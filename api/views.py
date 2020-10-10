@@ -275,6 +275,7 @@ class NoticeFromAppStoreAPIView(views.APIView):
     def post(self, request, *args, **kwargs):
         n_type = request.data['notification_type']
         if n_type == 'DID_RECOVER':
+            print(request.data)
             iaps = Iap.objects.filter(original_transaction_id=request.data['latest_receipt_info']['original_transaction_id'])
             if iaps.exists():
                 iap = iaps.first()
@@ -290,6 +291,7 @@ class NoticeFromAppStoreAPIView(views.APIView):
                     iap.user.save()
 
         elif n_type == 'DID_CHANGE_RENEWAL_STATUS':
+            print(request.data)
             if 'latest_receipt_info' in request.data:
                 original_transaction_id = request.data['latest_receipt_info']['original_transaction_id']
             elif 'unified_receipt' in request.data:
