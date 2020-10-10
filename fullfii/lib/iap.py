@@ -98,16 +98,20 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
     receipt_data = format_verify_receipt_json(res_json)
 
     if receipt_data['status'] != 0:
+        print(1)
         return Response({'type': 'bad_status', 'message': '{}しばらく時間をおいて再度プランの変更を行ってください。'.format(base_error_message)}, status=status.HTTP_409_CONFLICT)
     if receipt_data['bundle_id'] != BUNDLE_ID:
+        print(2)
         return Response({'type': 'conflict_bundle_id', 'message': '{}不正なバンドルIDです。'.format(base_error_message)}, status=status.HTTP_409_CONFLICT)
 
     if Iap.objects.filter(transaction_id=receipt_data['transaction_id']).exists() and not is_restore:
+        print(3)
         return Response({'type': 'conflict_transaction_id', 'message': '{}'.format(base_error_message)},
                         status=status.HTTP_409_CONFLICT)
 
     # 有効期限が過ぎている場合
     if (timezone.now() - cvt_tz_str_to_datetime(receipt_data['expires_date'])).total_seconds() > 0:
+        print(4)
         return Response({'type': 'expired', 'message': '{}更新の有効期限が切れています。新たにプランを購入してください。'.format(base_error_message)},
                         status=status.HTTP_409_CONFLICT)
 
@@ -125,6 +129,7 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
                     expires_date=cvt_tz_str_to_datetime(receipt_data['expires_date']),
                 )
             else:
+                print(5)
                 return Response({'type': 'conflict_original_transaction_id', 'message': '{}既に購入済みの自動購読があります。購入を復元して下さい。'.format(base_error_message)},
                             status=status.HTTP_409_CONFLICT)
         else:  # 購読中のサブスクリプションの期限が切れた後にサブスクリプションを再購読
