@@ -120,6 +120,7 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
                 print('購入の復元')
                 print(iap.user.plan)
                 iap.user.plan = Plan.FREE
+                iap.user.save()
                 update_iap(
                     iap=iap,
                     original_transaction_id=receipt_data['original_transaction_id'],
@@ -136,6 +137,7 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
             print('再講読')
             print(iap.user.plan)
             iap.user.plan = Plan.FREE
+            iap.user.save()
             update_iap(
                 iap=iap,
                 original_transaction_id=receipt_data['original_transaction_id'] if is_restore else None,
