@@ -117,6 +117,7 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
         if iap.status == IapStatus.SUBSCRIPTION:
             # 購入の復元
             if is_restore:
+                iap.user.plan = Plan.FREE
                 update_iap(
                     iap=iap,
                     original_transaction_id=receipt_data['original_transaction_id'],
@@ -130,6 +131,7 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
                 return Response({'type': 'conflict_original_transaction_id', 'message': '{}既に購入済みの自動購読があります。購入を復元して下さい。'.format(base_error_message)},
                             status=status.HTTP_409_CONFLICT)
         else:  # 購読中のサブスクリプションの期限が切れた後にサブスクリプションを再購読
+            iap.user.plan = Plan.FREE
             update_iap(
                 iap=iap,
                 original_transaction_id=receipt_data['original_transaction_id'] if is_restore else None,
@@ -149,8 +151,8 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
                 expires_date=cvt_tz_str_to_datetime(receipt_data['expires_date']),
             )
         else:
-            print(res_json)
-            print('kkkk')
+            return Response({'type': 'conflict_transaction_id', 'message': '{}'.format(base_error_message)},
+                            status=status.HTTP_409_CONFLICT)
 
     user.plan = product_id
     user.save()
