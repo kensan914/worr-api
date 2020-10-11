@@ -62,12 +62,9 @@ def format_verify_receipt_json(res_json):
                     return res_json['pending_renewal_info'][key]
                 elif key in res_json['pending_renewal_info'][0]:
                     return res_json['pending_renewal_info'][0][key]
-                else:
-                    return '-1'
-            elif key in latest_receipt_info:
+            if key in latest_receipt_info:
                 return latest_receipt_info[key]
-            else:
-                return '-1'
+            return '-1'
 
         is_in_billing_retry_period = get_pending_renewal_info_param('is_in_billing_retry_period')
         auto_renew_status = get_pending_renewal_info_param('auto_renew_status')
@@ -158,11 +155,9 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
 
 def verify_receipt_when_update(verified_iap):
     res_json = request_post_receipt(verified_iap.receipt)
-    receipt_data = format_verify_receipt_json(res_json)
     print(res_json)
-    print('zzzz')
-    print(receipt_data)
-    print('yyyy')
+    print('rrrr')
+    receipt_data = format_verify_receipt_json(res_json)
 
     if receipt_data['status'] != 0 and receipt_data['status'] != 21006:
         return
