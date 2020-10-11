@@ -57,6 +57,10 @@ def format_verify_receipt_json(res_json):
         latest_receipt_info = res_json['latest_receipt_info'] if isinstance(res_json['latest_receipt_info'], dict) else res_json['latest_receipt_info'][0]
 
         # is_in_billing_retry_period
+        print('xxxx')
+        print('pending_renewal_info' in res_json)
+        print('is_in_billing_retry_period' in res_json['pending_renewal_info'])
+        print(res_json['pending_renewal_info']['is_in_billing_retry_period'])
         if 'pending_renewal_info' in res_json and 'is_in_billing_retry_period' in res_json['pending_renewal_info']:
             is_in_billing_retry_period = res_json['pending_renewal_info']['is_in_billing_retry_period']
         elif 'is_in_billing_retry_period' in latest_receipt_info:
