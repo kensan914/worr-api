@@ -56,25 +56,21 @@ def format_verify_receipt_json(res_json):
         # latest_receipt_info
         latest_receipt_info = res_json['latest_receipt_info'] if isinstance(res_json['latest_receipt_info'], dict) else res_json['latest_receipt_info'][0]
 
-        # is_in_billing_retry_period
-        print('xxxx')
-        print('pending_renewal_info' in res_json)
-        print('is_in_billing_retry_period' in res_json['pending_renewal_info'])
-        print(res_json['pending_renewal_info']['is_in_billing_retry_period'])
-        if 'pending_renewal_info' in res_json and 'is_in_billing_retry_period' in res_json['pending_renewal_info']:
-            is_in_billing_retry_period = res_json['pending_renewal_info']['is_in_billing_retry_period']
-        elif 'is_in_billing_retry_period' in latest_receipt_info:
-            is_in_billing_retry_period = latest_receipt_info['is_in_billing_retry_period']
-        else:
-            is_in_billing_retry_period = '-1'
+        def get_pending_renewal_info_param(key):
+            if 'pending_renewal_info' in res_json:
+                if key in res_json['pending_renewal_info']:
+                    return res_json['pending_renewal_info'][key]
+                elif key in res_json['pending_renewal_info'][0]:
+                    return res_json['pending_renewal_info'][0][key]
+                else:
+                    return '-1'
+            elif key in latest_receipt_info:
+                return latest_receipt_info[key]
+            else:
+                return '-1'
 
-        # auto_renew_status
-        if 'pending_renewal_info' in res_json and 'auto_renew_status' in res_json['pending_renewal_info']:
-            auto_renew_status = res_json['pending_renewal_info']['auto_renew_status']
-        elif 'auto_renew_status' in latest_receipt_info:
-            auto_renew_status = latest_receipt_info['auto_renew_status']
-        else:
-            auto_renew_status = '-1'
+        is_in_billing_retry_period = get_pending_renewal_info_param('is_in_billing_retry_period')
+        auto_renew_status = get_pending_renewal_info_param('auto_renew_status')
 
         additional_receipt_data = {
             'bundle_id': bundle_id,
