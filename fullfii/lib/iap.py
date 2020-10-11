@@ -140,13 +140,17 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
                 status=IapStatus.SUBSCRIPTION,
             )
     else:
-        create_iap(
-            original_transaction_id=receipt_data['original_transaction_id'],
-            transaction_id=receipt_data['transaction_id'],
-            user=user,
-            receipt=receipt_data['latest_receipt'],
-            expires_date=cvt_tz_str_to_datetime(receipt_data['expires_date']),
-        )
+        if receipt_data['latest_receipt']:
+            create_iap(
+                original_transaction_id=receipt_data['original_transaction_id'],
+                transaction_id=receipt_data['transaction_id'],
+                user=user,
+                receipt=receipt_data['latest_receipt'],
+                expires_date=cvt_tz_str_to_datetime(receipt_data['expires_date']),
+            )
+        else:
+            print(res_json)
+            print('kkkk')
 
     user.plan = product_id
     user.save()
