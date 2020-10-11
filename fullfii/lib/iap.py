@@ -169,10 +169,10 @@ def verify_receipt_when_update(verified_iap):
     res_json = request_post_receipt(verified_iap.receipt)
     print(res_json)
     print('rrrr')
-    receipt_data = format_verify_receipt_json(res_json)
 
-    if receipt_data['status'] != 0 and receipt_data['status'] != 21006:
+    if res_json['status'] != 0 and res_json['status'] != 21006:
         return
+    receipt_data = format_verify_receipt_json(res_json)
 
     # case 1. 自動更新に成功している
     if not Iap.objects.filter(transaction_id=receipt_data['transaction_id']).exists():
