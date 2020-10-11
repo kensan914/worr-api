@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from account.serializers import SignupSerializer, MeSerializer, PatchMeSerializer, ProfileImageSerializer, \
     FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, WorriesToSympathizeSerializer, \
     AuthUpdateSerializer
-from account.models import ProfileImage, Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize
+from account.models import ProfileImage, Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, IapStatus
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
 
@@ -108,6 +108,14 @@ class MeAPIView(views.APIView):
                 return record
 
     def delete(self, request):
+        if request.user.iap.all().exists():
+            can_delete = True
+            for iap in request.user.iap.all():
+                if iap.status != IapStatus.EXPIRED:
+                    can_delete = False
+            if not can_delete:
+                return Response({'status': 'conflict_delete_user_has_iap', 'message': '購読有効期限が終了していないため、アカウントを削除することができません。'}, status=status.HTTP_409_CONFLICT)
+
         request.user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
