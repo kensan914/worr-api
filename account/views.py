@@ -108,13 +108,6 @@ class MeAPIView(views.APIView):
                 return record
 
     def delete(self, request):
-        # if request.user.iap.all().exists():
-        #     can_delete = True
-        #     for iap in request.user.iap.all():
-        #         if iap.status != IapStatus.EXPIRED:
-        #             can_delete = False
-        #     if not can_delete:
-        #         return Response({'status': 'conflict_delete_user_has_iap', 'message': '購読有効期限が終了していないため、アカウントを削除することができません。'}, status=status.HTTP_409_CONFLICT)
         request.user.is_active = False
         request.user.email = '{}-deleted'.format(request.user.id)
         request.user.save()
