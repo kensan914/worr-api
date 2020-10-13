@@ -63,7 +63,7 @@ class UsersAPIView(views.APIView):
             genre = self.request.GET.get('genre')
             genre_of_worries = GenreOfWorries.objects.filter(value=genre)
 
-            viewable_users = fullfii.get_viewable_accounts(request.user.can_talk_heterosexual, request.user.gender, me=request.user)
+            viewable_users = fullfii.get_viewable_accounts(request.user, is_exclude_me=True)
             if genre_of_worries.exists():
                 users = viewable_users.filter(genre_of_worries=genre_of_worries.first())
             else:
@@ -107,6 +107,21 @@ class TalkRequestAPIView(views.APIView):
 
 
 talkRequestAPIView = TalkRequestAPIView.as_view()
+
+
+class BlockAPIView(views.APIView):
+    def patch(self, request, *args, **kwargs):
+        will_block_user_id = self.kwargs.get('user_id')
+        will_block_user = get_object_or_404(Account, id=will_block_user_id)
+
+        if request.user.blocked_accounts.all().filter(id=will_block_user.id).exists():
+            return Response({'type': 'have_already_blocked', 'message': 'すでに{}さんはブロックされています。'.format(will_block_user.username)}, status=status.HTTP_409_CONFLICT)
+        else:
+            request.user.blocked_accounts.add(will_block_user)
+            return Response(status=status.HTTP_200_OK)
+
+
+blockAPIView = BlockAPIView.as_view()
 
 
 class TalkAPIView(views.APIView):

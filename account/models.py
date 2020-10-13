@@ -104,6 +104,7 @@ class Account(AbstractBaseUser):
     status = models.CharField(verbose_name='ステータス', max_length=100, choices=Status.choices, default=Status.OFFLINE)
     plan = models.CharField(verbose_name='プラン', max_length=100, choices=Plan.choices, default=Plan.FREE)
     can_talk_heterosexual = models.BooleanField(verbose_name='異性との相談を許可', default=False)
+    blocked_accounts = models.ManyToManyField("self", verbose_name='異性との相談を許可', blank=True, symmetrical=False, related_name='block_me_accounts')
     features = models.ManyToManyField(Feature, verbose_name='特徴', blank=True)
     genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='対応できる悩みのジャンル', blank=True)
     scale_of_worries = models.ManyToManyField(ScaleOfWorries, verbose_name='対応できる悩みの大きさ', blank=True)
