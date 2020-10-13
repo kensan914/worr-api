@@ -1,10 +1,6 @@
 from django.db.models import Q
-
 from account.models import Account, Iap, IapStatus
 
-"""
-fullfii/__init__.pyによるimport * を制限(循環importを引き起こす)
-"""
 
 def get_all_accounts(me=None):
     """
