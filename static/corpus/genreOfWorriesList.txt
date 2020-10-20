@@ -1,0 +1,4 @@
+0 work 仕事
+1 child 子供
+2 family 家庭
+3 love 恋愛
