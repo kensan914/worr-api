@@ -12,27 +12,30 @@ def get_all_accounts(me=None):
     else:
         return accounts
 
-def get_viewable_accounts(user, is_exclude_me=False):
+def get_viewable_accounts(me, is_exclude_me=False):
     """
-    全ての利用者アカウント(性別・ブロックを考慮)を取得. me指定で除外可
+    全ての利用者アカウント(性別・ブロックを考慮)を取得. is_exclude_me指定で除外可
+    0. gender==Noneの場合、1以降は無視しall_accountsを返す
     1. 自分の「異性との相談を許可」がFalseの場合, 同性のみ.
     2. 自分の「異性との相談を許可」がTrueの場合, 全利用者アカウントから「異性との相談を許可」がTrue, または同性をfilter
     3. ブロックしたユーザをexclude
     4. ブロックされているユーザをexclude
     """
-    can_talk_heterosexual = user.can_talk_heterosexual
-    gender = user.gender
-    blocked_accounts = user.blocked_accounts
-    block_me_accounts = user.block_me_accounts
+    can_talk_heterosexual = me.can_talk_heterosexual
+    gender = me.gender
+    blocked_accounts = me.blocked_accounts
+    block_me_accounts = me.block_me_accounts
 
-    all_accounts = get_all_accounts(me=user if is_exclude_me else None)
+    all_accounts = get_all_accounts(me=me if is_exclude_me else None).exclude(Q(birthday=None) | Q(gender=None))
+    if not gender:  # 0
+        return all_accounts
     if not can_talk_heterosexual:  # 1
         accounts = all_accounts.filter(gender=gender)
     else:  # 2
         accounts = all_accounts.filter(Q(can_talk_heterosexual=True) | Q(gender=gender))
     if blocked_accounts:  # 3
         accounts = accounts.exclude(id__in=blocked_accounts.all().values_list('id', flat=True))
-    if block_me_accounts:
+    if block_me_accounts:  # 4
         accounts = accounts.exclude(id__in=block_me_accounts.all().values_list('id', flat=True))
 
     return accounts

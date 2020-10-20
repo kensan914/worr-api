@@ -10,7 +10,7 @@ from account.models import Account, ProfileImage, Plan, Status, Feature, GenreOf
 class AuthSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'username', 'email', 'password', 'gender', 'birthday')
+        fields = ('id', 'username', 'email', 'password')
 
     password = serializers.CharField(write_only=True, min_length=8, max_length=30)
 
@@ -18,11 +18,6 @@ class AuthSerializer(serializers.ModelSerializer):
 class SignupSerializer(AuthSerializer):
     def validate_password(self, data):
         validators.validate_password(password=data, user=Account)
-        return data
-
-    def validate_gender(self, data):
-        if not data in Gender.values:
-            raise serializers.ValidationError('不正な性別です。')
         return data
 
     def create(self, validated_data):
@@ -108,13 +103,20 @@ class UserSerializer(serializers.ModelSerializer):
     me = serializers.BooleanField(default=False)
 
     def get_birthday(self, obj):
-        return fullfii.generate_birthday(birthday=obj.birthday)
+        if obj.birthday:
+            return fullfii.generate_birthday(birthday=obj.birthday)
+        else: return
 
     def get_age(self, obj):
-        return fullfii.calc_age(birthday=obj.birthday)
+        if obj.birthday:
+            return fullfii.calc_age(birthday=obj.birthday)
+        else: return '-'
 
     def get_gender(self, obj):
-        return {'key': Gender(obj.gender).value, 'label': Gender(obj.gender).label}
+        if obj.gender:
+            return {'key': Gender(obj.gender).value, 'label': Gender(obj.gender).label}
+        else:
+            return {'key': '', 'label': '性別未設定'}
 
     def get_status(self, obj):
         return {'key': Status(obj.status).value, 'label': Status(obj.status).label, 'color': StatusColor(obj.status).label}
@@ -140,6 +142,11 @@ class MeSerializer(UserSerializer):
 class PatchMeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('name', 'email', 'birthday', 'introduction', 'can_talk_heterosexual')
+        fields = ('name', 'email', 'birthday', 'introduction', 'can_talk_heterosexual', 'gender')
 
     name = serializers.CharField(source='username')
+
+    def validate_gender(self, data):
+        if not data in Gender.values:
+            raise serializers.ValidationError('不正な性別です。')
+        return data

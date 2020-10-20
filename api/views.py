@@ -1,10 +1,8 @@
 import uuid
 from django.db.models import Q
-from django.utils import timezone
 from rest_framework import views, status, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-
 import fullfii
 from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, \
     WorriesToSympathizeSerializer, MeSerializer
