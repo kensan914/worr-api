@@ -59,10 +59,6 @@ class ScaleOfWorries(ParamsModel):
     pass
 
 
-class WorriesToSympathize(ParamsModel):
-    pass
-
-
 class Status(models.TextChoices):
     TALKING = 'talking', '会話中'
     ONLINE = 'online', 'オンライン'
@@ -106,9 +102,8 @@ class Account(AbstractBaseUser):
     can_talk_heterosexual = models.BooleanField(verbose_name='異性との相談を許可', default=False)
     blocked_accounts = models.ManyToManyField("self", verbose_name='異性との相談を許可', blank=True, symmetrical=False, related_name='block_me_accounts')
     features = models.ManyToManyField(Feature, verbose_name='特徴', blank=True)
-    genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='対応できる悩みのジャンル', blank=True)
-    scale_of_worries = models.ManyToManyField(ScaleOfWorries, verbose_name='対応できる悩みの大きさ', blank=True)
-    worries_to_sympathize = models.ManyToManyField(WorriesToSympathize, verbose_name='共感できる悩み', blank=True)
+    genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='共感できる悩み', blank=True)
+    scale_of_worries = models.ManyToManyField(ScaleOfWorries, verbose_name='話せる悩みの大きさ', blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
