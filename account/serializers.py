@@ -3,8 +3,7 @@ from django.contrib.auth import password_validation as validators
 from rest_framework import serializers
 from rest_framework_jwt.serializers import JSONWebTokenSerializer, jwt_payload_handler, jwt_encode_handler
 import fullfii
-from account.models import Account, ProfileImage, Plan, Status, Feature, GenreOfWorries, ScaleOfWorries, \
-    WorriesToSympathize, StatusColor, Gender
+from account.models import Account, ProfileImage, Plan, Status, Feature, GenreOfWorries, ScaleOfWorries, StatusColor, Gender
 
 
 class AuthSerializer(serializers.ModelSerializer):
@@ -79,16 +78,10 @@ class ScaleOfWorriesSerializer(serializers.ModelSerializer):
         exclude = ['id']
 
 
-class WorriesToSympathizeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WorriesToSympathize
-        exclude = ['id']
-
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'status', 'features', 'genre_of_worries', 'scale_of_worries', 'worries_to_sympathize', 'image', 'me')
+        fields = ('id', 'name', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'status', 'features', 'genre_of_worries', 'scale_of_worries', 'image', 'me')
 
     name = serializers.CharField(source='username')
     birthday = serializers.SerializerMethodField()
@@ -98,7 +91,6 @@ class UserSerializer(serializers.ModelSerializer):
     features = FeaturesSerializer(many=True)
     genre_of_worries = GenreOfWorriesSerializer(many=True)
     scale_of_worries = ScaleOfWorriesSerializer(many=True)
-    worries_to_sympathize = WorriesToSympathizeSerializer(many=True)
     image = serializers.SerializerMethodField()
     me = serializers.BooleanField(default=False)
 
@@ -130,7 +122,7 @@ class UserSerializer(serializers.ModelSerializer):
 class MeSerializer(UserSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'email', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'worries_to_sympathize', 'image', 'me', 'can_talk_heterosexual')
+        fields = ('id', 'name', 'email', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'image', 'me', 'can_talk_heterosexual')
 
     plan = serializers.SerializerMethodField()
     me = serializers.BooleanField(default=True)

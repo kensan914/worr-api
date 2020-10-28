@@ -10,4 +10,3 @@ class Command(BaseCommand):
         fullfii.InitFeature().init()
         fullfii.InitGenreOfWorries().init()
         fullfii.InitScaleOfWorries().init()
-        fullfii.InitWorriesToSympathize().init()

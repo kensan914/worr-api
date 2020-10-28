@@ -4,9 +4,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from account.serializers import SignupSerializer, MeSerializer, PatchMeSerializer, ProfileImageSerializer, \
-    FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, WorriesToSympathizeSerializer, \
-    AuthUpdateSerializer
-from account.models import ProfileImage, Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, IapStatus
+    FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, AuthUpdateSerializer
+from account.models import ProfileImage, Feature, GenreOfWorries, ScaleOfWorries
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
 
@@ -73,7 +72,7 @@ class MeAPIView(views.APIView):
 
     def patch_params(self, request_data, request_user):
         patch_type = list(request_data.keys())[0]
-        if patch_type in ['features', 'genre_of_worries', 'scale_of_worries', 'worries_to_sympathize']:
+        if patch_type in ['features', 'genre_of_worries', 'scale_of_worries']:
             if patch_type == 'features':
                 record = self._patch_params(request_data, FeaturesSerializer, Feature, patch_type, many=True)
                 request_user.features.set(record)
@@ -83,9 +82,6 @@ class MeAPIView(views.APIView):
             elif patch_type == 'scale_of_worries':
                 record = self._patch_params(request_data, ScaleOfWorriesSerializer, ScaleOfWorries, patch_type, many=True)
                 request_user.scale_of_worries.set(record)
-            elif patch_type == 'worries_to_sympathize':
-                record = self._patch_params(request_data, WorriesToSympathizeSerializer, WorriesToSympathize, patch_type, many=True)
-                request_user.worries_to_sympathize.set(record)
 
             request_user.save()
             return Response(MeSerializer(request_user).data, status=status.HTTP_200_OK)
