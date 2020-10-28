@@ -1,5 +1,5 @@
 from abc import ABCMeta
-from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize
+from account.models import Feature, GenreOfWorries, ScaleOfWorries
 
 
 class InitDB(metaclass=ABCMeta):
@@ -50,10 +50,3 @@ class InitScaleOfWorries(InitDB):
     file_path = 'static/corpus/scaleOfWorriesList.txt'
     keyList = ['key', 'label']
     model = ScaleOfWorries
-
-
-class InitWorriesToSympathize(InitDB):
-    file_path = 'static/corpus/worriesToSympathizeList.txt'
-    keyList = ['key', 'label']
-    model = WorriesToSympathize
-

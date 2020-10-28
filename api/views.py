@@ -4,13 +4,12 @@ from rest_framework import views, status, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 import fullfii
-from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, \
-    WorriesToSympathizeSerializer, MeSerializer
+from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, MeSerializer
 from chat.consumers import ChatConsumer
 from chat.models import Room
 from chat.serializers import RoomSerializer
 from fullfii.db.account import get_all_accounts, increment_num_of_thunks, update_iap
-from account.models import Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize, Account, Plan, Iap, IapStatus
+from account.models import Feature, GenreOfWorries, ScaleOfWorries, Account, Plan, Iap, IapStatus
 from fullfii.lib.iap import verify_receipt_at_first
 from fullfii.lib.support import cvt_tz_str_to_datetime
 from main.consumers import NotificationConsumer
@@ -31,12 +30,10 @@ class ProfileParamsAPIView(views.APIView):
         features_obj = self.get_profile_params(FeaturesSerializer, Feature)
         genre_of_worries_obj = self.get_profile_params(GenreOfWorriesSerializer, GenreOfWorries)
         scale_of_worries_obj = self.get_profile_params(ScaleOfWorriesSerializer, ScaleOfWorries)
-        worries_to_sympathize_obj = self.get_profile_params(WorriesToSympathizeSerializer, WorriesToSympathize)
         return Response({
             'features': features_obj,
             'genre_of_worries': genre_of_worries_obj,
             'scale_of_worries': scale_of_worries_obj,
-            'worries_to_sympathize': worries_to_sympathize_obj,
         }, status.HTTP_200_OK)
 
 

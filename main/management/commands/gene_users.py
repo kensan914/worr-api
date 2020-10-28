@@ -1,6 +1,6 @@
 import random
 from django.core.management.base import BaseCommand
-from account.models import Account, Feature, GenreOfWorries, ScaleOfWorries, WorriesToSympathize
+from account.models import Account, Feature, GenreOfWorries, ScaleOfWorries
 
 
 class Command(BaseCommand):
@@ -25,9 +25,6 @@ class Command(BaseCommand):
             )
             user.scale_of_worries.set(
                 ScaleOfWorries.objects.filter(key__in=self.get_random_params_keys(ScaleOfWorries.objects.all(), probability_num))
-            )
-            user.worries_to_sympathize.set(
-                WorriesToSympathize.objects.filter(key__in=self.get_random_params_keys(WorriesToSympathize.objects.all(), probability_num))
             )
             print('仮ユーザ({})を作成しました'.format(i))
 
