@@ -5,7 +5,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from account.serializers import SignupSerializer, MeSerializer, PatchMeSerializer, ProfileImageSerializer, \
     FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, AuthUpdateSerializer
-from account.models import ProfileImage, Feature, GenreOfWorries, ScaleOfWorries
+from account.models import ProfileImage, Feature, GenreOfWorries, ScaleOfWorries, IntroStep
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
 
@@ -64,6 +64,8 @@ class MeAPIView(views.APIView):
         if result_patch_params is not None:
             return result_patch_params
 
+        result_patch_intro_step = self.patch_intro_step(request.data, request.user)
+
         serializer = PatchMeSerializer(instance=request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -102,6 +104,22 @@ class MeAPIView(views.APIView):
                 raise ValidationError('パラメータが見つかりません')
             else:
                 return record
+
+    def patch_intro_step(self, request_data, request_user):
+        patch_type = list(request_data.keys())[0]
+        if patch_type in ['intro_step']:
+            if patch_type == 'intro_step':
+                data = request_data[patch_type]
+                intro_step_objects = []
+                for key, val in data.items():
+                    if val:
+                        intro_step = IntroStep.objects.filter(key=key)
+                        if not intro_step.exists():
+                            raise ValidationError('不正な値です')
+                        intro_step_objects.append(intro_step.first())
+                request_user.intro_step.set(intro_step_objects)
+                request_user.save()
+
 
     def delete(self, request):
         request.user.is_active = False

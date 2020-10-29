@@ -84,6 +84,12 @@ class Gender(models.TextChoices):
     FEMALE = 'female', '女性'
 
 
+class IntroStep(models.Model):
+    key = models.CharField(verbose_name='キー', max_length=30)
+
+    def __str__(self):
+        return str(self.key)
+
 class Account(AbstractBaseUser):
     class Meta:
         verbose_name = 'アカウント'
@@ -104,6 +110,7 @@ class Account(AbstractBaseUser):
     features = models.ManyToManyField(Feature, verbose_name='特徴', blank=True)
     genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='共感できる悩み', blank=True)
     scale_of_worries = models.ManyToManyField(ScaleOfWorries, verbose_name='話せる悩みの大きさ', blank=True)
+    intro_step = models.ManyToManyField(IntroStep, verbose_name='イントロステップ', blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -151,6 +158,7 @@ class IapStatus(models.TextChoices):
     SUBSCRIPTION = 'subscription', '購読中'
     FAILURE = 'failure', '自動更新失敗中'
     EXPIRED = 'expired', '期限切れ'
+
 
 class Iap(models.Model):
     original_transaction_id = models.CharField(verbose_name='オリジナルトランザクションID', max_length=255, unique=True, default='')

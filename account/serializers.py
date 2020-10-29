@@ -3,7 +3,8 @@ from django.contrib.auth import password_validation as validators
 from rest_framework import serializers
 from rest_framework_jwt.serializers import JSONWebTokenSerializer, jwt_payload_handler, jwt_encode_handler
 import fullfii
-from account.models import Account, ProfileImage, Plan, Status, Feature, GenreOfWorries, ScaleOfWorries, StatusColor, Gender
+from account.models import Account, ProfileImage, Plan, Status, Feature, GenreOfWorries, ScaleOfWorries, StatusColor, \
+    Gender, IntroStep
 
 
 class AuthSerializer(serializers.ModelSerializer):
@@ -122,13 +123,22 @@ class UserSerializer(serializers.ModelSerializer):
 class MeSerializer(UserSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'email', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'image', 'me', 'can_talk_heterosexual')
+        fields = ('id', 'name', 'email', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'intro_step', 'intro_step', 'image', 'me', 'can_talk_heterosexual')
 
     plan = serializers.SerializerMethodField()
     me = serializers.BooleanField(default=True)
+    intro_step = serializers.SerializerMethodField()
 
     def get_plan(self, obj):
         return {'key': Plan(obj.plan).value, 'label': Plan(obj.plan).label}
+
+    def get_intro_step(self, obj):
+        intro_step = {}
+        for intro_step_obj in IntroStep.objects.all():
+            intro_step[intro_step_obj.key] = False
+        for done_intro_step_obj in obj.intro_step.all():
+            intro_step[done_intro_step_obj.key] = True
+        return intro_step
 
 
 class PatchMeSerializer(serializers.ModelSerializer):
