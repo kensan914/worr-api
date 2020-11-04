@@ -27,6 +27,19 @@
 <link rel="stylesheet" href="/static/css/animate.min.css">
 <link rel="stylesheet" href="/static/css/line-icon.css">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+
+{% if not debug %}
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-180692073-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-180692073-1');
+</script>
+{% endif %}
+<meta name="p:domain_verify" content="0ff6b8072e3212265ceb35c90dcc5c2f"/>
 </head>
 
 <body>
