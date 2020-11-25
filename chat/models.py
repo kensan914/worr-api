@@ -21,6 +21,7 @@ class Room(models.Model):
     is_end_response = models.BooleanField(verbose_name='レスポンスユーザ側のend状況', default=False)
     is_closed_request = models.BooleanField(verbose_name='リクエストユーザ側のclose状況', default=False)
     is_closed_response = models.BooleanField(verbose_name='レスポンスユーザ側のclose状況', default=False)
+    is_worried_request_user = models.BooleanField(verbose_name='リクエストユーザが相談者である', default=True)
 
 
 class Message(models.Model):
@@ -34,3 +35,17 @@ class Message(models.Model):
     user = models.ForeignKey('account.Account', verbose_name='投稿者', on_delete=models.CASCADE)
     is_stored_on_request = models.BooleanField(verbose_name='リクエストユーザ側の保存状況', default=False)
     is_stored_on_response = models.BooleanField(verbose_name='レスポンスユーザ側の保存状況', default=False)
+
+
+class Worry(models.Model):
+    class Meta:
+        ordering = ['-time']
+
+    def __str__(self):
+        return '{}'.format(self.message)
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    time = models.DateTimeField(verbose_name='投稿時間', default=timezone.now)
+    message = models.TextField(verbose_name='メッセージ内容', max_length=280, blank=True)
+    user = models.ForeignKey('account.Account', verbose_name='投稿者', on_delete=models.CASCADE)
+    active = models.BooleanField(default=True)

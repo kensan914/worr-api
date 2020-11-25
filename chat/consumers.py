@@ -23,14 +23,19 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
         return 'room_{}'.format(str(_id))
 
     async def receive_auth(self, received_data):
-        me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
-        self.me_id = me.id
-
         self.group_name = self.get_group_name(self.room_id)
         await self.channel_layer.group_add(
             self.group_name,
-            self.channel_name,
+            self.channel_name
         )
+
+        me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+        if me is None:
+            # 401 Unauthorized
+            await self.disconnect(4001)
+            print('401 Unauthorized')
+            return
+        self.me_id = me.id
 
         result = await self.get_room()
         if result:
@@ -49,7 +54,11 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
             # If init is true, set response notification to request user
             if received_data['init']:
                 await self.start_talk(room)  # start talk
-                await NotificationConsumer.send_notification_async(recipient=target_user, subject=me, notification_type=NotificationType.TALK_RESPONSE, reference_id=self.room_id)
+                worried_user_id = await self.get_worried_user_id(room)
+                await NotificationConsumer.send_notification_async(recipient=target_user, subject=me, notification_type=NotificationType.TALK_RESPONSE, context={
+                    'room_id': str(self.room_id),
+                    'worried_user_id': str(worried_user_id),
+                })
         else:
             raise
 
@@ -176,6 +185,13 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
     @database_sync_to_async
     def get_room_users(self, room):
         return {'request_user': room.request_user, 'response_user': room.response_user}
+
+    @database_sync_to_async
+    def get_worried_user_id(self, room):
+        if room.is_worried_request_user:
+            return room.request_user.id
+        else:
+            return room.response_user.id
 
     @database_sync_to_async
     def turn_on_message_stored(self, is_request_user, message_id=None, room_id=None):
