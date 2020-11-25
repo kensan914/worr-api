@@ -4,7 +4,7 @@ from account.serializers import LoginSerializer
 from account.views import signupAPIView, meAPIView, profileImageAPIView, authUpdateAPIView
 from api.views import profileParamsAPIView, usersAPIView, talkRequestAPIView, cancelTalkAPIView, talkInfoAPIView, \
     endTalkAPIView, closeTalkAPIView, purchaseProductAPIView, noticeFromAppStoreAPIView, restoreProductAPIView, \
-    blockAPIView
+    blockAPIView, worriesAPIView
 
 app_name = 'api'
 
@@ -27,4 +27,6 @@ urlpatterns = [
     path('products/<str:product_id>/purchase/', purchaseProductAPIView),
     path('products/<str:product_id>/restore/', restoreProductAPIView),
     path('products/notice/', noticeFromAppStoreAPIView),
+    path('worries/', worriesAPIView),
+    path('worries/<uuid:worry_id>/', worriesAPIView),
 ]

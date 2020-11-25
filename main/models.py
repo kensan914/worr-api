@@ -12,8 +12,11 @@ class NotificationType(models.TextChoices):
 
 
 class Notification(models.Model):
+    class Meta:
+        ordering = ['-date']
+
     def __str__(self):
-        return str(self.id)
+        return str(self.date)
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     recipient = models.ForeignKey('account.Account', verbose_name='受取人', on_delete=models.CASCADE, related_name='recipient_notification')

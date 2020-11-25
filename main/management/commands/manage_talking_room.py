@@ -4,8 +4,8 @@ from fullfii.chat.time_managers import manage_talking_time
 
 class Command(BaseCommand):
     help = '1分ごとに実行. ' \
-           'talking_roomを調べ、開始後24時間(1440分)経過していたらend処理を行う' \
-           '開始後23時間55分(1435分)経過していたらアラートを出す'
+           'talking_roomを調べ、開始後2週間(20160分)経過していたらend処理を行う' \
+           '開始後2週間経過5分前(20155分)達したらアラートを出す'
 
     def handle(self, *args, **options):
-        manage_talking_time(end_minutes=1440, alert_minutes=1435)
+        manage_talking_time(end_minutes=20160, alert_minutes=20155)

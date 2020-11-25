@@ -4,10 +4,11 @@ from rest_framework import views, status, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 import fullfii
-from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, MeSerializer
+from account.serializers import UserSerializer, FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, \
+    MeSerializer
 from chat.consumers import ChatConsumer
-from chat.models import Room
-from chat.serializers import RoomSerializer
+from chat.models import Room, Worry
+from chat.serializers import RoomSerializer, WorrySerializer, PostWorrySerializer
 from fullfii.db.account import get_all_accounts, increment_num_of_thunks, update_iap
 from account.models import Feature, GenreOfWorries, ScaleOfWorries, Account, Plan, Iap, IapStatus
 from fullfii.lib.iap import verify_receipt_at_first
@@ -41,7 +42,6 @@ profileParamsAPIView = ProfileParamsAPIView.as_view()
 
 
 class UsersAPIView(views.APIView):
-    permission_classes = (permissions.AllowAny,)
     paginate_by = 10
 
     def get(self, request, *args, **kwargs):
@@ -54,7 +54,8 @@ class UsersAPIView(views.APIView):
             else:
                 return Response({'error': 'not found user'}, status=status.HTTP_404_NOT_FOUND)
         else:
-            page = int(self.request.GET.get('page')) if self.request.GET.get('page') is not None else 1
+            _page = self.request.GET.get('page')
+            page = int(_page) if _page is not None and _page.isdecimal() else 1
             genre = self.request.GET.get('genre')
             genre_of_worries = GenreOfWorries.objects.filter(value=genre)
 
@@ -65,6 +66,13 @@ class UsersAPIView(views.APIView):
                 users = viewable_users
             users = users[self.paginate_by * (page - 1): self.paginate_by * page]
             users_data = UserSerializer(users, many=True).data
+
+            # paginate_byをクライアントで管理しない手法, v2に見送り
+            # res_data = {
+            #     'has_more': len(users_data) >= self.paginate_by,
+            #     'users': users_data,
+            # }
+            # return Response(res_data, status=status.HTTP_200_OK)
             return Response(users_data, status=status.HTTP_200_OK)
 
 
@@ -74,6 +82,7 @@ usersAPIView = UsersAPIView.as_view()
 class TalkRequestAPIView(views.APIView):
     def post(self, request, *args, **kwargs):
         target_user_id = self.kwargs.get('user_id')
+        is_worried = request.data['is_worried']
         room_id = uuid.uuid4()
 
         # create room
@@ -86,6 +95,7 @@ class TalkRequestAPIView(views.APIView):
                 id=room_id,
                 request_user=request.user,
                 response_user=target_user,
+                is_worried_request_user=is_worried,
             )
             room.save()
         else:
@@ -94,11 +104,20 @@ class TalkRequestAPIView(views.APIView):
             else:
                 return Response({'type': 'conflict', 'message': 'the room already exists'}, status=status.HTTP_409_CONFLICT)
 
+        worried_user_id = request.user.id if is_worried else target_user.id
+
         # set notification to target user
-        NotificationConsumer.send_notification(recipient=target_user, subject=request.user, notification_type=NotificationType.TALK_REQUEST, reference_id=room_id)
+        NotificationConsumer.send_notification(recipient=target_user, subject=request.user, notification_type=NotificationType.TALK_REQUEST, context={
+            'room_id': str(room_id),
+            'worried_user_id': str(worried_user_id),
+        })
 
         target_user_data = UserSerializer(target_user).data
-        return Response({'room_id': room_id, 'target_user': target_user_data}, status=status.HTTP_200_OK)
+        return Response({
+            'room_id': room_id,
+            'target_user': target_user_data,
+            'worried_user_id': worried_user_id,
+        }, status=status.HTTP_200_OK)
 
 
 talkRequestAPIView = TalkRequestAPIView.as_view()
@@ -150,7 +169,9 @@ class CancelTalkAPIView(TalkAPIView):
         room.delete()
 
         # set notification to target user
-        NotificationConsumer.send_notification(recipient=response_user, subject=request_user, notification_type=NotificationType.CANCEL_TALK_REQUEST_TO_RES, reference_id=room_id)
+        NotificationConsumer.send_notification(recipient=response_user, subject=request_user, notification_type=NotificationType.CANCEL_TALK_REQUEST_TO_RES, context={
+            'room_id': str(room_id),
+        })
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 
 
@@ -232,7 +253,8 @@ class TalkInfoAPIView(views.APIView):
 
         # talking rooms
         talking_rooms = Room.objects.filter(Q(request_user__id=request.user.id) | Q(response_user_id=request.user.id), is_start=True, is_end=False)
-        talking_room_ids = [str(talking_room.id) for talking_room in talking_rooms]
+        talking_rooms_data = RoomSerializer(talking_rooms, many=True, context={'me': request.user}).data
+        # talking_room_ids = [str(talking_room.id) for talking_room in talking_rooms]
 
         # end rooms and end time out rooms
         all_end_rooms = Room.objects.filter(Q(request_user__id=request.user.id, is_end_request=False) | Q(response_user_id=request.user.id, is_end_response=False), is_end=True)
@@ -246,13 +268,78 @@ class TalkInfoAPIView(views.APIView):
         return Response({
             'send_objects': rooms_i_sent_data,
             'in_objects': rooms_i_received_data,
-            'talking_room_ids': talking_room_ids,
+            'talking_rooms': talking_rooms_data,
             'end_room_ids': end_room_ids,
             'end_time_out_room_ids': end_time_out_room_ids,
         }, status=status.HTTP_200_OK)
 
 
 talkInfoAPIView = TalkInfoAPIView.as_view()
+
+
+class WorriesAPIView(views.APIView):
+    paginate_by = 10
+
+    def get(self, request, *args, **kwargs):
+        worry_id = self.kwargs.get('worry_id')
+
+        if worry_id:
+            worries = Worry.objects.filter(id=worry_id, active=True)
+            if worries.exists():
+                return Response(WorrySerializer(worries.first(), context={'me': request.user}).data, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'not found worries'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            _page = self.request.GET.get('page')
+            page = int(_page) if _page is not None and _page.isdecimal() else 1
+            genre = self.request.GET.get('genre')
+            genre_of_worries = GenreOfWorries.objects.filter(value=genre)
+
+            # ユーザ絞込み
+            viewable_users = fullfii.get_viewable_accounts(request.user)
+            if genre_of_worries.exists():
+                users = viewable_users.filter(genre_of_worries=genre_of_worries.first())
+            else:
+                users = viewable_users
+
+            worries = Worry.objects.filter(active=True, user__in=users)
+
+            worries = worries[self.paginate_by * (page - 1): self.paginate_by * page]
+            worries_data = WorrySerializer(worries, many=True, context={'me': request.user}).data
+            res_data = {
+                'has_more': len(worries_data) >= self.paginate_by,
+                'worries': worries_data,
+            }
+            return Response(res_data, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        data = {'user': request.user.id, **request.data}
+        post_worry_serializer = PostWorrySerializer(data=data)
+        if post_worry_serializer.is_valid():
+            post_worry_serializer.save()
+
+            worries = Worry.objects.filter(id=dict(post_worry_serializer.data)['id'])
+            if worries.exists():
+                return Response(
+                    WorrySerializer(worries.first(), context={'me': request.user}).data,
+                    status=status.HTTP_201_CREATED
+                )
+        return Response(post_worry_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        worry_id = self.kwargs.get('worry_id')
+
+        if worry_id:
+            worries = Worry.objects.filter(id=worry_id)
+            if worries.exists():
+                worry = worries.first()
+                worry.active = False
+                worry.save()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'error': 'not found worries'}, status=status.HTTP_404_NOT_FOUND)
+
+
+worriesAPIView = WorriesAPIView.as_view()
 
 
 class PurchaseProductAPIView(views.APIView):
