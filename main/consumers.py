@@ -26,13 +26,13 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             raise
 
-    async def disconnect(self, close_code):
+    async def disconnect(self, close_code=None):
         await self._disconnect(close_code)
         await self.channel_layer.group_discard(
             self.group_name,
             self.channel_name
         )
-        await self.close()
+        await self.close(close_code)
 
     @abstractmethod
     async def get_group_name(self, _id):
@@ -98,12 +98,20 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
 
     async def _disconnect(self, close_code):
         # change to offline
-        me = await self.get_user(self.me_id)
-        await self.change_status(me, Status.OFFLINE)
+        if self.me_id:
+            me = await self.get_user(self.me_id)
+            await self.change_status(me, Status.OFFLINE)
 
     async def receive_auth(self, received_data):
         me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+        if me is None:
+            # 401 Unauthorized
+            # NotificationConsumerではgroupを作成するのにme_idを用いるため、この瞬間groupが未作成であるため。
+            await self.close(4001)
+            print('401 Unauthorized')
+            return
         self.me_id = me.id
+
         self.group_name = await self.get_group_name(self.me_id)
         await self.channel_layer.group_add(
             self.group_name,
@@ -152,8 +160,11 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
             ### talk request ###  or  ### talk response ###  or  ### cancel talk request ###  or  ### end talk ###
             if notification.type == NotificationType.TALK_REQUEST or notification.type == NotificationType.TALK_RESPONSE or\
                     notification.type == NotificationType.CANCEL_TALK_REQUEST_TO_RES or notification.type == NotificationType.CANCEL_TALK_REQUEST_TO_REQ:
-                room_id = event['reference_id']
-                appended_data = {'room_id': room_id}
+                appended_data = event['context']
+                # if 'room_id' in event['context']:
+                #     appended_data.update({'room_id': event['context']['room_id']})
+                # if 'worried_user_id' in event['context']:
+                #     appended_data.update({'worried_user_id': event['context']['worried_user_id']})
 
             ### normal time ###
             else:
@@ -200,9 +211,9 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
         return _notification
 
     @classmethod
-    async def send_notification_async(cls, recipient, notification_type, subject=None, message='', reference_id=None):
+    async def send_notification_async(cls, recipient, notification_type, subject=None, message='', context=None):
         """
-        ex) await NotificationConsumer.send_notification_async(recipient=self.target_user, subject=self.me, notification_type=NotificationType.TALK_RESPONSE, reference_id=self.room_id)
+        ex) await NotificationConsumer.send_notification_async(recipient=self.target_user, subject=self.me, notification_type=NotificationType.TALK_RESPONSE, context={'room_id': str(self.room_id)})
         """
         notification = await cls.create_notification(recipient, subject, notification_type, message)
 
@@ -210,13 +221,13 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
         await channel_layer.group_send('notification_{}'.format(str(recipient.id)), {
             'type': 'notice',
             'notification_id': str(notification.id),
-            'reference_id': str(reference_id) if reference_id is not None else None,
+            'context': context if context is not None else None,
         })
 
     @classmethod
-    def send_notification(cls, recipient, notification_type, subject=None, message='', reference_id=None):
+    def send_notification(cls, recipient, notification_type, subject=None, message='', context=None):
         """
-        ex) NotificationConsumer.send_notification(recipient=response_user, subject=request_user, notification_type=NotificationType.CANCEL_TALK_REQUEST_TO_RES, reference_id=room_id)
+        ex) NotificationConsumer.send_notification(recipient=response_user, subject=request_user, notification_type=NotificationType.CANCEL_TALK_REQUEST_TO_RES, context={'room_id': str(room_id)})
         """
         notification = async_to_sync(cls.create_notification)(recipient, subject, notification_type, message)
 
@@ -224,5 +235,5 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
         async_to_sync(channel_layer.group_send)('notification_{}'.format(str(recipient.id)), {
             'type': 'notice',
             'notification_id': str(notification.id),
-            'reference_id': str(reference_id) if reference_id is not None else None,
+            'context': context if context is not None else None,
         })

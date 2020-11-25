@@ -52,8 +52,18 @@ def manage_talk_request_time(close_minutes=1440):
 
         # close talk request
         if elapsed_minutes > close_minutes:
-            NotificationConsumer.send_notification(recipient=not_started_room.request_user, subject=not_started_room.response_user,
-                                                   notification_type=NotificationType.CANCEL_TALK_REQUEST_TO_REQ, reference_id=not_started_room.id)
-            NotificationConsumer.send_notification(recipient=not_started_room.response_user, subject=not_started_room.request_user,
-                                                   notification_type=NotificationType.CANCEL_TALK_REQUEST_TO_RES, reference_id=not_started_room.id)
+            NotificationConsumer.send_notification(
+                recipient=not_started_room.request_user,
+                subject=not_started_room.response_user,
+                notification_type=NotificationType.CANCEL_TALK_REQUEST_TO_REQ,
+                context={
+                    'room_id': str(not_started_room.id),
+                })
+            NotificationConsumer.send_notification(
+                recipient=not_started_room.response_user,
+                subject=not_started_room.request_user,
+                notification_type=NotificationType.CANCEL_TALK_REQUEST_TO_RES,
+                context={
+                    'room_id': str(not_started_room.id),
+                })
             not_started_room.delete()
