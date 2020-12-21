@@ -1,7 +1,7 @@
 from config import settings
 
 ### URL ###
-BASE_URL = 'http://192.168.11.17:8080/' if settings.DEBUG else 'https://fullfii.com/'
+BASE_URL = 'http://192.168.11.18:8080/' if settings.DEBUG else 'https://fullfii.com/'
 
 
 ### IAP ###

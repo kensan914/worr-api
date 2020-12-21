@@ -3,6 +3,7 @@ from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.contrib.auth.models import _user_has_perm
 from django.db import models
 from django.utils import timezone
+from stdimage.models import StdImageField
 
 
 class AccountManager(BaseUserManager):
@@ -139,12 +140,17 @@ class Account(AbstractBaseUser):
 def get_upload_to(instance, filename):
     pass
     media_dir_1 = str(instance.user.id)
-    return 'profile_images/{0}/{1}' .format(media_dir_1, filename)
+    return 'profile_images/{0}/{1}'.format(media_dir_1, filename)
 
 
 class ProfileImage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    picture = models.ImageField(verbose_name='イメージ(original)', upload_to=get_upload_to)
+    # picture = models.ImageField(verbose_name='イメージ(original)', upload_to=get_upload_to)
+    picture = StdImageField(verbose_name='イメージ', upload_to=get_upload_to, variations={
+        'large': (600, 400),
+        'thumbnail': (100, 100, True),
+        'medium': (250, 250),
+    })
     # picture_250x = models.CharField(verbose_name='イメージ(250x)', max_length=1024, null=True)
     # picture_500x = models.CharField(verbose_name='イメージ(500x)', max_length=1024, null=True)
     upload_date = models.DateTimeField(verbose_name='アップロード日', default=timezone.now)

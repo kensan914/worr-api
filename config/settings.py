@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'bootstrap4',
     'django_cleanup',
     'channels',
+    'stdimage',
 ]
 
 MIDDLEWARE = [
