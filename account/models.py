@@ -6,6 +6,10 @@ from django.utils import timezone
 from stdimage.models import StdImageField
 
 
+def get_default_status():
+    pass
+
+
 class AccountManager(BaseUserManager):
     use_in_migration = True
 
@@ -25,8 +29,7 @@ class AccountManager(BaseUserManager):
         fields.setdefault('is_superuser', False)
         return self._create_user(**fields)
 
-    # TODO id消す
-    def create_superuser(self, _id, password, **extra_fields):
+    def create_superuser(self, password, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
@@ -35,7 +38,7 @@ class AccountManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser==True.')
 
-        return self._create_user(id=_id, password=password, **extra_fields)
+        return self._create_user(password=password, **extra_fields)
 
 
 class ParamsModel(models.Model):
@@ -102,6 +105,7 @@ class IntroStep(models.Model):
 
     def __str__(self):
         return str(self.key)
+
 
 class Account(AbstractBaseUser):
     class Meta:

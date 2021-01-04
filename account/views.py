@@ -8,6 +8,8 @@ from account.serializers import SignupSerializer, MeSerializer, PatchMeSerialize
 from account.models import ProfileImage, Feature, GenreOfWorries, ScaleOfWorries, IntroStep, Account
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
+from account.v2.serializers import MeV2Serializer
+
 
 class SignupAPIView(views.APIView):
     """
@@ -39,7 +41,7 @@ class SignupAPIView(views.APIView):
                         payload = jwt_payload_handler(me)
                         token = jwt_encode_handler(payload)
                         data = {
-                            'me': MeSerializer(me).data,
+                            'me': MeV2Serializer(me).data,
                             'token': str(token),
                         }
                         return Response(data, status=status.HTTP_201_CREATED)
@@ -80,21 +82,24 @@ authUpdateAPIView = AuthUpdateAPIView.as_view()
 
 
 class MeAPIView(views.APIView):
+    Serializer = MeSerializer
+    PatchSerializer = PatchMeSerializer
+
     def get(self, request):
-        serializer = MeSerializer(request.user)
+        serializer = self.Serializer(request.user)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request, *args, **kwargs):
         me = self.patch_params(request.data, request.user)
         if me is not None:
-            return Response(MeSerializer(me).data, status=status.HTTP_200_OK)
+            return Response(self.Serializer(me).data, status=status.HTTP_200_OK)
 
-        result_patch_intro_step = self.patch_intro_step(request.data, request.user)
+        # result_patch_intro_step = self.patch_intro_step(request.data, request.user)
 
-        serializer = PatchMeSerializer(instance=request.user, data=request.data, partial=True)
+        serializer = self.PatchSerializer(instance=request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(MeSerializer(request.user).data, status=status.HTTP_200_OK)
+            return Response(self.Serializer(request.user).data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @classmethod
@@ -152,7 +157,6 @@ class MeAPIView(views.APIView):
                 request_user.intro_step.set(intro_step_objects)
                 request_user.save()
 
-
     def delete(self, request):
         request.user.is_active = False
         request.user.email = '{}-deleted'.format(request.user.id)
@@ -165,6 +169,7 @@ meAPIView = MeAPIView.as_view()
 
 class ProfileImageAPIView(views.APIView):
     parser_classes = [MultiPartParser]
+    Serializer = MeSerializer
 
     def post(self, request, *args, **kwargs):
         request_data = {'picture': request.data['image'], 'user': request.user.id}
@@ -175,7 +180,7 @@ class ProfileImageAPIView(views.APIView):
 
         if profile_image_serializer.is_valid():
             profile_image_serializer.save()
-            return Response(MeSerializer(request.user).data, status=status.HTTP_201_CREATED)
+            return Response(self.Serializer(request.user).data, status=status.HTTP_201_CREATED)
         else:
             return Response(profile_image_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

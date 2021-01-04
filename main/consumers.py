@@ -237,3 +237,25 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
             'notification_id': str(notification.id),
             'context': context if context is not None else None,
         })
+
+    # only use v2
+    async def notice_talk(self, event):
+        try:
+            appended_data = event['context']
+            data = {'type': 'notice_talk'}
+            data.update(appended_data)
+            await self.send(text_data=json.dumps(data))
+        except Exception as e:
+            raise
+
+    # only use v2
+    @classmethod
+    def send_talk_notification(cls, recipient, context=None):
+        """
+        ex) NotificationConsumer.send_talk_notification(recipient=user, context={'room_id': str(room_id)})
+        """
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)('notification_{}'.format(str(recipient.id)), {
+            'type': 'notice_talk',
+            'context': context if context is not None else None,
+        })

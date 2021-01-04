@@ -27,35 +27,14 @@ class ProfileParamsAPIView(views.APIView):
             record_obj[record_data['key']] = record_data
         return record_obj
 
-    def get_text_choices(self, text_choices):
-        text_choices_obj = {}
-
-        tc = text_choices
-        for name, value, label in zip(tc.names, tc.values, tc.labels):
-            text_choices_obj[value] = {
-                'key': value,
-                'name': name,
-                'label': label,
-            }
-        return text_choices_obj
-
-
     def get(self, request, *args, **kwargs):
-        # profile params
-        # features_obj = self.get_profile_params(FeaturesSerializer, Feature)
+        features_obj = self.get_profile_params(FeaturesSerializer, Feature)
         genre_of_worries_obj = self.get_profile_params(GenreOfWorriesSerializer, GenreOfWorries)
-        # scale_of_worries_obj = self.get_profile_params(ScaleOfWorriesSerializer, ScaleOfWorries)
-
-        # text choices
-        gender_obj = self.get_text_choices(Gender)
-        job_obj = self.get_text_choices(Job)
-
+        scale_of_worries_obj = self.get_profile_params(ScaleOfWorriesSerializer, ScaleOfWorries)
         return Response({
-            # 'features': features_obj,
+            'features': features_obj,
             'genre_of_worries': genre_of_worries_obj,
-            # 'scale_of_worries': scale_of_worries_obj,
-            'gender': gender_obj,
-            'job': job_obj,
+            'scale_of_worries': scale_of_worries_obj,
         }, status.HTTP_200_OK)
 
 
@@ -372,6 +351,7 @@ class PurchaseProductAPIView(views.APIView):
         response = verify_receipt_at_first(product_id, receipt, request.user)
         return response
 
+
 purchaseProductAPIView = PurchaseProductAPIView.as_view()
 
 
@@ -383,6 +363,7 @@ class RestoreProductAPIView(views.APIView):
         # verify receipt
         response = verify_receipt_at_first(product_id, receipt, request.user, is_restore=True)
         return response
+
 
 restoreProductAPIView = RestoreProductAPIView.as_view()
 
