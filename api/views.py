@@ -10,7 +10,7 @@ from chat.consumers import ChatConsumer
 from chat.models import Room, Worry
 from chat.serializers import RoomSerializer, WorrySerializer, PostWorrySerializer
 from fullfii.db.account import get_all_accounts, increment_num_of_thunks, update_iap
-from account.models import Feature, GenreOfWorries, ScaleOfWorries, Account, Plan, Iap, IapStatus
+from account.models import Feature, GenreOfWorries, ScaleOfWorries, Account, Plan, Iap, IapStatus, Gender, Job
 from fullfii.lib.iap import verify_receipt_at_first
 from fullfii.lib.support import cvt_tz_str_to_datetime
 from main.consumers import NotificationConsumer
@@ -27,14 +27,35 @@ class ProfileParamsAPIView(views.APIView):
             record_obj[record_data['key']] = record_data
         return record_obj
 
+    def get_text_choices(self, text_choices):
+        text_choices_obj = {}
+
+        tc = text_choices
+        for name, value, label in zip(tc.names, tc.values, tc.labels):
+            text_choices_obj[value] = {
+                'key': value,
+                'name': name,
+                'label': label,
+            }
+        return text_choices_obj
+
+
     def get(self, request, *args, **kwargs):
-        features_obj = self.get_profile_params(FeaturesSerializer, Feature)
+        # profile params
+        # features_obj = self.get_profile_params(FeaturesSerializer, Feature)
         genre_of_worries_obj = self.get_profile_params(GenreOfWorriesSerializer, GenreOfWorries)
-        scale_of_worries_obj = self.get_profile_params(ScaleOfWorriesSerializer, ScaleOfWorries)
+        # scale_of_worries_obj = self.get_profile_params(ScaleOfWorriesSerializer, ScaleOfWorries)
+
+        # text choices
+        gender_obj = self.get_text_choices(Gender)
+        job_obj = self.get_text_choices(Job)
+
         return Response({
-            'features': features_obj,
+            # 'features': features_obj,
             'genre_of_worries': genre_of_worries_obj,
-            'scale_of_worries': scale_of_worries_obj,
+            # 'scale_of_worries': scale_of_worries_obj,
+            'gender': gender_obj,
+            'job': job_obj,
         }, status.HTTP_200_OK)
 
 

@@ -4,13 +4,37 @@ from rest_framework import serializers
 from rest_framework_jwt.serializers import JSONWebTokenSerializer, jwt_payload_handler, jwt_encode_handler
 import fullfii
 from account.models import Account, ProfileImage, Plan, Status, Feature, GenreOfWorries, ScaleOfWorries, StatusColor, \
-    Gender, IntroStep
+    Gender, IntroStep, Job
+
+
+class ProfileImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileImage
+        fields = ('picture', 'user')
+
+
+class FeaturesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feature
+        exclude = ['id']
+
+
+class GenreOfWorriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GenreOfWorries
+        exclude = ['id']
+
+
+class ScaleOfWorriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScaleOfWorries
+        exclude = ['id']
 
 
 class AuthSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'username', 'email', 'password')
+        fields = ('id', 'username', 'password', 'gender', 'job')
 
     password = serializers.CharField(write_only=True, min_length=8, max_length=30)
 
@@ -25,6 +49,10 @@ class SignupSerializer(AuthSerializer):
 
 
 class AuthUpdateSerializer(AuthSerializer):
+    class Meta:
+        model = Account
+        fields = ('id', 'username', 'password', 'gender', 'job', 'email')
+
     def update(self, instance, validated_data):
         if 'password' in validated_data:
             instance.set_password(validated_data['password'])
@@ -55,39 +83,16 @@ class LoginSerializer(JSONWebTokenSerializer):
             raise serializers.ValidationError('このメールアドレスを持ったアカウントは存在しません。')
 
 
-class ProfileImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProfileImage
-        fields = ('picture', 'user')
-
-
-class FeaturesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Feature
-        exclude = ['id']
-
-
-class GenreOfWorriesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GenreOfWorries
-        exclude = ['id']
-
-
-class ScaleOfWorriesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ScaleOfWorries
-        exclude = ['id']
-
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'status', 'features', 'genre_of_worries', 'scale_of_worries', 'image', 'me')
+        fields = ('id', 'name', 'birthday', 'age', 'gender', 'job', 'introduction', 'num_of_thunks', 'status', 'features', 'genre_of_worries', 'scale_of_worries', 'image', 'me')
 
     name = serializers.CharField(source='username')
     birthday = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
     gender = serializers.SerializerMethodField()
+    job = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     features = FeaturesSerializer(many=True)
     genre_of_worries = GenreOfWorriesSerializer(many=True)
@@ -106,10 +111,18 @@ class UserSerializer(serializers.ModelSerializer):
         else: return '-'
 
     def get_gender(self, obj):
-        if obj.gender:
-            return {'key': Gender(obj.gender).value, 'label': Gender(obj.gender).label}
+        if obj.gender in Gender.values:
+            g = Gender(obj.gender)
         else:
-            return {'key': '', 'label': '性別未設定'}
+            g = Gender.SECRET
+        return {'key': g.value, 'name': g.name, 'label': g.label}
+
+    def get_job(self, obj):
+        if obj.job in Job.values:
+            j = Job(obj.job)
+        else:
+            j = Job.SECRET
+        return {'key': j.value, 'name': j.name, 'label': j.label}
 
     def get_status(self, obj):
         return {'key': Status(obj.status).value, 'label': Status(obj.status).label, 'color': StatusColor(obj.status).label}
@@ -123,7 +136,8 @@ class UserSerializer(serializers.ModelSerializer):
 class MeSerializer(UserSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'email', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'intro_step', 'intro_step', 'image', 'me', 'can_talk_heterosexual')
+        # fields = ('id', 'name', 'email', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'intro_step', 'intro_step', 'image', 'me', 'can_talk_heterosexual')
+        fields = ('id', 'name', 'birthday', 'age', 'gender', 'job', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'intro_step', 'intro_step', 'image', 'me', 'can_talk_heterosexual')
 
     plan = serializers.SerializerMethodField()
     me = serializers.BooleanField(default=True)
@@ -144,7 +158,8 @@ class MeSerializer(UserSerializer):
 class PatchMeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('name', 'email', 'birthday', 'introduction', 'can_talk_heterosexual', 'gender')
+        # fields = ('name', 'email', 'birthday', 'introduction', 'can_talk_heterosexual', 'gender')
+        fields = ('name', 'birthday', 'introduction', 'can_talk_heterosexual', 'gender')
 
     name = serializers.CharField(source='username')
 
