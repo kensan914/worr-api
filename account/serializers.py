@@ -136,8 +136,7 @@ class UserSerializer(serializers.ModelSerializer):
 class MeSerializer(UserSerializer):
     class Meta:
         model = Account
-        # fields = ('id', 'name', 'email', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'intro_step', 'intro_step', 'image', 'me', 'can_talk_heterosexual')
-        fields = ('id', 'name', 'birthday', 'age', 'gender', 'job', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'intro_step', 'intro_step', 'image', 'me', 'can_talk_heterosexual')
+        fields = ('id', 'name', 'email', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'intro_step', 'intro_step', 'image', 'me', 'can_talk_heterosexual')
 
     plan = serializers.SerializerMethodField()
     me = serializers.BooleanField(default=True)
@@ -158,8 +157,7 @@ class MeSerializer(UserSerializer):
 class PatchMeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        # fields = ('name', 'email', 'birthday', 'introduction', 'can_talk_heterosexual', 'gender')
-        fields = ('name', 'birthday', 'introduction', 'can_talk_heterosexual', 'gender')
+        fields = ('name', 'email', 'birthday', 'introduction', 'can_talk_heterosexual', 'gender')
 
     name = serializers.CharField(source='username')
 

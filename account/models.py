@@ -6,6 +6,10 @@ from django.utils import timezone
 from stdimage.models import StdImageField
 
 
+def get_default_status():
+    pass
+
+
 class AccountManager(BaseUserManager):
     use_in_migration = True
 
@@ -25,8 +29,7 @@ class AccountManager(BaseUserManager):
         fields.setdefault('is_superuser', False)
         return self._create_user(**fields)
 
-    # TODO id消す
-    def create_superuser(self, _id, password, **extra_fields):
+    def create_superuser(self, password, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
@@ -35,7 +38,7 @@ class AccountManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser==True.')
 
-        return self._create_user(id=_id, password=password, **extra_fields)
+        return self._create_user(password=password, **extra_fields)
 
 
 class ParamsModel(models.Model):
@@ -103,6 +106,7 @@ class IntroStep(models.Model):
     def __str__(self):
         return str(self.key)
 
+
 class Account(AbstractBaseUser):
     class Meta:
         verbose_name = 'アカウント'
@@ -118,9 +122,9 @@ class Account(AbstractBaseUser):
     introduction = models.CharField(verbose_name='自己紹介', max_length=250, blank=True)
     num_of_thunks = models.IntegerField(verbose_name='ありがとう', default=0)
     plan = models.CharField(verbose_name='プラン', max_length=100, choices=Plan.choices, default=Plan.FREE)
-    can_talk_heterosexual = models.BooleanField(verbose_name='異性との相談を許可', default=False)
-    blocked_accounts = models.ManyToManyField('self', verbose_name='ブロックアカウント', blank=True, symmetrical=False, related_name='block_me_accounts')
     genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='悩み', blank=True)
+    blocked_accounts = models.ManyToManyField('self', verbose_name='ブロックアカウント', blank=True, symmetrical=False, related_name='block_me_accounts')
+    talked_accounts = models.ManyToManyField('self', verbose_name='トーク済みアカウント', blank=True, symmetrical=False, related_name='talked_me_accounts')
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -135,6 +139,7 @@ class Account(AbstractBaseUser):
     status = models.CharField(verbose_name='(not used)ステータス', max_length=100, choices=Status.choices, default=Status.OFFLINE)
     is_online = models.BooleanField(verbose_name='(not used)オンライン状況', default=False)
     intro_step = models.ManyToManyField(IntroStep, verbose_name='(not used)イントロステップ', blank=True)
+    can_talk_heterosexual = models.BooleanField(verbose_name='異性との相談を許可', default=False)
     ### not used ###
 
     USERNAME_FIELD = 'email'
