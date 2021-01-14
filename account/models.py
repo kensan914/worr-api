@@ -122,9 +122,9 @@ class Account(AbstractBaseUser):
     introduction = models.CharField(verbose_name='自己紹介', max_length=250, blank=True)
     num_of_thunks = models.IntegerField(verbose_name='ありがとう', default=0)
     plan = models.CharField(verbose_name='プラン', max_length=100, choices=Plan.choices, default=Plan.FREE)
-    can_talk_heterosexual = models.BooleanField(verbose_name='異性との相談を許可', default=False)
-    blocked_accounts = models.ManyToManyField('self', verbose_name='ブロックアカウント', blank=True, symmetrical=False, related_name='block_me_accounts')
     genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='悩み', blank=True)
+    blocked_accounts = models.ManyToManyField('self', verbose_name='ブロックアカウント', blank=True, symmetrical=False, related_name='block_me_accounts')
+    talked_accounts = models.ManyToManyField('self', verbose_name='トーク済みアカウント', blank=True, symmetrical=False, related_name='talked_me_accounts')
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -139,6 +139,7 @@ class Account(AbstractBaseUser):
     status = models.CharField(verbose_name='(not used)ステータス', max_length=100, choices=Status.choices, default=Status.OFFLINE)
     is_online = models.BooleanField(verbose_name='(not used)オンライン状況', default=False)
     intro_step = models.ManyToManyField(IntroStep, verbose_name='(not used)イントロステップ', blank=True)
+    can_talk_heterosexual = models.BooleanField(verbose_name='異性との相談を許可', default=False)
     ### not used ###
 
     USERNAME_FIELD = 'email'

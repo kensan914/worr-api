@@ -132,6 +132,7 @@ class BlockAPIView(views.APIView):
             return Response({'type': 'have_already_blocked', 'message': 'すでに{}さんはブロックされています。'.format(will_block_user.username)}, status=status.HTTP_409_CONFLICT)
         else:
             request.user.blocked_accounts.add(will_block_user)
+            request.user.save()
             return Response(status=status.HTTP_200_OK)
 
 

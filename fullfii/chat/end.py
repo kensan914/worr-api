@@ -4,6 +4,24 @@ from account.models import Status
 from chat.models import Room
 
 
+def end_talk_v2(room):
+    """
+    v2. トークを終了するときに1回だけ実行. set talked_accounts.
+    :param room:
+    :return:
+    """
+    room.is_end = True
+    room.ended_at = timezone.now()
+    room.save()
+
+    speaker = room.speaker_ticket.owner
+    listener = room.listener_ticket.owner
+    speaker.talked_accounts.add(listener)
+    speaker.save()
+    listener.talked_accounts.add(speaker)
+    listener.save()
+
+
 def end_talk(room, is_first_time, user):
     """
     トークを終了するときにリクエストユーザ、レスポンスユーザで2回実行. roomレコードの変更

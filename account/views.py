@@ -3,6 +3,8 @@ from rest_framework import views, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
+
+import fullfii
 from account.serializers import SignupSerializer, MeSerializer, PatchMeSerializer, ProfileImageSerializer, \
     FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, AuthUpdateSerializer
 from account.models import ProfileImage, Feature, GenreOfWorries, ScaleOfWorries, IntroStep, Account
@@ -44,6 +46,8 @@ class SignupAPIView(views.APIView):
                             'me': MeV2Serializer(me).data,
                             'token': str(token),
                         }
+
+                        fullfii.on_signup_success(me)
                         return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

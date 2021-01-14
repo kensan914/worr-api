@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from account.models import Plan, Iap, IapStatus
 import requests
 from account.serializers import MeSerializer
+from account.v2.serializers import MeV2Serializer
 from fullfii import create_iap, update_iap
 from fullfii.lib.constants import IAP_SHARED_SECRET, IAP_STORE_API_URL, IAP_STORE_API_URL_SANDBOX, BUNDLE_ID
 from fullfii.lib.support import cvt_tz_str_to_datetime
@@ -153,7 +154,7 @@ def verify_receipt_at_first(product_id, receipt, user, is_restore=False):
 
     user.plan = product_id
     user.save()
-    return Response({'status': 'success', 'profile': MeSerializer(user).data}, status=status.HTTP_200_OK)
+    return Response({'status': 'success', 'profile': MeV2Serializer(user).data}, status=status.HTTP_200_OK)
 
 
 def verify_receipt_when_update(verified_iap):
