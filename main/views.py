@@ -24,3 +24,12 @@ class TermsOfServiceView(BaseView):
 
 
 termsOfServiceView = TermsOfServiceView.as_view()
+
+
+class PrivacyPolicyView(BaseView):
+    html_path = 'privacypolicy.html'
+    def get(self, request, *args, **kwargs):
+        return render(request, self.html_path, self.context)
+
+
+privacyPolicyView = PrivacyPolicyView.as_view()

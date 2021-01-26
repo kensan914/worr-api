@@ -132,3 +132,5 @@ media/
 migrations
 
 !fullfii/lib
+
+.DS_Store
