@@ -3,17 +3,22 @@ from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.contrib.auth.models import _user_has_perm
 from django.db import models
 from django.utils import timezone
+from stdimage.models import StdImageField
+
+
+def get_default_status():
+    pass
 
 
 class AccountManager(BaseUserManager):
     use_in_migration = True
 
     def _create_user(self, **fields):
-        if not 'email' in fields:
-            raise ValueError('The given email must be set')
+        # if not 'id' in fields:
+        #     raise ValueError('The given id must be set')
         if not 'password' in fields:
             raise ValueError('The given password must be set')
-        fields['email'] = self.normalize_email(fields['email'])
+        # fields['email'] = self.normalize_email(fields['email'])
         user = self.model(**fields)
         user.set_password(fields['password'])
         user.save(using=self._db)
@@ -24,7 +29,7 @@ class AccountManager(BaseUserManager):
         fields.setdefault('is_superuser', False)
         return self._create_user(**fields)
 
-    def create_superuser(self, email, password, **extra_fields):
+    def create_superuser(self, password, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
@@ -33,7 +38,7 @@ class AccountManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser==True.')
 
-        return self._create_user(email=email, password=password, **extra_fields)
+        return self._create_user(password=password, **extra_fields)
 
 
 class ParamsModel(models.Model):
@@ -82,6 +87,17 @@ class Plan(models.TextChoices):
 class Gender(models.TextChoices):
     MALE = 'male', '男性'
     FEMALE = 'female', '女性'
+    SECRET = 'secret', '内緒'
+
+
+class Job(models.TextChoices):
+    HS_STUDENT = 'hs-student', '高校生'
+    COLLEGE_STUDENT = 'college-student', '大学生'
+    HOUSEWIFE = 'housewife', '主婦'
+    FREETER = 'freeter', 'フリーター'
+    # SOCIETY = 'society', '社会人'
+    OTHER = 'other', 'その他'
+    SECRET = 'secret', '内緒'
 
 
 class IntroStep(models.Model):
@@ -90,34 +106,42 @@ class IntroStep(models.Model):
     def __str__(self):
         return str(self.key)
 
+
 class Account(AbstractBaseUser):
     class Meta:
         verbose_name = 'アカウント'
         ordering = ['-date_joined']
 
+    def __str__(self):
+        return str(self.username)
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(verbose_name='ユーザネーム', max_length=15)
-    email = models.EmailField(verbose_name='メールアドレス', max_length=255, unique=True)
-    birthday = models.DateField(verbose_name='生年月日', null=True, blank=True)
-    gender = models.CharField(verbose_name='性別', max_length=100, choices=Gender.choices, null=True, blank=True)
+    gender = models.CharField(verbose_name='性別', max_length=100, choices=Gender.choices, default=Gender.SECRET)
+    job = models.CharField(verbose_name='職業', max_length=100, choices=Job.choices, default=Job.SECRET)
     introduction = models.CharField(verbose_name='自己紹介', max_length=250, blank=True)
     num_of_thunks = models.IntegerField(verbose_name='ありがとう', default=0)
-    is_online = models.BooleanField(verbose_name='オンライン状況', default=False)
-    status = models.CharField(verbose_name='ステータス', max_length=100, choices=Status.choices, default=Status.OFFLINE)
     plan = models.CharField(verbose_name='プラン', max_length=100, choices=Plan.choices, default=Plan.FREE)
-    can_talk_heterosexual = models.BooleanField(verbose_name='異性との相談を許可', default=False)
-    blocked_accounts = models.ManyToManyField("self", verbose_name='ブロックアカウント', blank=True, symmetrical=False, related_name='block_me_accounts')
-    features = models.ManyToManyField(Feature, verbose_name='特徴', blank=True)
-    genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='共感できる悩み', blank=True)
-    scale_of_worries = models.ManyToManyField(ScaleOfWorries, verbose_name='話せる悩みの大きさ', blank=True)
-    intro_step = models.ManyToManyField(IntroStep, verbose_name='イントロステップ', blank=True)
+    genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='悩み', blank=True)
+    blocked_accounts = models.ManyToManyField('self', verbose_name='ブロックアカウント', blank=True, symmetrical=False, related_name='block_me_accounts')
+    talked_accounts = models.ManyToManyField('self', verbose_name='トーク済みアカウント', blank=True, symmetrical=False, related_name='talked_me_accounts')
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     date_joined = models.DateTimeField(verbose_name='登録日', default=timezone.now)
 
-    EMAIL_FIELD = 'email'
+    ### not used ###
+    email = models.EmailField(verbose_name='(not used)メールアドレス', max_length=255, null=True, unique=True)
+    features = models.ManyToManyField(Feature, verbose_name='(not used)特徴', blank=True)
+    scale_of_worries = models.ManyToManyField(ScaleOfWorries, verbose_name='(not used)話せる悩みの大きさ', blank=True)
+    birthday = models.DateField(verbose_name='(not used)生年月日', null=True, blank=True)
+    status = models.CharField(verbose_name='(not used)ステータス', max_length=100, choices=Status.choices, default=Status.OFFLINE)
+    is_online = models.BooleanField(verbose_name='(not used)オンライン状況', default=False)
+    intro_step = models.ManyToManyField(IntroStep, verbose_name='(not used)イントロステップ', blank=True)
+    can_talk_heterosexual = models.BooleanField(verbose_name='異性との相談を許可', default=False)
+    ### not used ###
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
@@ -139,12 +163,17 @@ class Account(AbstractBaseUser):
 def get_upload_to(instance, filename):
     pass
     media_dir_1 = str(instance.user.id)
-    return 'profile_images/{0}/{1}' .format(media_dir_1, filename)
+    return 'profile_images/{0}/{1}'.format(media_dir_1, filename)
 
 
 class ProfileImage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    picture = models.ImageField(verbose_name='イメージ(original)', upload_to=get_upload_to)
+    # picture = models.ImageField(verbose_name='イメージ(original)', upload_to=get_upload_to)
+    picture = StdImageField(verbose_name='イメージ', upload_to=get_upload_to, variations={
+        'large': (600, 400),
+        'thumbnail': (100, 100, True),
+        'medium': (250, 250),
+    })
     # picture_250x = models.CharField(verbose_name='イメージ(250x)', max_length=1024, null=True)
     # picture_500x = models.CharField(verbose_name='イメージ(500x)', max_length=1024, null=True)
     upload_date = models.DateTimeField(verbose_name='アップロード日', default=timezone.now)

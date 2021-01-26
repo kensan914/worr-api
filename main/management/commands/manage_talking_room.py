@@ -8,4 +8,6 @@ class Command(BaseCommand):
            '開始後2週間経過5分前(20155分)達したらアラートを出す'
 
     def handle(self, *args, **options):
-        manage_talking_time(end_minutes=20160, alert_minutes=20155)
+        pass
+        # v2.0.0では見送り
+        # manage_talking_time(end_minutes=20160, alert_minutes=20155)

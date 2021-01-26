@@ -1,8 +1,11 @@
 ### chat ###
 from .chat.end import *
+from .chat.start import *
+from .chat.matching import *
 
 ### db ###
 from .db.account import *
+from .db.chat import *
 from .db.initDB import *
 
 ### lib ###

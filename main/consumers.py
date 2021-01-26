@@ -6,7 +6,7 @@ import json
 from channels.layers import get_channel_layer
 from account.models import Account, Status
 from account.serializers import MeSerializer, UserSerializer
-import fullfii
+from fullfii.lib.authSupport import authenticate_jwt
 from main.serializers import NotificationSerializer
 from main.models import Notification, NotificationType
 
@@ -103,7 +103,7 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
             await self.change_status(me, Status.OFFLINE)
 
     async def receive_auth(self, received_data):
-        me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+        me = await authenticate_jwt(received_data['token'], is_async=True)
         if me is None:
             # 401 Unauthorized
             # NotificationConsumerではgroupを作成するのにme_idを用いるため、この瞬間groupが未作成であるため。
@@ -129,7 +129,7 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
 
     async def _receive(self, received_data):
         received_type = received_data['type']
-        me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+        me = await authenticate_jwt(received_data['token'], is_async=True)
 
         if received_type == 'get':
             page = received_data['page']

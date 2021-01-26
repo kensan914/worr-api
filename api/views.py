@@ -10,7 +10,7 @@ from chat.consumers import ChatConsumer
 from chat.models import Room, Worry
 from chat.serializers import RoomSerializer, WorrySerializer, PostWorrySerializer
 from fullfii.db.account import get_all_accounts, increment_num_of_thunks, update_iap
-from account.models import Feature, GenreOfWorries, ScaleOfWorries, Account, Plan, Iap, IapStatus
+from account.models import Feature, GenreOfWorries, ScaleOfWorries, Account, Plan, Iap, IapStatus, Gender, Job
 from fullfii.lib.iap import verify_receipt_at_first
 from fullfii.lib.support import cvt_tz_str_to_datetime
 from main.consumers import NotificationConsumer
@@ -132,6 +132,7 @@ class BlockAPIView(views.APIView):
             return Response({'type': 'have_already_blocked', 'message': 'すでに{}さんはブロックされています。'.format(will_block_user.username)}, status=status.HTTP_409_CONFLICT)
         else:
             request.user.blocked_accounts.add(will_block_user)
+            request.user.save()
             return Response(status=status.HTTP_200_OK)
 
 
@@ -351,6 +352,7 @@ class PurchaseProductAPIView(views.APIView):
         response = verify_receipt_at_first(product_id, receipt, request.user)
         return response
 
+
 purchaseProductAPIView = PurchaseProductAPIView.as_view()
 
 
@@ -362,6 +364,7 @@ class RestoreProductAPIView(views.APIView):
         # verify receipt
         response = verify_receipt_at_first(product_id, receipt, request.user, is_restore=True)
         return response
+
 
 restoreProductAPIView = RestoreProductAPIView.as_view()
 

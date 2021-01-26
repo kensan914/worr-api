@@ -1,8 +1,11 @@
+import random
 import jwt
 from asgiref.sync import sync_to_async
 from rest_framework import exceptions
 from account.models import Account
 from rest_framework_jwt.utils import jwt_decode_handler
+from chat.models import TalkTicket
+from fullfii import start_matching, create_talk_ticket
 
 
 def authenticate_jwt(jwt_token, is_async=False):
@@ -29,3 +32,15 @@ def authenticate_jwt(jwt_token, is_async=False):
     except (jwt.ExpiredSignatureError, jwt.DecodeError, jwt.InvalidSignatureError, KeyError, jwt.ExpiredSignatureError,):
         msg = "failed jwt authentication"
         raise exceptions.AuthenticationFailed(msg)
+
+
+def on_signup_success(me):
+    """
+    signup成功時に実行. talk ticket作成 & start_matching()
+    :param me:
+    :return:
+    """
+    for worry in me.genre_of_worries.all():
+        create_talk_ticket(me, worry)
+
+    start_matching()

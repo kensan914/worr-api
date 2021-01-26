@@ -1,5 +1,5 @@
 from django.db.models import Q
-from account.models import Account, Iap, IapStatus
+from account.models import Account, Iap, IapStatus, Gender
 
 
 def get_all_accounts(me=None):
@@ -15,7 +15,7 @@ def get_all_accounts(me=None):
 def get_viewable_accounts(me, is_exclude_me=False):
     """
     全ての利用者アカウント(性別・ブロックを考慮)を取得. is_exclude_me指定で除外可
-    0. gender==Noneの場合、1以降は無視しall_accountsを返す
+    0. genderが"内緒"の場合、1・2は無視しall_accountsを返す(ブロック処理はする)
     1. 自分の「異性との相談を許可」がFalseの場合, 同性のみ.
     2. 自分の「異性との相談を許可」がTrueの場合, 全利用者アカウントから「異性との相談を許可」がTrue, または同性をfilter
     3. ブロックしたユーザをexclude
@@ -26,19 +26,24 @@ def get_viewable_accounts(me, is_exclude_me=False):
     blocked_accounts = me.blocked_accounts
     block_me_accounts = me.block_me_accounts
 
-    all_accounts = get_all_accounts(me=me if is_exclude_me else None).exclude(Q(birthday=None) | Q(gender=None))
-    if not gender:  # 0
-        return all_accounts
+    def exclude_block_accounts(_accounts):
+        if blocked_accounts:  # 3
+            _accounts = _accounts.exclude(id__in=blocked_accounts.all().values_list('id', flat=True))
+        if block_me_accounts:  # 4
+            _accounts = _accounts.exclude(id__in=block_me_accounts.all().values_list('id', flat=True))
+        return _accounts
+
+    # all_accounts = get_all_accounts(me=me if is_exclude_me else None).exclude(Q(birthday=None) | Q(gender=None))
+    # birthday, gender未設定でも表示対象に加える
+    all_accounts = get_all_accounts(me=me if is_exclude_me else None)
+    if gender == Gender.SECRET:  # 0
+        return exclude_block_accounts(all_accounts)
     if not can_talk_heterosexual:  # 1
         accounts = all_accounts.filter(gender=gender)
     else:  # 2
         accounts = all_accounts.filter(Q(can_talk_heterosexual=True) | Q(gender=gender))
-    if blocked_accounts:  # 3
-        accounts = accounts.exclude(id__in=blocked_accounts.all().values_list('id', flat=True))
-    if block_me_accounts:  # 4
-        accounts = accounts.exclude(id__in=block_me_accounts.all().values_list('id', flat=True))
 
-    return accounts
+    return exclude_block_accounts(accounts)
 
 
 def increment_num_of_thunks(user):
