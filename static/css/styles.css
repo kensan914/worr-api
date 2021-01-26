@@ -348,7 +348,7 @@ Hero
 ========================================================================== */
 .hero {
   min-height: 750px;
-  background: url("../img/having_phone.png") center center;
+  background: url("../images/having_phone.png") center center;
   background-size: cover;
   position: relative; }
   .hero .down-arrow a {
