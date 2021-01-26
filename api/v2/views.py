@@ -144,11 +144,10 @@ closeTalkV2APIView = CloseTalkV2APIView.as_view()
 
 class WorryAPIView(views.APIView):
     def post(self, request, *args, **kwargs):
-        data = GenreOfWorriesSerializer(request.data['genre_of_worries'], many=True).data
-        will_add_worries = GenreOfWorries.objects.filter(key__in=[part_of_data['key'] for part_of_data in data])
-        if not will_add_worries.exists():
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        else:
+        if 'genre_of_worries' in request.data:
+            data = GenreOfWorriesSerializer(request.data['genre_of_worries'], many=True).data
+            will_add_worries = GenreOfWorries.objects.filter(key__in=[part_of_data['key'] for part_of_data in data])
+
             talk_tickets = TalkTicket.objects.filter(owner=request.user, is_active=True)
 
             # 追加
@@ -182,5 +181,7 @@ class WorryAPIView(views.APIView):
                 'removed_talk_ticket_keys': removed_talk_ticket_keys,
             }, status.HTTP_200_OK)
 
+        else:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 worryAPIView = WorryAPIView.as_view()
