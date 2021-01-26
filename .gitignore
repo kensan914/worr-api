@@ -27,11 +27,10 @@ db.sqlite3-journal
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
-lib/
+
 lib64/
 parts/
 sdist/
@@ -132,3 +131,5 @@ media/
 migrations
 
 !fullfii/lib
+
+.DS_Store
