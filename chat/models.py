@@ -35,8 +35,8 @@ class TalkingRoom(models.Model):
         return '{}{} - {}({})'.format(alert_msg, self.speaker_ticket.owner.username, self.listener_ticket.owner.username, self.speaker_ticket.worry.label)
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    speaker_ticket = models.ForeignKey('chat.TalkTicket', verbose_name='話し手talkTicket', on_delete=models.PROTECT, related_name='speaker_ticket_talking_room', null=True)
-    listener_ticket = models.ForeignKey('chat.TalkTicket', verbose_name='聞き手talkTicket', on_delete=models.PROTECT, related_name='listener_ticket_talking_room', null=True)
+    speaker_ticket = models.ForeignKey('chat.TalkTicket', verbose_name='話し手talkTicket', on_delete=models.CASCADE, related_name='speaker_ticket_talking_room', null=True)
+    listener_ticket = models.ForeignKey('chat.TalkTicket', verbose_name='聞き手talkTicket', on_delete=models.CASCADE, related_name='listener_ticket_talking_room', null=True)
     started_at = models.DateTimeField(verbose_name='トーク開始時間', default=timezone.now)
     is_alert = models.BooleanField(verbose_name='アラート済み', default=False)
     is_end = models.BooleanField(verbose_name='トーク終了状況', default=False)
