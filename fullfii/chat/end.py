@@ -1,7 +1,7 @@
 from django.db.models import Q
 from django.utils import timezone
 from account.models import Status
-from chat.models import Room
+from chat.models import Room, TalkStatus
 
 
 def end_talk_v2(room):
@@ -21,9 +21,15 @@ def end_talk_v2(room):
     listener.talked_accounts.add(speaker)
     listener.save()
 
+def end_talk_ticket(talk_ticket):
+    talk_ticket.status = TalkStatus.WAITING
+    talk_ticket.wait_start_time = timezone.now()  # reset wait_start_time
+    talk_ticket.save()
+
 
 def end_talk(room, is_first_time, user):
     """
+    only v1.
     トークを終了するときにリクエストユーザ、レスポンスユーザで2回実行. roomレコードの変更
     :param room:
     :param is_first_time: 初めてならTrue. 既にroomのend処理がなされていたらFalse
@@ -45,6 +51,7 @@ def end_talk(room, is_first_time, user):
 
 def change_status_of_talk(room, user_id=None):
     """
+    only v1.
     トークを終了するときに一度だけ実行. ユーザのstatusを変更
     :param room:
     :param user_id:
