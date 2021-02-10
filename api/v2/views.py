@@ -1,5 +1,3 @@
-import random
-
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import views, status, permissions
@@ -12,7 +10,7 @@ from account.views import MeAPIView, ProfileImageAPIView
 from chat.consumers import ChatConsumer
 from chat.models import TalkTicket, TalkStatus, TalkingRoom
 from chat.v2.serializers import TalkTicketSerializer, TalkTicketPatchSerializer
-from fullfii import end_talk_v2, start_matching, increment_num_of_thunks, create_talk_ticket
+from fullfii import end_talk_v2, start_matching, increment_num_of_thunks, create_talk_ticket, end_talk_ticket
 
 
 class ProfileParamsV2APIView(views.APIView):
@@ -100,7 +98,7 @@ class TalkTicketAPIView(views.APIView):
         if serializer.is_valid():
             ### params 変更 ###
             serializer.save()
-            talk_ticket.wait_start_time  = timezone.now() # reset wait_start_time
+            talk_ticket.wait_start_time = timezone.now()  # reset wait_start_time
             talk_ticket.save()
             ###################
 
@@ -164,10 +162,8 @@ class WorryAPIView(views.APIView):
                     removed_talk_ticket_keys.append(talk_ticket.worry.key)
                     talk_ticket.is_active = False
 
-
                     # end talk
-                    talk_ticket.status = TalkStatus.WAITING
-                    talk_ticket.save()
+                    end_talk_ticket(talk_ticket)
                     talking_rooms = TalkingRoom.objects.filter(is_end=False).filter(
                         Q(speaker_ticket=talk_ticket) | Q(listener_ticket=talk_ticket))
                     if talking_rooms.exists():
