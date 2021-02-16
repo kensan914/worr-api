@@ -42,11 +42,6 @@ class TalkingRoom(models.Model):
     is_end = models.BooleanField(verbose_name='トーク終了状況', default=False)
     ended_at = models.DateTimeField(verbose_name='トーク終了時間', null=True)
     is_time_out = models.BooleanField(verbose_name='トーク終了理由(time out)', default=False)
-    # is_end_speaker = models.BooleanField(verbose_name='話し手側のend状況', default=False)
-    # is_end_listener = models.BooleanField(verbose_name='聞き手側のend状況', default=False)
-    # is_closed_speaker = models.BooleanField(verbose_name='話し手側のclose状況', default=False)
-    # is_closed_listener = models.BooleanField(verbose_name='聞き手側のclose状況', default=False)
-
 
 class MessageV2(models.Model):
     def __str__(self):
