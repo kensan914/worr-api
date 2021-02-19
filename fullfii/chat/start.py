@@ -2,7 +2,6 @@ from chat.models import TalkingRoom, TalkStatus
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from fullfii.lib.firebase import send_fcm
-from chat.v2.serializers import TalkTicketSerializer
 
 
 def start_talk(talking_room):
@@ -11,6 +10,7 @@ def start_talk(talking_room):
     :param talking_room:
     :return:
     """
+    from chat.v2.serializers import TalkTicketSerializer
     talking_room.speaker_ticket.status = TalkStatus.TALKING
     talking_room.speaker_ticket.save()
     talking_room.listener_ticket.status = TalkStatus.TALKING
