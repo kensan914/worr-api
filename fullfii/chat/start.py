@@ -2,6 +2,7 @@ from chat.models import TalkingRoom, TalkStatus
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from fullfii.lib.firebase import send_fcm
+from chat.v2.serializers import TalkTicketSerializer
 
 
 def start_talk(talking_room):
@@ -17,11 +18,13 @@ def start_talk(talking_room):
 
     send_talk_notification(
         recipient=talking_room.speaker_ticket.owner,
-        context={'room_id': str(talking_room.id), 'status': 'start'}
+        context={'room_id': str(talking_room.id), 'status': 'start',
+                 'talk_ticket': TalkTicketSerializer(talking_room.speaker_ticket).data}
     )
     send_talk_notification(
         recipient=talking_room.listener_ticket.owner,
-        context={'room_id': str(talking_room.id), 'status': 'start'}
+        context={'room_id': str(talking_room.id), 'status': 'start',
+                 'talk_ticket': TalkTicketSerializer(talking_room.listener_ticket).data}
     )
 
     # send fcm(MATCH_TALK)
