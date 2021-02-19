@@ -1,6 +1,6 @@
 from django.db.models import Q
 from rest_framework import serializers
-from account.serializers import UserSerializer, GenreOfWorriesSerializer
+from account.serializers import GenreOfWorriesSerializer
 from account.v2.serializers import MeV2Serializer, UserV2Serializer
 from chat.models import Room, TalkTicket, TalkStatus, TalkingRoom, MessageV2
 
@@ -56,17 +56,15 @@ class TalkingRoomSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     started_at = serializers.SerializerMethodField()
     ended_at = serializers.SerializerMethodField()
-    # is_end_target = serializers.SerializerMethodField()
-    # is_closed_target = serializers.SerializerMethodField()
 
     def is_me_speaker(self, obj):
         return obj.speaker_ticket.owner.id == self.context['me'].id
 
     def get_user(self, obj):
         if self.is_me_speaker(obj):
-            return UserSerializer(obj.listener_ticket.owner).data
+            return UserV2Serializer(obj.listener_ticket.owner).data
         else:
-            return UserSerializer(obj.speaker_ticket.owner).data
+            return UserV2Serializer(obj.speaker_ticket.owner).data
 
     def get_started_at(self, obj):
         if obj.started_at:

@@ -125,6 +125,7 @@ class Account(AbstractBaseUser):
     genre_of_worries = models.ManyToManyField(GenreOfWorries, verbose_name='悩み', blank=True)
     blocked_accounts = models.ManyToManyField('self', verbose_name='ブロックアカウント', blank=True, symmetrical=False, related_name='block_me_accounts')
     talked_accounts = models.ManyToManyField('self', verbose_name='トーク済みアカウント', blank=True, symmetrical=False, related_name='talked_me_accounts')
+    device_token = models.CharField(verbose_name='デバイストークン', max_length=200, null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

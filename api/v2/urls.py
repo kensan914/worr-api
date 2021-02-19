@@ -16,6 +16,7 @@ urlpatterns = [
     path('me/', meV2APIView),
     path('me/profile-image/', profileImageV2APIView),
     path('me/talk-info/', talkInfoV2APIView),
+    # path('me/device-token/', deviceTokenAPIView),
     # path('me/email/', authUpdateAPIView),
     # path('me/password/', authUpdateAPIView),
     path('profile-params/', profileParamsV2APIView),
