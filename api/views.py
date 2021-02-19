@@ -29,8 +29,10 @@ class ProfileParamsAPIView(views.APIView):
 
     def get(self, request, *args, **kwargs):
         features_obj = self.get_profile_params(FeaturesSerializer, Feature)
-        genre_of_worries_obj = self.get_profile_params(GenreOfWorriesSerializer, GenreOfWorries)
-        scale_of_worries_obj = self.get_profile_params(ScaleOfWorriesSerializer, ScaleOfWorries)
+        genre_of_worries_obj = self.get_profile_params(
+            GenreOfWorriesSerializer, GenreOfWorries)
+        scale_of_worries_obj = self.get_profile_params(
+            ScaleOfWorriesSerializer, ScaleOfWorries)
         return Response({
             'features': features_obj,
             'genre_of_worries': genre_of_worries_obj,
@@ -59,12 +61,15 @@ class UsersAPIView(views.APIView):
             genre = self.request.GET.get('genre')
             genre_of_worries = GenreOfWorries.objects.filter(value=genre)
 
-            viewable_users = fullfii.get_viewable_accounts(request.user, is_exclude_me=True)
+            viewable_users = fullfii.get_viewable_accounts(
+                request.user, is_exclude_me=True)
             if genre_of_worries.exists():
-                users = viewable_users.filter(genre_of_worries=genre_of_worries.first())
+                users = viewable_users.filter(
+                    genre_of_worries=genre_of_worries.first())
             else:
                 users = viewable_users
-            users = users[self.paginate_by * (page - 1): self.paginate_by * page]
+            users = users[self.paginate_by *
+                          (page - 1): self.paginate_by * page]
             users_data = UserSerializer(users, many=True).data
 
             # paginate_byをクライアントで管理しない手法, v2に見送り
@@ -245,26 +250,34 @@ closeTalkAPIView = CloseTalkAPIView.as_view()
 class TalkInfoAPIView(views.APIView):
     def get(self, request, *args, **kwargs):
         # send objects
-        rooms_i_sent = Room.objects.filter(is_start=False, request_user__id=request.user.id)
-        rooms_i_sent_data = RoomSerializer(rooms_i_sent, many=True, context={'me': request.user}).data
+        rooms_i_sent = Room.objects.filter(
+            is_start=False, request_user__id=request.user.id)
+        rooms_i_sent_data = RoomSerializer(
+            rooms_i_sent, many=True, context={'me': request.user}).data
 
         # in objects
-        rooms_i_received = Room.objects.filter(is_start=False, response_user_id=request.user.id)
-        rooms_i_received_data = RoomSerializer(rooms_i_received, many=True, context={'me': request.user}).data
+        rooms_i_received = Room.objects.filter(
+            is_start=False, response_user_id=request.user.id)
+        rooms_i_received_data = RoomSerializer(
+            rooms_i_received, many=True, context={'me': request.user}).data
 
         # talking rooms
-        talking_rooms = Room.objects.filter(Q(request_user__id=request.user.id) | Q(response_user_id=request.user.id), is_start=True, is_end=False)
-        talking_rooms_data = RoomSerializer(talking_rooms, many=True, context={'me': request.user}).data
+        talking_rooms = Room.objects.filter(Q(request_user__id=request.user.id) | Q(
+            response_user_id=request.user.id), is_start=True, is_end=False)
+        talking_rooms_data = RoomSerializer(
+            talking_rooms, many=True, context={'me': request.user}).data
         # talking_room_ids = [str(talking_room.id) for talking_room in talking_rooms]
 
         # end rooms and end time out rooms
-        all_end_rooms = Room.objects.filter(Q(request_user__id=request.user.id, is_end_request=False) | Q(response_user_id=request.user.id, is_end_response=False), is_end=True)
+        all_end_rooms = Room.objects.filter(Q(request_user__id=request.user.id, is_end_request=False) | Q(
+            response_user_id=request.user.id, is_end_response=False), is_end=True)
 
         end_rooms = all_end_rooms.filter(is_time_out=False)
         end_room_ids = [str(end_room.id) for end_room in end_rooms]
 
         end_time_out_rooms = all_end_rooms.filter(is_time_out=True)
-        end_time_out_room_ids = [str(end_time_out_room.id) for end_time_out_room in end_time_out_rooms]
+        end_time_out_room_ids = [str(end_time_out_room.id)
+                                 for end_time_out_room in end_time_out_rooms]
 
         return Response({
             'send_objects': rooms_i_sent_data,
@@ -299,14 +312,17 @@ class WorriesAPIView(views.APIView):
             # ユーザ絞込み
             viewable_users = fullfii.get_viewable_accounts(request.user)
             if genre_of_worries.exists():
-                users = viewable_users.filter(genre_of_worries=genre_of_worries.first())
+                users = viewable_users.filter(
+                    genre_of_worries=genre_of_worries.first())
             else:
                 users = viewable_users
 
             worries = Worry.objects.filter(active=True, user__in=users)
 
-            worries = worries[self.paginate_by * (page - 1): self.paginate_by * page]
-            worries_data = WorrySerializer(worries, many=True, context={'me': request.user}).data
+            worries = worries[self.paginate_by *
+                              (page - 1): self.paginate_by * page]
+            worries_data = WorrySerializer(worries, many=True, context={
+                                           'me': request.user}).data
             res_data = {
                 'has_more': len(worries_data) >= self.paginate_by,
                 'worries': worries_data,
@@ -319,10 +335,12 @@ class WorriesAPIView(views.APIView):
         if post_worry_serializer.is_valid():
             post_worry_serializer.save()
 
-            worries = Worry.objects.filter(id=dict(post_worry_serializer.data)['id'])
+            worries = Worry.objects.filter(
+                id=dict(post_worry_serializer.data)['id'])
             if worries.exists():
                 return Response(
-                    WorrySerializer(worries.first(), context={'me': request.user}).data,
+                    WorrySerializer(worries.first(), context={
+                                    'me': request.user}).data,
                     status=status.HTTP_201_CREATED
                 )
         return Response(post_worry_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -362,7 +380,8 @@ class RestoreProductAPIView(views.APIView):
         receipt = request.data['receipt']
 
         # verify receipt
-        response = verify_receipt_at_first(product_id, receipt, request.user, is_restore=True)
+        response = verify_receipt_at_first(
+            product_id, receipt, request.user, is_restore=True)
         return response
 
 
@@ -375,7 +394,8 @@ class NoticeFromAppStoreAPIView(views.APIView):
     def post(self, request, *args, **kwargs):
         n_type = request.data['notification_type']
         if n_type == 'DID_RECOVER':
-            iaps = Iap.objects.filter(original_transaction_id=request.data['latest_receipt_info']['original_transaction_id'])
+            iaps = Iap.objects.filter(
+                original_transaction_id=request.data['latest_receipt_info']['original_transaction_id'])
             if iaps.exists():
                 iap = iaps.first()
                 if request.data['auto_renew_status'] == 'true':
@@ -383,7 +403,8 @@ class NoticeFromAppStoreAPIView(views.APIView):
                         iap=iap,
                         transaction_id=request.data['latest_receipt_info']['transaction_id'],
                         receipt=request.data['latest_receipt'],
-                        expires_date=cvt_tz_str_to_datetime(request.data['latest_receipt_info']['expires_date_formatted']),
+                        expires_date=cvt_tz_str_to_datetime(
+                            request.data['latest_receipt_info']['expires_date_formatted']),
                         status=IapStatus.SUBSCRIPTION,
                     )
                     iap.user.plan = request.data['latest_receipt_info']['product_id']
@@ -393,11 +414,13 @@ class NoticeFromAppStoreAPIView(views.APIView):
             if 'latest_receipt_info' in request.data:
                 original_transaction_id = request.data['latest_receipt_info']['original_transaction_id']
             elif 'unified_receipt' in request.data:
-                original_transaction_id = request.data['unified_receipt']['latest_receipt_info'][0]['original_transaction_id']
+                original_transaction_id = request.data['unified_receipt'][
+                    'latest_receipt_info'][0]['original_transaction_id']
             else:
                 original_transaction_id = ''
 
-            iaps = Iap.objects.filter(original_transaction_id=original_transaction_id)
+            iaps = Iap.objects.filter(
+                original_transaction_id=original_transaction_id)
             if iaps.exists():
                 iap = iaps.first()
                 # 自動更新成功

@@ -19,3 +19,9 @@ def create_talk_ticket(owner, worry):
         )
         talk_ticket.save()
     return talk_ticket
+
+
+def activate_talk_ticket(talk_ticket):
+    talk_ticket.is_active = True
+    talk_ticket.save()
+    return talk_ticket

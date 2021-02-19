@@ -8,7 +8,8 @@ from account.serializers import GenreOfWorriesSerializer
 class UserV2Serializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'gender', 'job', 'introduction', 'num_of_thunks', 'genre_of_worries', 'image', 'me')
+        fields = ('id', 'name', 'gender', 'job', 'introduction',
+                  'num_of_thunks', 'genre_of_worries', 'image', 'me')
 
     name = serializers.CharField(source='username')
     gender = serializers.SerializerMethodField()
@@ -40,7 +41,8 @@ class UserV2Serializer(serializers.ModelSerializer):
 class MeV2Serializer(UserV2Serializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'gender', 'job', 'introduction', 'num_of_thunks', 'date_joined', 'plan', 'genre_of_worries', 'image', 'me', 'can_talk_heterosexual')
+        fields = ('id', 'name', 'gender', 'job', 'introduction', 'num_of_thunks',
+                  'date_joined', 'plan', 'genre_of_worries', 'image', 'me', 'can_talk_heterosexual', 'device_token')
 
     plan = serializers.SerializerMethodField()
     me = serializers.BooleanField(default=True)
@@ -52,6 +54,7 @@ class MeV2Serializer(UserV2Serializer):
 class PatchMeV2Serializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('name', 'introduction', 'can_talk_heterosexual')
+        fields = ('name', 'introduction',
+                  'can_talk_heterosexual', 'device_token')
 
     name = serializers.CharField(source='username')

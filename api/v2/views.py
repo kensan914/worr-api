@@ -10,7 +10,9 @@ from account.views import MeAPIView, ProfileImageAPIView
 from chat.consumers import ChatConsumer
 from chat.models import TalkTicket, TalkStatus, TalkingRoom
 from chat.v2.serializers import TalkTicketSerializer, TalkTicketPatchSerializer
-from fullfii import end_talk_v2, start_matching, increment_num_of_thunks, create_talk_ticket, end_talk_ticket
+from fullfii import end_talk_v2, start_matching, increment_num_of_thunks, create_talk_ticket, end_talk_ticket, \
+    activate_talk_ticket
+import fullfii
 
 
 class ProfileParamsV2APIView(views.APIView):
@@ -37,7 +39,8 @@ class ProfileParamsV2APIView(views.APIView):
 
     def get(self, request, *args, **kwargs):
         # profile params
-        genre_of_worries_obj = self.get_profile_params(GenreOfWorriesSerializer, GenreOfWorries)
+        genre_of_worries_obj = self.get_profile_params(
+            GenreOfWorriesSerializer, GenreOfWorries)
 
         # text choices
         gender_obj = self.get_text_choices(Gender)
@@ -70,7 +73,8 @@ profileImageV2APIView = ProfileImageV2APIView.as_view()
 
 class TalkInfoV2APIView(views.APIView):
     def get(self, request, *args, **kwargs):
-        talk_tickets = TalkTicket.objects.filter(owner=request.user, is_active=True)
+        talk_tickets = TalkTicket.objects.filter(
+            owner=request.user, is_active=True)
         talking_tickets_data = TalkTicketSerializer(
             talk_tickets,
             many=True,
@@ -94,7 +98,8 @@ class TalkTicketAPIView(views.APIView):
         if request.data['status'] == TalkStatus.TALKING:
             return Response(TalkTicketSerializer(talk_ticket, context={'me': request.user}).data, status=status.HTTP_409_CONFLICT)
 
-        serializer = TalkTicketPatchSerializer(instance=talk_ticket, data=request.data, partial=True)
+        serializer = TalkTicketPatchSerializer(
+            instance=talk_ticket, data=request.data, partial=True)
         if serializer.is_valid():
             ### params 変更 ###
             serializer.save()
@@ -102,10 +107,12 @@ class TalkTicketAPIView(views.APIView):
             talk_ticket.save()
             ###################
 
-            talking_rooms = TalkingRoom.objects.filter(is_end=False).filter(Q(speaker_ticket=talk_ticket) | Q(listener_ticket=talk_ticket))
+            talking_rooms = TalkingRoom.objects.filter(is_end=False).filter(
+                Q(speaker_ticket=talk_ticket) | Q(listener_ticket=talk_ticket))
             if talking_rooms.exists():
                 talking_room = talking_rooms.first()
-                ChatConsumer.send_end_talk(talking_room.id, sender_id=request.user.id)
+                ChatConsumer.send_end_talk(
+                    talking_room.id, sender_id=request.user.id)
                 end_talk_v2(talking_room)
 
             start_matching()
@@ -134,6 +141,12 @@ class CloseTalkV2APIView(views.APIView):
         if has_thunks:
             increment_num_of_thunks(target_user)
 
+            # send fcm(THUNKS)
+            fullfii.send_fcm(target_user, {
+                'type': 'THUNKS',
+                'user': request.user,
+            })
+
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 
 
@@ -143,17 +156,35 @@ closeTalkV2APIView = CloseTalkV2APIView.as_view()
 class WorryAPIView(views.APIView):
     def post(self, request, *args, **kwargs):
         if 'genre_of_worries' in request.data:
-            data = GenreOfWorriesSerializer(request.data['genre_of_worries'], many=True).data
-            will_add_worries = GenreOfWorries.objects.filter(key__in=[part_of_data['key'] for part_of_data in data])
+            data = GenreOfWorriesSerializer(
+                request.data['genre_of_worries'], many=True).data
+            will_add_worries = GenreOfWorries.objects.filter(
+                key__in=[part_of_data['key'] for part_of_data in data])
 
-            talk_tickets = TalkTicket.objects.filter(owner=request.user, is_active=True)
+            # アクティブのみ
+            talk_tickets = TalkTicket.objects.filter(
+                owner=request.user, is_active=True)
+            # 非アクティブも含む
+            all_talk_tickets = TalkTicket.objects.filter(owner=request.user)
 
             # 追加
             added_talk_tickets = []
             for will_add_worry in will_add_worries:
+                # アクティブではない時
                 if not talk_tickets.filter(worry=will_add_worry).exists():
-                    added_talk_ticket = create_talk_ticket(request.user, will_add_worry)
-                    added_talk_tickets.append(added_talk_ticket)
+                    target_talk_tickets = all_talk_tickets.filter(
+                        worry=will_add_worry)
+                    # 既にtalk_ticketが存在する時
+                    if target_talk_tickets.exists():
+                        target_talk_ticket = activate_talk_ticket(
+                            target_talk_tickets.first())
+                        added_talk_tickets.append(target_talk_ticket)
+
+                    # 未だtalk_ticketが作成されていない時
+                    else:
+                        added_talk_ticket = create_talk_ticket(
+                            request.user, will_add_worry)
+                        added_talk_tickets.append(added_talk_ticket)
 
             # 削除
             removed_talk_ticket_keys = []
@@ -168,7 +199,8 @@ class WorryAPIView(views.APIView):
                         Q(speaker_ticket=talk_ticket) | Q(listener_ticket=talk_ticket))
                     if talking_rooms.exists():
                         talking_room = talking_rooms.first()
-                        ChatConsumer.send_end_talk(talking_room.id, sender_id=request.user.id)
+                        ChatConsumer.send_end_talk(
+                            talking_room.id, sender_id=request.user.id)
                         end_talk_v2(talking_room)
 
             start_matching()
@@ -179,5 +211,6 @@ class WorryAPIView(views.APIView):
 
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
 
 worryAPIView = WorryAPIView.as_view()

@@ -81,25 +81,44 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
         received_type = received_data['type']
 
         if received_type == 'chat_message':
-            message_id = received_data['message_id']
-            message = received_data['message']
-            time = timezone.datetime.now()
+            if 'message_id' in received_data and 'message' in received_data and 'token' in received_data:
+                message_id = received_data['message_id']
+                message = received_data['message']
+                time = timezone.datetime.now()
 
-            me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+                me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
 
-            await self.create_message(received_data, time, me)
-            await self.channel_layer.group_send(self.group_name, {
+                await self.create_message(received_data, time, me)
+                await self.channel_layer.group_send(self.group_name, {
                     'type': 'chat_message',
                     'message_id': message_id,
                     'message': message,
                     'time': time.strftime('%Y/%m/%d %H:%M:%S'),
                     'sender_channel_name': self.channel_name,
-            })
+                })
+
+                # send fcm(SEND_MESSAGE)
+                room_users = await self.get_room_users(await self.get_room())
+                print(room_users)
+                receiver = room_users['listener'] if room_users['speaker'].id == me.id else room_users['speaker']
+                print(receiver)
+                fullfii.send_fcm(receiver, {
+                    'type': 'SEND_MESSAGE',
+                    'user': me,
+                    'message': 'test',
+                })
+            else:
+                # chat_message送信失敗
+                pass
 
         elif received_type == 'store':
-            message_id = received_data['message_id']
-            # me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
-            await self.turn_on_message_stored(self.is_speaker, message_id=message_id)
+            if 'message_id' in received_data and 'token' in received_data:
+                message_id = received_data['message_id']
+                # me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+                await self.turn_on_message_stored(self.is_speaker, message_id=message_id)
+            else:
+                # store失敗
+                pass
 
         elif received_type == 'store_by_room':
             await self.turn_on_message_stored(self.is_speaker, room_id=self.room_id)
@@ -184,17 +203,21 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
             elif room_id:  # for all messages in the room
                 upd_messages = []
                 if is_speaker:  # if I'm speaker
-                    messages = MessageV2.objects.filter(room__id=room_id, is_stored_on_speaker=False)
+                    messages = MessageV2.objects.filter(
+                        room__id=room_id, is_stored_on_speaker=False)
                     for message in messages:
                         message.is_stored_on_speaker = True
                         upd_messages.append(message)
-                    MessageV2.objects.bulk_update(upd_messages, fields=['is_stored_on_speaker'])
+                    MessageV2.objects.bulk_update(
+                        upd_messages, fields=['is_stored_on_speaker'])
                 else:  # if I'm listener
-                    messages = MessageV2.objects.filter(room__id=room_id, is_stored_on_listener=False)
+                    messages = MessageV2.objects.filter(
+                        room__id=room_id, is_stored_on_listener=False)
                     for message in messages:
                         message.is_stored_on_listener = True
                         upd_messages.append(message)
-                    MessageV2.objects.bulk_update(upd_messages, fields=['is_stored_on_listener'])
+                    MessageV2.objects.bulk_update(
+                        upd_messages, fields=['is_stored_on_listener'])
         except Exception as e:
             raise
 
@@ -202,9 +225,11 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
     def get_not_stored_messages_data(self, room, is_speaker, me):
         try:
             if is_speaker:  # if I'm speaker
-                messages = MessageV2.objects.filter(room=room, is_stored_on_speaker=False).order_by('time')
+                messages = MessageV2.objects.filter(
+                    room=room, is_stored_on_speaker=False).order_by('time')
             else:  # if I'm listener
-                messages = MessageV2.objects.filter(room=room, is_stored_on_listener=False).order_by('time')
+                messages = MessageV2.objects.filter(
+                    room=room, is_stored_on_listener=False).order_by('time')
             return MessageV2Serializer(messages, many=True, context={'me': me}).data
         except Exception as e:
             raise

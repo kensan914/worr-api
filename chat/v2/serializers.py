@@ -1,6 +1,6 @@
 from django.db.models import Q
 from rest_framework import serializers
-from account.serializers import UserSerializer, GenreOfWorriesSerializer
+from account.serializers import GenreOfWorriesSerializer
 from account.v2.serializers import MeV2Serializer, UserV2Serializer
 from chat.models import Room, TalkTicket, TalkStatus, TalkingRoom, MessageV2
 
