@@ -105,7 +105,7 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
                 fullfii.send_fcm(receiver, {
                     'type': 'SEND_MESSAGE',
                     'user': me,
-                    'message': 'test',
+                    'message': message,
                 })
             else:
                 # chat_message送信失敗
