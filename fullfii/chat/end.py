@@ -4,10 +4,11 @@ from account.models import Status
 from chat.models import Room, TalkStatus
 
 
-def end_talk_v2(room):
+def end_talk_v2(room, ender):
     """
     v2. トークを終了するときに1回だけ実行. set talked_accounts.
     :param room:
+    :param ender:
     :return:
     """
     room.is_end = True
@@ -20,6 +21,12 @@ def end_talk_v2(room):
     speaker.save()
     listener.talked_accounts.add(speaker)
     listener.save()
+
+    # 相手方(終了させられた方)のtalkticketをfinishing状態に
+    should_finish_ticket = room.listener_ticket if speaker.id == ender.id else room.speaker_ticket
+    should_finish_ticket.status = TalkStatus.FINISHING
+    should_finish_ticket.save()
+
 
 def end_talk_ticket(talk_ticket):
     talk_ticket.status = TalkStatus.WAITING
@@ -61,7 +68,8 @@ def change_status_of_talk(room, user_id=None):
     me = None
 
     for user in room_members:
-        talking_rooms = Room.objects.exclude(id=room.id).filter(Q(request_user__id=user.id) | Q(response_user_id=user.id), is_start=True, is_end=False)
+        talking_rooms = Room.objects.exclude(id=room.id).filter(
+            Q(request_user__id=user.id) | Q(response_user_id=user.id), is_start=True, is_end=False)
         if not talking_rooms.exists():
             if user.is_online:
                 user.status = Status.ONLINE
