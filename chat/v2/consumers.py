@@ -37,10 +37,10 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
             return
         self.me_id = me.id
 
-        print('auth1')
-        print(self.room_id)
+        print('auth1') # TODO:
+        print(self.room_id) # room_idもあっている # TODO:
         result = await self.get_room()
-        print(result is None)
+        print(result is None) # TODO:
         if result:
             room = result
         else:
@@ -166,7 +166,9 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_room(self):
+        print(self.room_id) # TODO:
         rooms = TalkingRoom.objects.filter(id=self.room_id)
+        print(rooms.count()) # TODO:
         if rooms.count() == 1:
             return rooms.first()
         elif rooms.count() == 0:
