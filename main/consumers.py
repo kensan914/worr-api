@@ -9,6 +9,7 @@ from account.serializers import MeSerializer, UserSerializer
 from fullfii.lib.authSupport import authenticate_jwt
 from main.serializers import NotificationSerializer
 from main.models import Notification, NotificationType
+from account.v2.serializers import MeV2Serializer, UserV2Serializer
 
 
 class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
@@ -39,13 +40,13 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
         return
 
     async def _disconnect(self, close_code):
-        pass # receive other than auth
+        pass  # receive other than auth
 
     async def receive_auth(self, received_data):
-        pass # receive auth
+        pass  # receive auth
 
     async def _receive(self, received_data):
-        pass # receive other than auth
+        pass  # receive other than auth
 
     async def receive(self, text_data):
         try:
@@ -69,10 +70,12 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_me_data(self, user):
-        return MeSerializer(user).data
+        return MeV2Serializer(user).data
 
     @database_sync_to_async
-    def get_user_data(self, user):
+    def get_user_data(self, user, isV2=False):
+        if isV2:
+            return UserV2Serializer(user).data
         return UserSerializer(user).data
 
     @classmethod
@@ -134,7 +137,8 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
         if received_type == 'get':
             page = received_data['page']
             newest_notifications = Notification.objects.filter(recipient=me).exclude(
-                type__in=[NotificationType.CANCEL_TALK_REQUEST_TO_RES, NotificationType.CANCEL_TALK_REQUEST_TO_REQ]
+                type__in=[NotificationType.CANCEL_TALK_REQUEST_TO_RES,
+                          NotificationType.CANCEL_TALK_REQUEST_TO_REQ]
             )[self.paginate_by * (page - 1): self.paginate_by * page]
             newest_notifications_data = await self.get_notification_data(newest_notifications, many=True)
 
@@ -194,7 +198,8 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
             for notification in Notification.objects.filter(id__in=notification_ids):
                 notification.read = True
                 upd_notifications.append(notification)
-            Notification.objects.bulk_update(upd_notifications, fields=['read'])
+            Notification.objects.bulk_update(
+                upd_notifications, fields=['read'])
         except Exception as e:
             raise
 
@@ -229,7 +234,8 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
         """
         ex) NotificationConsumer.send_notification(recipient=response_user, subject=request_user, notification_type=NotificationType.CANCEL_TALK_REQUEST_TO_RES, context={'room_id': str(room_id)})
         """
-        notification = async_to_sync(cls.create_notification)(recipient, subject, notification_type, message)
+        notification = async_to_sync(cls.create_notification)(
+            recipient, subject, notification_type, message)
 
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)('notification_{}'.format(str(recipient.id)), {

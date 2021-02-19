@@ -86,25 +86,27 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
         received_type = received_data['type']
 
         if received_type == 'chat_message':
-            message_id = received_data['message_id']
-            message = received_data['message']
-            time = timezone.datetime.now()
+            if 'message_id' in received_data and 'message' in received_data and 'token' in received_data:
+                message_id = received_data['message_id']
+                message = received_data['message']
+                time = timezone.datetime.now()
 
-            me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+                me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
 
-            await self.create_message(received_data, time, me)
-            await self.channel_layer.group_send(self.group_name, {
+                await self.create_message(received_data, time, me)
+                await self.channel_layer.group_send(self.group_name, {
                     'type': 'chat_message',
                     'message_id': message_id,
                     'message': message,
                     'time': time.strftime('%Y/%m/%d %H:%M:%S'),
                     'sender_channel_name': self.channel_name,
-            })
+                })
 
         elif received_type == 'store':
-            message_id = received_data['message_id']
-            me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
-            await self.turn_on_message_stored(self.is_request_user, message_id=message_id)
+            if 'message_id' in received_data and 'token' in received_data:
+                message_id = received_data['message_id']
+                me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+                await self.turn_on_message_stored(self.is_request_user, message_id=message_id)
 
         elif received_type == 'store_by_room':
             await self.turn_on_message_stored(self.is_request_user, room_id=self.room_id)
@@ -207,17 +209,21 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
             elif room_id:  # for all messages in the room
                 upd_messages = []
                 if is_request_user:  # if I'm request user
-                    messages = Message.objects.filter(room__id=room_id, is_stored_on_request=False)
+                    messages = Message.objects.filter(
+                        room__id=room_id, is_stored_on_request=False)
                     for message in messages:
                         message.is_stored_on_request = True
                         upd_messages.append(message)
-                    Message.objects.bulk_update(upd_messages, fields=['is_stored_on_request'])
+                    Message.objects.bulk_update(
+                        upd_messages, fields=['is_stored_on_request'])
                 else:  # if I'm response user
-                    messages = Message.objects.filter(room__id=room_id, is_stored_on_response=False)
+                    messages = Message.objects.filter(
+                        room__id=room_id, is_stored_on_response=False)
                     for message in messages:
                         message.is_stored_on_response = True
                         upd_messages.append(message)
-                    Message.objects.bulk_update(upd_messages, fields=['is_stored_on_response'])
+                    Message.objects.bulk_update(
+                        upd_messages, fields=['is_stored_on_response'])
         except Exception as e:
             raise
 
@@ -225,9 +231,11 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
     def get_not_stored_messages_data(self, room, is_request_user, me):
         try:
             if is_request_user:  # if I'm request user
-                messages = Message.objects.filter(room=room, is_stored_on_request=False).order_by('time')
+                messages = Message.objects.filter(
+                    room=room, is_stored_on_request=False).order_by('time')
             else:  # if I'm response user
-                messages = Message.objects.filter(room=room, is_stored_on_response=False).order_by('time')
+                messages = Message.objects.filter(
+                    room=room, is_stored_on_response=False).order_by('time')
             return MessageSerializer(messages, many=True, context={'me': me}).data
         except Exception as e:
             raise

@@ -35,7 +35,8 @@ class SignupAPIView(views.APIView):
                 if _me is not None:
                     me = _me
 
-                email_serializer = AuthUpdateSerializer(me, data={'email': '{}@fullfii.com'.format(me.id)}, partial=True)
+                email_serializer = AuthUpdateSerializer(
+                    me, data={'email': '{}@fullfii.com'.format(me.id)}, partial=True)
                 if email_serializer.is_valid():
                     email_serializer.save()
                     # token付与
@@ -59,7 +60,8 @@ class AuthUpdateAPIView(views.APIView):
     def patch(self, request, *args, **kwargs):
         if 'email' in request.data:
             email = request.data['email']
-            serializer = AuthUpdateSerializer(request.user, data={'email': email}, partial=True)
+            serializer = AuthUpdateSerializer(
+                request.user, data={'email': email}, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 payload = jwt_payload_handler(request.user)
@@ -72,7 +74,8 @@ class AuthUpdateAPIView(views.APIView):
             prev_password = request.data['prev_password']
             if not request.user.check_password(prev_password):
                 return Response({'error': ['パスワードが正しくありません。']}, status=status.HTTP_400_BAD_REQUEST)
-            serializer = AuthUpdateSerializer(request.user, data={'password': password}, partial=True)
+            serializer = AuthUpdateSerializer(
+                request.user, data={'password': password}, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 payload = jwt_payload_handler(request.user)
@@ -100,7 +103,8 @@ class MeAPIView(views.APIView):
 
         # result_patch_intro_step = self.patch_intro_step(request.data, request.user)
 
-        serializer = self.PatchSerializer(instance=request.user, data=request.data, partial=True)
+        serializer = self.PatchSerializer(
+            instance=request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(self.Serializer(request.user).data, status=status.HTTP_200_OK)
@@ -112,14 +116,20 @@ class MeAPIView(views.APIView):
         for patch_type in list(request_data.keys()):
             if patch_type in ['features', 'genre_of_worries', 'scale_of_worries']:
                 if patch_type == 'features':
-                    record = cls._patch_params(request_data, FeaturesSerializer, Feature, patch_type, many=True)
-                    if record is not None: request_user.features.set(record)
+                    record = cls._patch_params(
+                        request_data, FeaturesSerializer, Feature, patch_type, many=True)
+                    if record is not None:
+                        request_user.features.set(record)
                 elif patch_type == 'genre_of_worries':
-                    record = cls._patch_params(request_data, GenreOfWorriesSerializer, GenreOfWorries, patch_type, many=True)
-                    if record is not None: request_user.genre_of_worries.set(record)
+                    record = cls._patch_params(
+                        request_data, GenreOfWorriesSerializer, GenreOfWorries, patch_type, many=True)
+                    if record is not None:
+                        request_user.genre_of_worries.set(record)
                 elif patch_type == 'scale_of_worries':
-                    record = cls._patch_params(request_data, ScaleOfWorriesSerializer, ScaleOfWorries, patch_type, many=True)
-                    if record is not None: request_user.scale_of_worries.set(record)
+                    record = cls._patch_params(
+                        request_data, ScaleOfWorriesSerializer, ScaleOfWorries, patch_type, many=True)
+                    if record is not None:
+                        request_user.scale_of_worries.set(record)
                 request_user.save()
                 _request_user = request_user
 
@@ -139,7 +149,8 @@ class MeAPIView(views.APIView):
                 # raise ValidationError('パラメータが見つかりません')
                 return
         else:
-            record = model.objects.filter(key__in=[part_of_data['key'] for part_of_data in data])
+            record = model.objects.filter(
+                key__in=[part_of_data['key'] for part_of_data in data])
             if not record:
                 # raise ValidationError('パラメータが見つかりません')
                 return
@@ -176,11 +187,14 @@ class ProfileImageAPIView(views.APIView):
     Serializer = MeSerializer
 
     def post(self, request, *args, **kwargs):
-        request_data = {'picture': request.data['image'], 'user': request.user.id}
+        request_data = {
+            'picture': request.data['image'], 'user': request.user.id}
         if ProfileImage.objects.filter(user=request.user).exists():
-            profile_image_serializer = ProfileImageSerializer(instance=request.user.image, data=request_data)
+            profile_image_serializer = ProfileImageSerializer(
+                instance=request.user.image, data=request_data)
         else:
-            profile_image_serializer = ProfileImageSerializer(data=request_data)
+            profile_image_serializer = ProfileImageSerializer(
+                data=request_data)
 
         if profile_image_serializer.is_valid():
             profile_image_serializer.save()

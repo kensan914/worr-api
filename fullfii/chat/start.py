@@ -1,6 +1,7 @@
 from chat.models import TalkingRoom, TalkStatus
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from fullfii.lib.firebase import send_fcm
 
 
 def start_talk(talking_room):
@@ -22,6 +23,16 @@ def start_talk(talking_room):
         recipient=talking_room.listener_ticket.owner,
         context={'room_id': str(talking_room.id), 'status': 'start'}
     )
+
+    # send fcm(MATCH_TALK)
+    send_fcm(talking_room.speaker_ticket.owner, {
+        'type': 'MATCH_TALK',
+        'genreOfWorry': talking_room.speaker_ticket.worry,
+    })
+    send_fcm(talking_room.listener_ticket.owner, {
+        'type': 'MATCH_TALK',
+        'genreOfWorry': talking_room.listener_ticket.worry,
+    })
 
 
 def create_talking_room(speaker_ticket, listener_ticket):

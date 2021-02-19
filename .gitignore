@@ -133,3 +133,5 @@ migrations
 !fullfii/lib
 
 .DS_Store
+
+fullfii.code-workspace
