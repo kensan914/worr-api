@@ -1,8 +1,8 @@
 import os
 from rest_framework import serializers
-import fullfii
 from account.models import Account, ProfileImage, Plan, Gender, Job
 from account.serializers import GenreOfWorriesSerializer
+from fullfii.lib.constants import BASE_URL
 
 
 class UserV2Serializer(serializers.ModelSerializer):
@@ -35,7 +35,7 @@ class UserV2Serializer(serializers.ModelSerializer):
     def get_image(self, obj):
         if ProfileImage.objects.filter(user=obj).exists():
             image_url = obj.image.picture.medium.url
-            return os.path.join(fullfii.BASE_URL, image_url if image_url[0] != '/' else image_url[1:])
+            return os.path.join(BASE_URL, image_url if image_url[0] != '/' else image_url[1:])
 
 
 class MeV2Serializer(UserV2Serializer):

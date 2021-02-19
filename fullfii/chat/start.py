@@ -10,6 +10,7 @@ def start_talk(talking_room):
     :param talking_room:
     :return:
     """
+    from chat.v2.serializers import TalkTicketSerializer
     talking_room.speaker_ticket.status = TalkStatus.TALKING
     talking_room.speaker_ticket.save()
     talking_room.listener_ticket.status = TalkStatus.TALKING
@@ -17,11 +18,13 @@ def start_talk(talking_room):
 
     send_talk_notification(
         recipient=talking_room.speaker_ticket.owner,
-        context={'room_id': str(talking_room.id), 'status': 'start'}
+        context={'room_id': str(talking_room.id), 'status': 'start',
+                 'talk_ticket': TalkTicketSerializer(talking_room.speaker_ticket, context={'me': talking_room.speaker_ticket.owner}).data}
     )
     send_talk_notification(
         recipient=talking_room.listener_ticket.owner,
-        context={'room_id': str(talking_room.id), 'status': 'start'}
+        context={'room_id': str(talking_room.id), 'status': 'start',
+                 'talk_ticket': TalkTicketSerializer(talking_room.listener_ticket, context={'me': talking_room.speaker_ticket.owner}).data}
     )
 
     # send fcm(MATCH_TALK)

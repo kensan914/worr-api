@@ -95,7 +95,7 @@ class TalkTicketAPIView(views.APIView):
         talk_ticket = get_object_or_404(TalkTicket, id=talk_ticket_id)
 
         # talkingへの変更は不可.
-        if request.data['status'] == TalkStatus.TALKING:
+        if request.data['status'] == TalkStatus.TALKING or request.data['status'] == TalkStatus.FINISHING:
             return Response(TalkTicketSerializer(talk_ticket, context={'me': request.user}).data, status=status.HTTP_409_CONFLICT)
 
         serializer = TalkTicketPatchSerializer(
@@ -113,7 +113,7 @@ class TalkTicketAPIView(views.APIView):
                 talking_room = talking_rooms.first()
                 ChatConsumer.send_end_talk(
                     talking_room.id, sender_id=request.user.id)
-                end_talk_v2(talking_room)
+                end_talk_v2(talking_room, ender=request.user)
 
             start_matching()
             return Response(TalkTicketSerializer(talk_ticket, context={'me': request.user}).data, status=status.HTTP_200_OK)
@@ -201,7 +201,7 @@ class WorryAPIView(views.APIView):
                         talking_room = talking_rooms.first()
                         ChatConsumer.send_end_talk(
                             talking_room.id, sender_id=request.user.id)
-                        end_talk_v2(talking_room)
+                        end_talk_v2(talking_room, ender=request.user)
 
             start_matching()
             return Response({

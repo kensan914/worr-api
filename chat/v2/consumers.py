@@ -29,6 +29,8 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
             self.channel_name
         )
 
+        print('auth') # TODO: 消す
+
         me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
         if me is None:
             # 401 Unauthorized
@@ -45,6 +47,8 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
             print('not found room')
             return
 
+        print(result) # TODO: 消す
+
         room_users = await self.get_room_users(room)
         if room_users['speaker'].id == self.me_id:  # if I'm speaker
             self.is_speaker = True
@@ -58,6 +62,8 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
             #     await self.start_talk(room)  # start talk
         else:
             raise
+
+        print(room_users) # TODO: 消す
 
         # # change to talking
         user_data = await self.get_me_data(me)

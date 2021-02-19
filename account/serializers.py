@@ -2,9 +2,11 @@ import os
 from django.contrib.auth import password_validation as validators
 from rest_framework import serializers
 from rest_framework_jwt.serializers import JSONWebTokenSerializer, jwt_payload_handler, jwt_encode_handler
-import fullfii
 from account.models import Account, ProfileImage, Plan, Status, Feature, GenreOfWorries, ScaleOfWorries, StatusColor, \
     Gender, IntroStep, Job
+from fullfii.lib.constants import BASE_URL
+from fullfii.lib.serializerSupport import generate_birthday
+from fullfii.lib.support import calc_age
 
 
 class ProfileImageSerializer(serializers.ModelSerializer):
@@ -36,7 +38,8 @@ class AuthSerializer(serializers.ModelSerializer):
         model = Account
         fields = ('id', 'username', 'password', 'gender', 'job')
 
-    password = serializers.CharField(write_only=True, min_length=8, max_length=30)
+    password = serializers.CharField(
+        write_only=True, min_length=8, max_length=30)
 
 
 class SignupSerializer(AuthSerializer):
@@ -64,6 +67,7 @@ class AuthUpdateSerializer(AuthSerializer):
 
 class LoginSerializer(JSONWebTokenSerializer):
     username_field = 'email'
+
     def validate(self, attrs):
         password = attrs.get('password')
         account = Account.objects.filter(email=attrs.get('email')).first()
@@ -86,7 +90,8 @@ class LoginSerializer(JSONWebTokenSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'birthday', 'age', 'gender', 'job', 'introduction', 'num_of_thunks', 'status', 'features', 'genre_of_worries', 'scale_of_worries', 'image', 'me')
+        fields = ('id', 'name', 'birthday', 'age', 'gender', 'job', 'introduction', 'num_of_thunks',
+                  'status', 'features', 'genre_of_worries', 'scale_of_worries', 'image', 'me')
 
     name = serializers.CharField(source='username')
     birthday = serializers.SerializerMethodField()
@@ -102,13 +107,15 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_birthday(self, obj):
         if obj.birthday:
-            return fullfii.generate_birthday(birthday=obj.birthday)
-        else: return
+            return generate_birthday(birthday=obj.birthday)
+        else:
+            return
 
     def get_age(self, obj):
         if obj.birthday:
-            return fullfii.calc_age(birthday=obj.birthday)
-        else: return '-'
+            return calc_age(birthday=obj.birthday)
+        else:
+            return '-'
 
     def get_gender(self, obj):
         if obj.gender in Gender.values:
@@ -130,13 +137,14 @@ class UserSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         if ProfileImage.objects.filter(user=obj).exists():
             image_url = obj.image.picture.medium.url
-            return os.path.join(fullfii.BASE_URL, image_url if image_url[0] != '/' else image_url[1:])
+            return os.path.join(BASE_URL, image_url if image_url[0] != '/' else image_url[1:])
 
 
 class MeSerializer(UserSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'email', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan', 'features', 'genre_of_worries', 'scale_of_worries', 'intro_step', 'intro_step', 'image', 'me', 'can_talk_heterosexual')
+        fields = ('id', 'name', 'email', 'birthday', 'age', 'gender', 'introduction', 'num_of_thunks', 'date_joined', 'status', 'plan',
+                  'features', 'genre_of_worries', 'scale_of_worries', 'intro_step', 'intro_step', 'image', 'me', 'can_talk_heterosexual')
 
     plan = serializers.SerializerMethodField()
     me = serializers.BooleanField(default=True)
@@ -157,7 +165,8 @@ class MeSerializer(UserSerializer):
 class PatchMeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('name', 'email', 'birthday', 'introduction', 'can_talk_heterosexual', 'gender')
+        fields = ('name', 'email', 'birthday', 'introduction',
+                  'can_talk_heterosexual', 'gender')
 
     name = serializers.CharField(source='username')
 

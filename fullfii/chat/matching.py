@@ -10,6 +10,7 @@ def start_matching():
     """
     matched_talk_tickets = []
     # matched_talk_ticketsに指定したtalk_ticketが存在するか
+
     def exists_matched_talk_tickets(_talk_ticket):
         for matched_talk_ticket in matched_talk_tickets:
             if matched_talk_ticket.id == _talk_ticket.id:
@@ -18,6 +19,7 @@ def start_matching():
 
     matched_rooms = []
     # 同一のユーザマッチングの組み合わせが存在するか
+
     def exists_same_users_matching(_talk_ticket1, _talk_ticket2):
         for matched_room in matched_rooms:
             speaker_id = matched_room.speaker_ticket.owner.id
@@ -32,13 +34,16 @@ def start_matching():
             continue
         if talk_ticket.status != TalkStatus.WAITING:
             continue
-        target_talk_tickets = search_target_talk_tickets(my_ticket=talk_ticket) # 基本フィルタ
-        target_talk_tickets = filter_detail_target_talk_tickets(my_ticket=talk_ticket, target_tickets=target_talk_tickets) # 詳細フィルタ
+        target_talk_tickets = search_target_talk_tickets(
+            my_ticket=talk_ticket)  # 基本フィルタ
+        target_talk_tickets = filter_detail_target_talk_tickets(
+            my_ticket=talk_ticket, target_tickets=target_talk_tickets)  # 詳細フィルタ
         if not target_talk_tickets.exists():
             continue
 
         # ↓マッチング↓
-        target_talk_ticket = target_talk_tickets.order_by('-wait_start_time').first()
+        target_talk_ticket = target_talk_tickets.order_by(
+            '-wait_start_time').first()
         if exists_matched_talk_tickets(target_talk_ticket):
             continue
         if exists_same_users_matching(talk_ticket, target_talk_ticket):
@@ -94,21 +99,26 @@ def filter_detail_target_talk_tickets(my_ticket, target_tickets):
     elif not my_ticket.can_talk_heterosexual:  # 1
         target_tickets = target_tickets.filter(owner__gender=me.gender)
     else:  # 2
-        target_tickets = target_tickets.filter(Q(can_talk_heterosexual=True) | Q(owner__gender=me.gender))
+        target_tickets = target_tickets.filter(
+            Q(can_talk_heterosexual=True) | Q(owner__gender=me.gender))
 
     if me.job == Job.SECRET:  # 3
         pass
     elif not my_ticket.can_talk_different_job:  # 4
         target_tickets = target_tickets.filter(owner__job=me.job)
     else:  # 5
-        target_tickets = target_tickets.filter(Q(can_talk_different_job=True) | Q(owner__job=me.job))
+        target_tickets = target_tickets.filter(
+            Q(can_talk_different_job=True) | Q(owner__job=me.job))
 
     if blocked_accounts:  # 6
-        target_tickets = target_tickets.exclude(owner__id__in=blocked_accounts.all().values_list('id', flat=True))
+        target_tickets = target_tickets.exclude(
+            owner__id__in=blocked_accounts.all().values_list('id', flat=True))
     if block_me_accounts:  # 7
-        target_tickets = target_tickets.exclude(owner__id__in=block_me_accounts.all().values_list('id', flat=True))
+        target_tickets = target_tickets.exclude(
+            owner__id__in=block_me_accounts.all().values_list('id', flat=True))
 
     if talked_accounts:  # 8
-        target_tickets = target_tickets.exclude(owner__id__in=talked_accounts.all().values_list('id', flat=True))
+        target_tickets = target_tickets.exclude(
+            owner__id__in=talked_accounts.all().values_list('id', flat=True))
 
     return target_tickets
