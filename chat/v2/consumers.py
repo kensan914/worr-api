@@ -3,7 +3,6 @@ from channels.db import database_sync_to_async
 import json
 from channels.layers import get_channel_layer
 from account.v2.serializers import MeV2Serializer
-from chat.serializers import MessageSerializer
 from chat.v2.serializers import MessageV2Serializer
 from main.consumers import JWTAsyncWebsocketConsumer
 from ..models import *
@@ -168,7 +167,7 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
     def get_room(self):
         print(self.room_id) # TODO:
         rooms = TalkingRoom.objects.filter(id=self.room_id)
-        print(rooms.count()) # TODO:
+        print(TalkingRoom.objects.count()) # TODO:
         if rooms.count() == 1:
             return rooms.first()
         elif rooms.count() == 0:
