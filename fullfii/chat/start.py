@@ -24,7 +24,7 @@ def start_talk(talking_room):
     send_talk_notification(
         recipient=talking_room.listener_ticket.owner,
         context={'room_id': str(talking_room.id), 'status': 'start',
-                 'talk_ticket': TalkTicketSerializer(talking_room.listener_ticket, context={'me': talking_room.speaker_ticket.owner}).data}
+                 'talk_ticket': TalkTicketSerializer(talking_room.listener_ticket, context={'me': talking_room.listener_ticket.owner}).data}
     )
 
     # send fcm(MATCH_TALK)
