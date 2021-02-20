@@ -1,3 +1,4 @@
+import pytest
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 import json
@@ -8,6 +9,23 @@ from main.consumers import JWTAsyncWebsocketConsumer
 from ..models import *
 import fullfii
 
+
+@pytest.mark.django_db(transaction=True)
+def test(room_id):
+    async def async_get_user():
+        return await sync_get_room()
+
+    @database_sync_to_async
+    def sync_get_room():
+        result = None
+        print(room_id)  # TODO:
+        rooms = TalkingRoom.objects.filter(id=room_id)
+        print(await database_sync_to_async(TalkingRoom.objects.count)())  # TODO:
+        if await database_sync_to_async(rooms.count)() == 1:
+            result = await database_sync_to_async(rooms.first)()
+        return result
+
+    async_to_sync(async_get_user)()
 
 class ChatConsumerV2(JWTAsyncWebsocketConsumer):
     groups = ['broadcast']
@@ -39,16 +57,16 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
         print('auth1') # TODO:
         print(self.room_id) # room_idもあっている # TODO:
 
-        ###
-        result = None
-        print(self.room_id)  # TODO:
-        rooms = TalkingRoom.objects.filter(id=self.room_id)
-        print(await database_sync_to_async(TalkingRoom.objects.count)())  # TODO:
-        if await database_sync_to_async(rooms.count)() == 1:
-            result = await database_sync_to_async(rooms.first)()
-        ###
+        # ###
+        # result = None
+        # print(self.room_id)  # TODO:
+        # rooms = TalkingRoom.objects.filter(id=self.room_id)
+        # print(await database_sync_to_async(TalkingRoom.objects.count)())  # TODO:
+        # if await database_sync_to_async(rooms.count)() == 1:
+        #     result = await database_sync_to_async(rooms.first)()
+        # ###
 
-        # result = await test(self.room_id)
+        result = test(self.room_id)
         # result = await self.get_room()
 
         print(result is None) # TODO:]
