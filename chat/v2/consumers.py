@@ -9,17 +9,6 @@ from ..models import *
 import fullfii
 
 
-###
-def test(room_id):
-    result = None
-    print(room_id)  # TODO:
-    rooms = TalkingRoom.objects.filter(id=room_id)
-    print(async_to_sync(TalkingRoom.objects.count)())  # TODO:
-    if async_to_sync(rooms.count)() == 1:
-        result = async_to_sync(rooms.first)()
-    return result
-###
-
 class ChatConsumerV2(JWTAsyncWebsocketConsumer):
     groups = ['broadcast']
 
@@ -50,7 +39,16 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
         print('auth1') # TODO:
         print(self.room_id) # room_idもあっている # TODO:
 
-        result = await test(self.room_id)
+        ###
+        result = None
+        print(self.room_id)  # TODO:
+        rooms = TalkingRoom.objects.filter(id=self.room_id)
+        print(await database_sync_to_async(TalkingRoom.objects.count)())  # TODO:
+        if await database_sync_to_async(rooms.count)() == 1:
+            result = await database_sync_to_async(rooms.first)()
+        ###
+
+        # result = await test(self.room_id)
         # result = await self.get_room()
 
         print(result is None) # TODO:]
