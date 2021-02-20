@@ -42,7 +42,7 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
         ###
         result = None
         print(self.room_id)  # TODO:
-        rooms = async_to_sync(TalkingRoom.objects.filter)(id=self.room_id)
+        rooms = TalkingRoom.objects.filter(id=self.room_id)
         print(async_to_sync(TalkingRoom.objects.count)())  # TODO:
         if async_to_sync(rooms.count)() == 1:
             result = async_to_sync(rooms.first)()
