@@ -37,6 +37,8 @@ class TalkTicket(models.Model):
 
 
 class TalkingRoom(models.Model):
+    class Meta:
+        ordering = ['-started_at']
     def __str__(self):
         alert_msg = '【終了】 ' if self.is_end else ''
         return '{}{} - {}({})'.format(alert_msg, self.speaker_ticket.owner.username, self.listener_ticket.owner.username, self.speaker_ticket.worry.label)

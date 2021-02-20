@@ -3,7 +3,6 @@ from channels.db import database_sync_to_async
 import json
 from channels.layers import get_channel_layer
 from account.v2.serializers import MeV2Serializer
-from chat.serializers import MessageSerializer
 from chat.v2.serializers import MessageV2Serializer
 from main.consumers import JWTAsyncWebsocketConsumer
 from ..models import *
@@ -29,8 +28,6 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
             self.channel_name
         )
 
-        print('auth') # TODO: 消す
-
         me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
         if me is None:
             # 401 Unauthorized
@@ -39,49 +36,36 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
             return
         self.me_id = me.id
 
-        result = await self.get_room()
-        if result:
-            room = result
-        else:
-            await self.close()
-            print('not found room')
-            return
-
-        print(result) # TODO: 消す
-
-        room_users = await self.get_room_users(room)
-        if room_users['speaker'].id == self.me_id:  # if I'm speaker
-            self.is_speaker = True
-            target_user = room_users['listener']
-        elif room_users['listener'].id == self.me_id:  # if I'm listener
-            self.is_speaker = False
-            target_user = room_users['speaker']
-
-            # roomのスタート処理（保留）
-            # if received_data['init']:
-            #     await self.start_talk(room)  # start talk
-        else:
-            raise
-
-        print(room_users) # TODO: 消す
-
-        # # change to talking
-        user_data = await self.get_me_data(me)
-        #
-        target_user_data = await self.get_user_data(user=target_user)
         await self.send(text_data=json.dumps({
-            'type': 'auth', 'room_id': str(self.room_id), 'target_user': target_user_data, 'profile': user_data,
-            # 'type': 'auth', 'room_id': str(self.room_id),
+            'type': 'auth', 'room_id': str(self.room_id),
         }))
 
-        # Send messages that you haven't stored yet
-        not_stored_messages_data = await self.get_not_stored_messages_data(room, self.is_speaker, me)
-        if not_stored_messages_data:
-            await self.send(text_data=json.dumps({
-                'type': 'multi_chat_messages',
-                'room_id': str(self.room_id),
-                'messages': not_stored_messages_data,
-            }))
+        room = await self.get_room()
+        if room:
+            room_users = await self.get_room_users(room)
+            if room_users['speaker'].id == self.me_id:  # if I'm speaker
+                self.is_speaker = True
+            elif room_users['listener'].id == self.me_id:  # if I'm listener
+                self.is_speaker = False
+
+            # Send messages that you haven't stored yet
+            not_stored_messages_data = await self.get_not_stored_messages_data(room, self.is_speaker, me)
+            if not_stored_messages_data:
+                await self.send(text_data=json.dumps({
+                    'type': 'multi_chat_messages',
+                    'room_id': str(self.room_id),
+                    'messages': not_stored_messages_data,
+                }))
+        elif room == 0:
+            # マッチング直後にchat wsコネクションを試みたとき(マッチング時にアプリを開いていた時)
+            # roomをcreateした直後にself.get_room()した場合、roomがdoesNotExist判定になる(↓参考)
+            # https://github.com/django/channels/issues/1110
+            self.is_speaker = received_data['is_speaker'] if 'is_speaker' in received_data else True
+
+        else:
+            await self.close()
+            print('room error.')
+            return
 
     async def _receive(self, received_data):
         received_type = received_data['type']
@@ -104,15 +88,15 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
                 })
 
                 # send fcm(SEND_MESSAGE)
-                room_users = await self.get_room_users(await self.get_room())
-                print(room_users)
-                receiver = room_users['listener'] if room_users['speaker'].id == me.id else room_users['speaker']
-                print(receiver)
-                fullfii.send_fcm(receiver, {
-                    'type': 'SEND_MESSAGE',
-                    'user': me,
-                    'message': message,
-                })
+                room = await self.get_room()
+                if room:
+                    room_users = await self.get_room_users(room)
+                    receiver = room_users['listener'] if room_users['speaker'].id == me.id else room_users['speaker']
+                    fullfii.send_fcm(receiver, {
+                        'type': 'SEND_MESSAGE',
+                        'user': me,
+                        'message': message,
+                    })
             else:
                 # chat_message送信失敗
                 pass
@@ -173,7 +157,7 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
         if rooms.count() == 1:
             return rooms.first()
         elif rooms.count() == 0:
-            return
+            return 0
         else:
             return
 
