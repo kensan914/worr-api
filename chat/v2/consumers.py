@@ -38,8 +38,23 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
 
         print('auth1') # TODO:
         print(self.room_id) # room_idもあっている # TODO:
-        result = await self.get_room()
-        print(result is None) # TODO:
+        # result = await self.get_room()
+
+        ###
+        def test():
+            print(self.room_id)  # TODO:
+            rooms = TalkingRoom.objects.filter(id=self.room_id)
+            print(TalkingRoom.objects.count())  # TODO:
+            if rooms.count() == 1:
+                return rooms.first()
+            elif rooms.count() == 0:
+                return
+            else:
+                return
+        result = await database_sync_to_async(test())()
+        ###
+
+        print(result is None) # TODO:]
         if result:
             room = result
         else:
