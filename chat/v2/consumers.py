@@ -43,9 +43,9 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
         result = None
         print(self.room_id)  # TODO:
         rooms = TalkingRoom.objects.filter(id=self.room_id)
-        print(async_to_sync(TalkingRoom.objects.count)())  # TODO:
-        if async_to_sync(rooms.count)() == 1:
-            result = async_to_sync(rooms.first)()
+        print(TalkingRoom.objects.count())  # TODO:
+        if rooms.count == 1:
+            result = rooms.first()
         ###
 
         # result = await get_room(self.room_id)
