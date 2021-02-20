@@ -20,9 +20,9 @@ def test(room_id):
         result = None
         print(room_id)  # TODO:
         rooms = TalkingRoom.objects.filter(id=room_id)
-        print(await database_sync_to_async(TalkingRoom.objects.count)())  # TODO:
-        if await database_sync_to_async(rooms.count)() == 1:
-            result = await database_sync_to_async(rooms.first)()
+        print(TalkingRoom.objects.count())  # TODO:
+        if rooms.count() == 1:
+            result = rooms.first()
         return result
 
     async_to_sync(async_get_user)()
