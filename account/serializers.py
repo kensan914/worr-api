@@ -55,7 +55,6 @@ class SignupSerializer(AuthSerializer):
         # genderがFEMALEやMALE以外だった場合, is_secret_genderをTrueに
         if 'gender' in validated_data and validated_data['gender'] != Gender.FEMALE and validated_data['gender'] != Gender.MALE:
             validated_data['is_secret_gender'] = True
-            print('aaaaaaaaaaaaaaaaaaaaaa')
         return Account.objects.create_user(**validated_data)
 
 
