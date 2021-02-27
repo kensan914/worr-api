@@ -43,11 +43,19 @@ class AuthSerializer(serializers.ModelSerializer):
 
 
 class SignupSerializer(AuthSerializer):
+    class Meta:
+        model = Account
+        fields = ('id', 'username', 'password', 'gender', 'is_secret_gender', 'job')
+
     def validate_password(self, data):
         validators.validate_password(password=data, user=Account)
         return data
 
     def create(self, validated_data):
+        # genderがFEMALEやMALE以外だった場合, is_secret_genderをTrueに
+        if 'gender' in validated_data and validated_data['gender'] != Gender.FEMALE and validated_data['gender'] != Gender.MALE:
+            validated_data['is_secret_gender'] = True
+            print('aaaaaaaaaaaaaaaaaaaaaa')
         return Account.objects.create_user(**validated_data)
 
 
@@ -121,7 +129,7 @@ class UserSerializer(serializers.ModelSerializer):
         if obj.gender in Gender.values:
             g = Gender(obj.gender)
         else:
-            g = Gender.SECRET
+            g = Gender.NOTSET
         return {'key': g.value, 'name': g.name, 'label': g.label}
 
     def get_job(self, obj):

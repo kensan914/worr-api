@@ -124,10 +124,9 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
         # change to online
         _me = await self.change_status(me, Status.ONLINE)
         me = _me if _me is not None else me
-        user_data = await self.get_me_data(me)
 
         await self.send(text_data=json.dumps({
-            'type': 'auth', 'profile': user_data
+            'type': 'auth'
         }))
 
     async def _receive(self, received_data):

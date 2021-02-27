@@ -87,7 +87,8 @@ class Plan(models.TextChoices):
 class Gender(models.TextChoices):
     MALE = 'male', '男性'
     FEMALE = 'female', '女性'
-    SECRET = 'secret', '内緒'
+    NOTSET = 'notset', '未設定'
+    # SECRET = 'secret', '内緒'
 
 
 class Job(models.TextChoices):
@@ -117,7 +118,8 @@ class Account(AbstractBaseUser):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(verbose_name='ユーザネーム', max_length=15)
-    gender = models.CharField(verbose_name='性別', max_length=100, choices=Gender.choices, default=Gender.SECRET)
+    gender = models.CharField(verbose_name='性別', max_length=100, choices=Gender.choices, default=Gender.NOTSET)
+    is_secret_gender = models.BooleanField(verbose_name='性別内緒', default=False)
     job = models.CharField(verbose_name='職業', max_length=100, choices=Job.choices, default=Job.SECRET)
     introduction = models.CharField(verbose_name='自己紹介', max_length=250, blank=True)
     num_of_thunks = models.IntegerField(verbose_name='ありがとう', default=0)
