@@ -81,7 +81,7 @@ def filter_detail_target_talk_tickets(my_ticket, target_tickets):
     """
     詳細フィルタ(gender、 job, block, 過去にトーク済み)
 
-    0. genderが"内緒"の場合、1・2は無視.
+    0. genderが "内緒" or "未設定" の場合、1・2は無視.
     1. my_ticketの「異性との相談を許可」がFalseの場合, 同性のみ.
     2. my_ticketの「異性との相談を許可」がTrueの場合, target_ticketsから「異性との相談を許可」がTrue, または同性をfilter
     3. jobが"内緒"の場合、4・5は無視.
@@ -96,7 +96,7 @@ def filter_detail_target_talk_tickets(my_ticket, target_tickets):
     block_me_accounts = me.block_me_accounts
     talked_accounts = me.talked_accounts
 
-    if me.gender == Gender.SECRET:  # 0
+    if me.is_secret_gender or (me.gender != Gender.MALE and me.gender != Gender.FEMALE):  # 0
         pass
     elif not my_ticket.can_talk_heterosexual:  # 1
         target_tickets = target_tickets.filter(owner__gender=me.gender)

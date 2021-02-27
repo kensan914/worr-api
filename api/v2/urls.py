@@ -3,7 +3,7 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 from account.serializers import LoginSerializer
 from account.views import signupAPIView, meAPIView, profileImageAPIView, authUpdateAPIView
 from api.v2.views import meV2APIView, profileParamsV2APIView, profileImageV2APIView, talkInfoV2APIView, \
-    talkTicketAPIView, closeTalkV2APIView, worryAPIView
+    talkTicketAPIView, closeTalkV2APIView, worryAPIView, genderAPIView
 from api.views import profileParamsAPIView, usersAPIView, talkRequestAPIView, cancelTalkAPIView, talkInfoAPIView, \
     endTalkAPIView, closeTalkAPIView, purchaseProductAPIView, noticeFromAppStoreAPIView, restoreProductAPIView, \
     blockAPIView, worriesAPIView
@@ -16,6 +16,7 @@ urlpatterns = [
     path('me/', meV2APIView),
     path('me/profile-image/', profileImageV2APIView),
     path('me/talk-info/', talkInfoV2APIView),
+    path('me/gender/', genderAPIView),
     # path('me/device-token/', deviceTokenAPIView),
     # path('me/email/', authUpdateAPIView),
     # path('me/password/', authUpdateAPIView),

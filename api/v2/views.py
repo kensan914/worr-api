@@ -214,3 +214,26 @@ class WorryAPIView(views.APIView):
 
 
 worryAPIView = WorryAPIView.as_view()
+
+
+class GenderAPIView(views.APIView):
+    def put(self, request, *args, **kwargs):
+        expected_keys = ['female', 'male', 'secret']
+        if 'key' in request.data and request.data['key'] in expected_keys:
+            if request.data['key'] == 'female' and request.user.gender != Gender.MALE:
+                request.user.gender = Gender.FEMALE
+                request.user.is_secret_gender = False
+            elif request.data['key'] == 'male' and request.user.gender != Gender.FEMALE:
+                request.user.gender = Gender.MALE
+                request.user.is_secret_gender = False
+            elif request.data['key'] == 'secret':
+                request.user.is_secret_gender = True
+            request.user.save()
+            return Response({
+                'me': MeV2Serializer(request.user).data,
+            }, status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_409_CONFLICT)
+
+
+genderAPIView = GenderAPIView.as_view()

@@ -36,7 +36,7 @@ def get_viewable_accounts(me, is_exclude_me=False):
     # all_accounts = get_all_accounts(me=me if is_exclude_me else None).exclude(Q(birthday=None) | Q(gender=None))
     # birthday, gender未設定でも表示対象に加える
     all_accounts = get_all_accounts(me=me if is_exclude_me else None)
-    if gender == Gender.SECRET:  # 0
+    if me.is_secret_gender or (gender != Gender.MALE and gender != Gender.FEMALE):  # 0
         return exclude_block_accounts(all_accounts)
     if not can_talk_heterosexual:  # 1
         accounts = all_accounts.filter(gender=gender)
