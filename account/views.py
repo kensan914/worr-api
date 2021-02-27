@@ -97,37 +97,20 @@ class MeAPIView(views.APIView):
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request, *args, **kwargs):
-        print(1)
-        print(request.data)
-
         me = self.patch_params(request.data, request.user)
         if me is not None:
             return Response(self.Serializer(me).data, status=status.HTTP_200_OK)
-
-        print(2)
 
         # job filter
         if 'job' in request.data and not request.data['job'] in Job.values:
             return Response(status=status.HTTP_409_CONFLICT)
 
-        print(3)
-        print(request.user)
-
         serializer = self.PatchSerializer(
             instance=request.user, data=request.data, partial=True)
 
-        print(4)
-        print(serializer)
-
         if serializer.is_valid():
-            print(5)
-            print(serializer)
             serializer.save()
-
-            print(self.Serializer(request.user).data)
             return Response(self.Serializer(request.user).data, status=status.HTTP_200_OK)
-
-        print(6)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
