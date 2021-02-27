@@ -117,12 +117,17 @@ class MeAPIView(views.APIView):
             instance=request.user, data=request.data, partial=True)
 
         print(4)
+        print(serializer)
 
         if serializer.is_valid():
+            print(5)
+            print(serializer)
             serializer.save()
+
+            print(self.Serializer(request.user).data)
             return Response(self.Serializer(request.user).data, status=status.HTTP_200_OK)
 
-        print(5)
+        print(6)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
