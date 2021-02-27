@@ -55,6 +55,6 @@ class PatchMeV2Serializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = ('name', 'introduction',
-                  'can_talk_heterosexual', 'device_token')
+                  'can_talk_heterosexual', 'device_token', 'job')
 
     name = serializers.CharField(source='username')

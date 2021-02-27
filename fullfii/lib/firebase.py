@@ -4,7 +4,6 @@ from firebase_admin import messaging
 
 
 def send_fcm(to_user, action):
-    print('start send_fcm')
     if not firebase_admin._apps:
         cred = credentials.Certificate(
             '/var/www/static/fullfii-firebase-adminsdk-cn02h-2e2b2efd56.json')
@@ -25,10 +24,12 @@ def send_fcm(to_user, action):
         ),
         token=registration_token,
     )
-    print(fcm_reducer_result)
 
-    response = messaging.send(message)
-    print('Successfully sent message:', response)
+    try:
+        response = messaging.send(message)
+        print('Successfully sent message:', response)
+    except:
+        print('requests.exceptions.HTTPError: 404 Client Error')
 
 
 def fcm_reducer(action):

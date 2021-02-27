@@ -7,7 +7,7 @@ from rest_framework.response import Response
 import fullfii
 from account.serializers import SignupSerializer, MeSerializer, PatchMeSerializer, ProfileImageSerializer, \
     FeaturesSerializer, GenreOfWorriesSerializer, ScaleOfWorriesSerializer, AuthUpdateSerializer
-from account.models import ProfileImage, Feature, GenreOfWorries, ScaleOfWorries, IntroStep, Account
+from account.models import ProfileImage, Feature, GenreOfWorries, ScaleOfWorries, IntroStep, Account, Job
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
 from account.v2.serializers import MeV2Serializer
@@ -101,7 +101,9 @@ class MeAPIView(views.APIView):
         if me is not None:
             return Response(self.Serializer(me).data, status=status.HTTP_200_OK)
 
-        # result_patch_intro_step = self.patch_intro_step(request.data, request.user)
+        # job filter
+        if 'job' in request.data and not request.data['job'] in Job.values:
+            return Response(status=status.HTTP_409_CONFLICT)
 
         serializer = self.PatchSerializer(
             instance=request.user, data=request.data, partial=True)
