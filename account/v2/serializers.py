@@ -8,7 +8,7 @@ from fullfii.lib.constants import BASE_URL
 class UserV2Serializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'gender', 'job', 'introduction',
+        fields = ('id', 'name', 'gender', 'is_secret_gender', 'job', 'introduction',
                   'num_of_thunks', 'genre_of_worries', 'image', 'me')
 
     name = serializers.CharField(source='username')
@@ -22,7 +22,7 @@ class UserV2Serializer(serializers.ModelSerializer):
         if obj.gender in Gender.values:
             g = Gender(obj.gender)
         else:
-            g = Gender.SECRET
+            g = Gender.NOTSET
         return {'key': g.value, 'name': g.name, 'label': g.label}
 
     def get_job(self, obj):
@@ -41,7 +41,7 @@ class UserV2Serializer(serializers.ModelSerializer):
 class MeV2Serializer(UserV2Serializer):
     class Meta:
         model = Account
-        fields = ('id', 'name', 'gender', 'job', 'introduction', 'num_of_thunks',
+        fields = ('id', 'name', 'gender', 'is_secret_gender', 'job', 'introduction', 'num_of_thunks',
                   'date_joined', 'plan', 'genre_of_worries', 'image', 'me', 'can_talk_heterosexual', 'device_token')
 
     plan = serializers.SerializerMethodField()
