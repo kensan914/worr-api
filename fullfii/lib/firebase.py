@@ -1,6 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import messaging
+import traceback
 
 
 def send_fcm(to_user, action):
@@ -17,23 +18,26 @@ def send_fcm(to_user, action):
     if fcm_reducer_result is None:
         return
 
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title=fcm_reducer_result['title'],
-            body=fcm_reducer_result['body'],
-        ),
-        # apns=messaging.APNSConfig(
-        #     payload=messaging.APNSPayload(
-        #         aps=messaging.aps(badge=fcm_reducer_result['badge'])
-        #     )),
-        token=registration_token,
-    )
-
     try:
-        response = messaging.send(message)
-        print('Successfully sent message:', response)
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=fcm_reducer_result['title'],
+                body=fcm_reducer_result['body'],
+            ),
+            apns=messaging.APNSConfig(
+                payload=messaging.APNSPayload(
+                    aps=messaging.Aps(badge=fcm_reducer_result['badge'])
+                )),
+            token=registration_token,
+        )
+
+        try:
+            response = messaging.send(message)
+            print('Successfully sent message:', response)
+        except:
+            traceback.print_exc()
     except:
-        print('requests.exceptions.HTTPError: 404 Client Error')
+        traceback.print_exc()
 
 
 def fcm_reducer(action):
