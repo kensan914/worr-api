@@ -19,6 +19,7 @@ def send_fcm(to_user, action):
         return
 
     try:
+        print(fcm_reducer_result['body'])
         message = messaging.Message(
             notification=messaging.Notification(
                 title=fcm_reducer_result['title'],
@@ -30,6 +31,7 @@ def send_fcm(to_user, action):
                 )),
             token=registration_token,
         )
+        print(message)
 
         try:
             response = messaging.send(message)
