@@ -22,10 +22,10 @@ def send_fcm(to_user, action):
             title=fcm_reducer_result['title'],
             body=fcm_reducer_result['body'],
         ),
-        apns=messaging.APNSConfig(
-            payload=messaging.APNSPayload(
-                aps=messaging.aps(badge=fcm_reducer_result['badge'])
-            )),
+        # apns=messaging.APNSConfig(
+        #     payload=messaging.APNSPayload(
+        #         aps=messaging.aps(badge=fcm_reducer_result['badge'])
+        #     )),
         token=registration_token,
     )
 
