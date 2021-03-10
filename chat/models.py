@@ -58,6 +58,8 @@ class TalkingRoom(models.Model):
 
 
 class MessageV2(models.Model):
+    class Meta:
+        ordering = ['-time']
     def __str__(self):
         return '{}({})'.format(str(self.room), self.time)
 

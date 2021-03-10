@@ -22,6 +22,10 @@ def send_fcm(to_user, action):
             title=fcm_reducer_result['title'],
             body=fcm_reducer_result['body'],
         ),
+        apns=messaging.APNSConfig(
+            payload=messaging.APNSPayload(
+                aps=messaging.aps(badge=fcm_reducer_result['badge'])
+            )),
         token=registration_token,
     )
 
@@ -36,6 +40,7 @@ def fcm_reducer(action):
     result = {
         'title': '',
         'body': '',
+        'badge': 0,
     }
     if action['type'] == 'SEND_MESSAGE':
         # action {type, user, message}
@@ -43,7 +48,10 @@ def fcm_reducer(action):
             return
         result['title'] = ''
         result['body'] = '{}さん：{}'.format(
-            action['user'].username, action['message'])
+            action['user'].username, action['message']
+        )
+        result['body'] = 1
+
     elif action['type'] == 'MATCH_TALK':
         # action {type, genreOfWorry}
         if not action['genreOfWorry'].label:
@@ -51,6 +59,7 @@ def fcm_reducer(action):
         result['title'] = ''
         result['body'] = '【{}】新しい話し相手が見つかりました！'.format(
             action['genreOfWorry'].label)
+
     elif action['type'] == 'THUNKS':
         # action {type, user}
         if not action['user'].username:
