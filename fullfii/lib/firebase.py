@@ -56,7 +56,7 @@ def fcm_reducer(action):
         result['body'] = '{}さん：{}'.format(
             action['user'].username, action['message']
         )
-        result['body'] = 1
+        result['badge'] = 1
 
     elif action['type'] == 'MATCH_TALK':
         # action {type, genreOfWorry}
