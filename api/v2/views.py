@@ -115,8 +115,10 @@ class TalkTicketAPIView(views.APIView):
                     talking_room.id, sender_id=request.user.id)
                 end_talk_v2(talking_room, ender=request.user)
 
+            response_data = TalkTicketSerializer(
+                talk_ticket, context={'me': request.user}).data
             start_matching()
-            return Response(TalkTicketSerializer(talk_ticket, context={'me': request.user}).data, status=status.HTTP_200_OK)
+            return Response(response_data, status=status.HTTP_200_OK)
 
 
 talkTicketAPIView = TalkTicketAPIView.as_view()
@@ -203,11 +205,12 @@ class WorryAPIView(views.APIView):
                             talking_room.id, sender_id=request.user.id)
                         end_talk_v2(talking_room, ender=request.user)
 
-            start_matching()
-            return Response({
+            response_data = {
                 'added_talk_tickets': TalkTicketSerializer(added_talk_tickets, context={'me': request.user}, many=True).data,
                 'removed_talk_ticket_keys': removed_talk_ticket_keys,
-            }, status.HTTP_200_OK)
+            }
+            start_matching()
+            return Response(response_data, status.HTTP_200_OK)
 
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
