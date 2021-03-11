@@ -26,6 +26,7 @@ async def send_fcm(to_user, action):
             payload=messaging.APNSPayload(
                 aps=messaging.Aps(badge=fcm_reducer_result['badge'])
             )) if fcm_reducer_result['badge'] > 0 else None
+
         message = messaging.Message(
             notification=messaging.Notification(
                 title=fcm_reducer_result['title'],
@@ -82,16 +83,27 @@ async def fcm_reducer(to_user, action):
 
 @DatabaseSyncToAsync
 def fetch_total_unread_count(to_user):
-    # fetch talking rooms
+    total_unread_count = 0
     talk_tickets = TalkTicket.objects.filter(owner=to_user, is_active=True)
-    talking_rooms = TalkingRoom.objects.filter(is_end=False).filter(
-        Q(speaker_ticket__in=talk_tickets) | Q(listener_ticket__in=talk_tickets))
 
-    talking_room__ids = [talking_room.id for talking_room in talking_rooms]
+    for talk_ticket in talk_tickets:
+        is_speaker = talk_ticket.is_speaker
 
-    # fetch unread messages
-    messages = MessageV2.objects.filter(room__id__in=talking_room__ids).filter(
-        Q(is_stored_on_speaker=False) | Q(is_stored_on_listener=False)
-    )
+        # fetch talking room
+        talking_rooms = TalkingRoom.objects.filter(is_end=False).filter(
+            Q(speaker_ticket=talk_ticket) | Q(listener_ticket=talk_ticket))
+        if not talking_rooms.exists():
+            continue
+        talking_room = talking_rooms.first()
 
-    return messages.count()
+        # fetch unread messages
+        if is_speaker:
+            messages = MessageV2.objects.filter(
+                room__id=talking_room.id).filter(is_read_speaker=False)
+        else:
+            messages = MessageV2.objects.filter(
+                room__id=talking_room.id).filter(is_read_listener=False)
+
+        total_unread_count += messages.count()
+
+    return total_unread_count
