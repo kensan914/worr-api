@@ -22,15 +22,16 @@ async def send_fcm(to_user, action):
         return
 
     try:
+        badge_apns = messaging.APNSConfig(
+            payload=messaging.APNSPayload(
+                aps=messaging.Aps(badge=fcm_reducer_result['badge'])
+            )) if fcm_reducer_result['badge'] > 0 else None
         message = messaging.Message(
             notification=messaging.Notification(
                 title=fcm_reducer_result['title'],
                 body=fcm_reducer_result['body'],
             ),
-            apns=messaging.APNSConfig(
-                payload=messaging.APNSPayload(
-                    aps=messaging.Aps(badge=fcm_reducer_result['badge'])
-                )),
+            apns=badge_apns,
             token=registration_token,
         )
 
