@@ -92,7 +92,8 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
                 if room:
                     room_users = await self.get_room_users(room)
                     receiver = room_users['listener'] if room_users['speaker'].id == me.id else room_users['speaker']
-                    fullfii.send_fcm(receiver, {
+                    # sync_to_async(fullfii.send_fcm)(receiver, {
+                    await fullfii.send_fcm(receiver, {
                         'type': 'SEND_MESSAGE',
                         'user': me,
                         'message': message,

@@ -1,10 +1,13 @@
+from channels.db import DatabaseSyncToAsync
+from django.db.models.query_utils import Q
+from chat.models import MessageV2, TalkTicket, TalkingRoom
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import messaging
 import traceback
 
 
-def send_fcm(to_user, action):
+async def send_fcm(to_user, action):
     if not firebase_admin._apps:
         cred = credentials.Certificate(
             '/var/www/static/fullfii-firebase-adminsdk-cn02h-2e2b2efd56.json')
@@ -14,12 +17,11 @@ def send_fcm(to_user, action):
     if not registration_token:
         return
 
-    fcm_reducer_result = fcm_reducer(action)
+    fcm_reducer_result = await fcm_reducer(to_user, action)
     if fcm_reducer_result is None:
         return
 
     try:
-        print(fcm_reducer_result['body'])
         message = messaging.Message(
             notification=messaging.Notification(
                 title=fcm_reducer_result['title'],
@@ -31,7 +33,6 @@ def send_fcm(to_user, action):
                 )),
             token=registration_token,
         )
-        print(message)
 
         try:
             response = messaging.send(message)
@@ -42,7 +43,7 @@ def send_fcm(to_user, action):
         traceback.print_exc()
 
 
-def fcm_reducer(action):
+async def fcm_reducer(to_user, action):
     result = {
         'title': '',
         'body': '',
@@ -56,7 +57,7 @@ def fcm_reducer(action):
         result['body'] = '{}さん：{}'.format(
             action['user'].username, action['message']
         )
-        result['badge'] = 1
+        result['badge'] = await fetch_total_unread_count(to_user)
 
     elif action['type'] == 'MATCH_TALK':
         # action {type, genreOfWorry}
@@ -76,3 +77,20 @@ def fcm_reducer(action):
         return
 
     return result
+
+
+@DatabaseSyncToAsync
+def fetch_total_unread_count(to_user):
+    # fetch talking rooms
+    talk_tickets = TalkTicket.objects.filter(owner=to_user, is_active=True)
+    talking_rooms = TalkingRoom.objects.filter(is_end=False).filter(
+        Q(speaker_ticket__in=talk_tickets) | Q(listener_ticket__in=talk_tickets))
+
+    talking_room__ids = [talking_room.id for talking_room in talking_rooms]
+
+    # fetch unread messages
+    messages = MessageV2.objects.filter(room__id__in=talking_room__ids).filter(
+        Q(is_stored_on_speaker=False) | Q(is_stored_on_listener=False)
+    )
+
+    return messages.count()
