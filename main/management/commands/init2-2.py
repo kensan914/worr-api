@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 import fullfii
 from account.models import Account, GenreOfWorries
+from asgiref.sync import async_to_sync
 
 
 class Command(BaseCommand):
@@ -13,20 +14,20 @@ class Command(BaseCommand):
         genreOfWorry = GenreOfWorries.objects.get(key='g')
 
         # send fcm(SEND_MESSAGE)
-        fullfii.send_fcm(to_user, {
+        async_to_sync(fullfii.send_fcm)(to_user, {
             'type': 'SEND_MESSAGE',
             'user': user,
             'message': 'test',
         })
 
         # send fcm(MATCH_TALK)
-        fullfii.send_fcm(to_user, {
+        async_to_sync(fullfii.send_fcm)(to_user, {
             'type': 'MATCH_TALK',
             'genreOfWorry': genreOfWorry,
         })
 
         # send fcm(THUNKS)
-        fullfii.send_fcm(to_user, {
+        async_to_sync(fullfii.send_fcm)(to_user, {
             'type': 'THUNKS',
             'user': user,
         })

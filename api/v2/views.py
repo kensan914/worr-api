@@ -13,6 +13,7 @@ from chat.v2.serializers import TalkTicketSerializer, TalkTicketPatchSerializer
 from fullfii import end_talk_v2, start_matching, increment_num_of_thunks, create_talk_ticket, end_talk_ticket, \
     activate_talk_ticket
 import fullfii
+from asgiref.sync import async_to_sync
 
 
 class ProfileParamsV2APIView(views.APIView):
@@ -144,7 +145,7 @@ class CloseTalkV2APIView(views.APIView):
             increment_num_of_thunks(target_user)
 
             # send fcm(THUNKS)
-            fullfii.send_fcm(target_user, {
+            async_to_sync(fullfii.send_fcm)(target_user, {
                 'type': 'THUNKS',
                 'user': request.user,
             })

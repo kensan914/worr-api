@@ -28,11 +28,11 @@ def start_talk(talking_room):
     )
 
     # send fcm(MATCH_TALK)
-    send_fcm(talking_room.speaker_ticket.owner, {
+    async_to_sync(send_fcm)(talking_room.speaker_ticket.owner, {
         'type': 'MATCH_TALK',
         'genreOfWorry': talking_room.speaker_ticket.worry,
     })
-    send_fcm(talking_room.listener_ticket.owner, {
+    async_to_sync(send_fcm)(talking_room.listener_ticket.owner, {
         'type': 'MATCH_TALK',
         'genreOfWorry': talking_room.listener_ticket.worry,
     })
