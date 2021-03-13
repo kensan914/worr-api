@@ -1,3 +1,4 @@
+import traceback
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 import json
@@ -92,7 +93,8 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
                 if room:
                     room_users = await self.get_room_users(room)
                     receiver = room_users['listener'] if room_users['speaker'].id == me.id else room_users['speaker']
-                    fullfii.send_fcm(receiver, {
+                    # sync_to_async(fullfii.send_fcm)(receiver, {
+                    await fullfii.send_fcm(receiver, {
                         'type': 'SEND_MESSAGE',
                         'user': me,
                         'message': message,
@@ -112,6 +114,14 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
 
         elif received_type == 'store_by_room':
             await self.turn_on_message_stored(self.is_speaker, room_id=self.room_id)
+
+        # フロントで既読処理が走った際に送信される
+        elif received_type == 'read':
+            if 'token' in received_data:
+                await self.turn_on_read_all_messages(self.is_speaker, room_id=self.room_id)
+            else:
+                # read 失敗
+                pass
 
     async def chat_message(self, event):
         try:
@@ -178,6 +188,29 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
     @database_sync_to_async
     def get_room_users(self, room):
         return {'speaker': room.speaker_ticket.owner, 'listener': room.listener_ticket.owner}
+
+    @database_sync_to_async
+    def turn_on_read_all_messages(self, is_speaker, room_id):
+        try:
+            upd_messages = []
+            if is_speaker:  # if I'm speaker
+                messages = MessageV2.objects.filter(
+                    room__id=room_id, is_read_speaker=False)
+                for message in messages:
+                    message.is_read_speaker = True
+                    upd_messages.append(message)
+                MessageV2.objects.bulk_update(
+                    upd_messages, fields=['is_read_speaker'])
+            else:  # if I'm listener
+                messages = MessageV2.objects.filter(
+                    room__id=room_id, is_read_listener=False)
+                for message in messages:
+                    message.is_read_listener = True
+                    upd_messages.append(message)
+                MessageV2.objects.bulk_update(
+                    upd_messages, fields=['is_read_listener'])
+        except:
+            traceback.print_exc()
 
     @database_sync_to_async
     def turn_on_message_stored(self, is_speaker, message_id=None, room_id=None):

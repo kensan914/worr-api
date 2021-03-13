@@ -12,6 +12,7 @@ class TalkStatus(models.TextChoices):
 
 class TalkTicket(models.Model):
     class Meta:
+        verbose_name = verbose_name_plural = 'トークチケット'
         unique_together = ('owner', 'worry')
 
     def __str__(self):
@@ -38,7 +39,9 @@ class TalkTicket(models.Model):
 
 class TalkingRoom(models.Model):
     class Meta:
+        verbose_name = verbose_name_plural = 'ルーム'
         ordering = ['-started_at']
+
     def __str__(self):
         alert_msg = '【終了】 ' if self.is_end else ''
         return '{}{} - {}({})'.format(alert_msg, self.speaker_ticket.owner.username, self.listener_ticket.owner.username, self.speaker_ticket.worry.label)
@@ -59,7 +62,9 @@ class TalkingRoom(models.Model):
 
 class MessageV2(models.Model):
     class Meta:
+        verbose_name = verbose_name_plural = 'メッセージ'
         ordering = ['-time']
+
     def __str__(self):
         return '{}({})'.format(str(self.room), self.time)
 
@@ -72,9 +77,17 @@ class MessageV2(models.Model):
     user = models.ForeignKey(
         'account.Account', verbose_name='投稿者', on_delete=models.CASCADE)
     is_stored_on_speaker = models.BooleanField(
-        verbose_name='話し手側の保存状況', default=False)
+        verbose_name='話し手側の保存状況', default=False
+    )
     is_stored_on_listener = models.BooleanField(
-        verbose_name='聞き手側の保存状況', default=False)
+        verbose_name='聞き手側の保存状況', default=False
+    )
+    is_read_speaker = models.BooleanField(
+        verbose_name='話し手側の既読状況', default=False
+    )
+    is_read_listener = models.BooleanField(
+        verbose_name='聞き手側の既読状況', default=False
+    )
 
 
 # only use v1
