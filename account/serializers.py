@@ -145,7 +145,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         if ProfileImage.objects.filter(user=obj).exists():
-            if exists_profile_std_image(obj.picture):
+            if exists_profile_std_image(obj.image.picture):
                 image_url = obj.image.picture.medium.url
             else:
                 image_url = obj.image.picture.url
