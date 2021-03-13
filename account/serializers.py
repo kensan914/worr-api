@@ -7,6 +7,7 @@ from account.models import Account, ProfileImage, Plan, Status, Feature, GenreOf
 from fullfii.lib.constants import BASE_URL
 from fullfii.lib.serializerSupport import generate_birthday
 from fullfii.lib.support import calc_age
+from fullfii.db.account import exists_profile_std_image
 
 
 class ProfileImageSerializer(serializers.ModelSerializer):
@@ -45,7 +46,8 @@ class AuthSerializer(serializers.ModelSerializer):
 class SignupSerializer(AuthSerializer):
     class Meta:
         model = Account
-        fields = ('id', 'username', 'password', 'gender', 'is_secret_gender', 'job')
+        fields = ('id', 'username', 'password',
+                  'gender', 'is_secret_gender', 'job')
 
     def validate_password(self, data):
         validators.validate_password(password=data, user=Account)
@@ -143,7 +145,10 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         if ProfileImage.objects.filter(user=obj).exists():
-            image_url = obj.image.picture.medium.url
+            if exists_profile_std_image(obj.picture):
+                image_url = obj.image.picture.medium.url
+            else:
+                image_url = obj.image.picture.url
             return os.path.join(BASE_URL, image_url if image_url[0] != '/' else image_url[1:])
 
 
