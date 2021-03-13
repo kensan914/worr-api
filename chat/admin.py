@@ -77,10 +77,6 @@ class MessageV2Admin(admin.ModelAdmin):
     list_display = ('format_to_detail', 'format_chat_composition',
                     'time', 'is_stored_on_speaker', 'is_stored_on_listener', 'is_read_speaker', 'is_read_listener')
     list_display_links = ('format_to_detail',)
-    # search_fields = ('speaker_ticket__owner__username',
-    #                  'listener_ticket__owner__username',)
-    # date_hierarchy = 'started_at'
-    # list_filter = ('is_end', 'is_alert', 'is_time_out',)
     raw_id_fields = ('room', 'user')
 
     def format_to_detail(self, obj):

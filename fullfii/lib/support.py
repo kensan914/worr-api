@@ -2,6 +2,7 @@ from datetime import datetime
 import pandas as pd
 import pytz
 from django.utils import timezone
+import os
 
 
 def calc_age(birthday):
@@ -24,6 +25,11 @@ def cvt_tz_str_to_datetime(tz_str, dt_format='%Y-%m-%d %H:%M:%S'):
     :return: datetime
     """
     dt, tz = tz_str.rsplit(maxsplit=1)
-    _datetime = datetime.strptime(dt, dt_format).replace(tzinfo=pytz.timezone(tz))
+    _datetime = datetime.strptime(
+        dt, dt_format).replace(tzinfo=pytz.timezone(tz))
     _local_datetime = _datetime.astimezone(timezone.get_current_timezone())
     return _local_datetime.replace(tzinfo=None)
+
+
+def calc_file_num(dir_path):
+    return sum(os.path.isfile(os.path.join(dir_path, name)) for name in os.listdir(dir_path))

@@ -1,16 +1,21 @@
 from django.db.models import Q
 from account.models import Account, Iap, IapStatus, Gender
+from fullfii.lib.support import calc_file_num
+from config import settings
+import os
 
 
 def get_all_accounts(me=None):
     """
     全ての利用者アカウントを取得. me指定で除外可
     """
-    accounts = Account.objects.filter(is_active=True, is_staff=False, is_superuser=False)
+    accounts = Account.objects.filter(
+        is_active=True, is_staff=False, is_superuser=False)
     if me:
         return accounts.exclude(id=me.id)
     else:
         return accounts
+
 
 def get_viewable_accounts(me, is_exclude_me=False):
     """
@@ -28,9 +33,11 @@ def get_viewable_accounts(me, is_exclude_me=False):
 
     def exclude_block_accounts(_accounts):
         if blocked_accounts:  # 3
-            _accounts = _accounts.exclude(id__in=blocked_accounts.all().values_list('id', flat=True))
+            _accounts = _accounts.exclude(
+                id__in=blocked_accounts.all().values_list('id', flat=True))
         if block_me_accounts:  # 4
-            _accounts = _accounts.exclude(id__in=block_me_accounts.all().values_list('id', flat=True))
+            _accounts = _accounts.exclude(
+                id__in=block_me_accounts.all().values_list('id', flat=True))
         return _accounts
 
     # all_accounts = get_all_accounts(me=me if is_exclude_me else None).exclude(Q(birthday=None) | Q(gender=None))
@@ -41,7 +48,8 @@ def get_viewable_accounts(me, is_exclude_me=False):
     if not can_talk_heterosexual:  # 1
         accounts = all_accounts.filter(gender=gender)
     else:  # 2
-        accounts = all_accounts.filter(Q(can_talk_heterosexual=True) | Q(gender=gender))
+        accounts = all_accounts.filter(
+            Q(can_talk_heterosexual=True) | Q(gender=gender))
 
     return exclude_block_accounts(accounts)
 
@@ -73,3 +81,12 @@ def update_iap(iap, original_transaction_id=None, transaction_id=None, user=None
     iap.status = status if status is not None else iap.status
     iap.save()
     return iap
+
+
+def exists_profile_std_image(image_field):
+    try:
+        profile_image_num = calc_file_num(os.path.dirname(
+            settings.BASE_DIR + image_field.url))
+        return profile_image_num > 1
+    except:
+        return
