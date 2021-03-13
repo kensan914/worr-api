@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import *
 from django.utils.html import format_html
+import fullfii
 
 
 @admin.register(Account)
@@ -41,7 +42,11 @@ class ProfileImageAdmin(admin.ModelAdmin):
 
     def format_picture(self, obj):
         if obj.picture:
-            return format_html('<img src="{}" width="100" style="border-radius: 8px" />', obj.picture.thumbnail.url)
+            if fullfii.exists_profile_std_image(obj.picture):
+                img_src = obj.picture.thumbnail.url
+            else:
+                img_src = obj.picture.url
+            return format_html('<img src="{}" width="100" style="border-radius: 8px" />', img_src)
     format_picture.short_description = '画像'
     format_picture.empty_value_display = 'No image'
 
