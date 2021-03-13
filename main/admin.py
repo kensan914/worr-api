@@ -1,4 +1,4 @@
 from django.contrib import admin
 from main.models import *
 
-admin.site.register(Notification)
+# admin.site.register(Notification)

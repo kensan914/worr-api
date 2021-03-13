@@ -12,6 +12,7 @@ class TalkStatus(models.TextChoices):
 
 class TalkTicket(models.Model):
     class Meta:
+        verbose_name = verbose_name_plural = 'トークチケット'
         unique_together = ('owner', 'worry')
 
     def __str__(self):
@@ -38,6 +39,7 @@ class TalkTicket(models.Model):
 
 class TalkingRoom(models.Model):
     class Meta:
+        verbose_name = verbose_name_plural = 'ルーム'
         ordering = ['-started_at']
 
     def __str__(self):
@@ -60,6 +62,7 @@ class TalkingRoom(models.Model):
 
 class MessageV2(models.Model):
     class Meta:
+        verbose_name = verbose_name_plural = 'メッセージ'
         ordering = ['-time']
 
     def __str__(self):
