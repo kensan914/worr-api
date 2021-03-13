@@ -24,4 +24,7 @@ urlpatterns = [
 ]
 
 if settings.ADMIN:
+    admin.site.site_header = 'Fullfii 管理サイト'
+    admin.site.site_title = 'Fullfii 管理サイト'
+    admin.site.index_title = 'HOME🏠'
     urlpatterns += [path('admin/', admin.site.urls)]
