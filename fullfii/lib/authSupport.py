@@ -43,4 +43,5 @@ def on_signup_success(me):
     for worry in me.genre_of_worries.all():
         create_talk_ticket(me, worry)
 
-    start_matching()
+    # sign up直後(デフォルト)は検索中断状態
+    # start_matching()

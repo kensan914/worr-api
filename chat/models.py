@@ -26,7 +26,7 @@ class TalkTicket(models.Model):
                               verbose_name='悩み', on_delete=models.CASCADE)
     is_speaker = models.BooleanField(verbose_name='話し手希望', default=True)
     status = models.CharField(verbose_name='状態', max_length=100,
-                              choices=TalkStatus.choices, default=TalkStatus.WAITING)
+                              choices=TalkStatus.choices, default=TalkStatus.STOPPING)
     wait_start_time = models.DateTimeField(
         verbose_name='待機開始時間', default=timezone.now)
 
