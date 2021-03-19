@@ -1,5 +1,5 @@
 import random
-from chat.models import TalkTicket
+from chat.models import TalkStatus, TalkTicket
 
 
 def create_talk_ticket(owner, worry):
@@ -22,6 +22,10 @@ def create_talk_ticket(owner, worry):
 
 
 def activate_talk_ticket(talk_ticket):
+    """
+    talkTicketを活性化状態に戻す, その時にstatusはstoppingに
+    """
     talk_ticket.is_active = True
+    talk_ticket.status = TalkStatus.STOPPING
     talk_ticket.save()
     return talk_ticket

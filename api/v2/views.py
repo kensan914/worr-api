@@ -210,7 +210,7 @@ class WorryAPIView(views.APIView):
                 'added_talk_tickets': TalkTicketSerializer(added_talk_tickets, context={'me': request.user}, many=True).data,
                 'removed_talk_ticket_keys': removed_talk_ticket_keys,
             }
-            start_matching()
+            # start_matching()
             return Response(response_data, status.HTTP_200_OK)
 
         else:
