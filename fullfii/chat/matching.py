@@ -56,8 +56,7 @@ def start_matching():
             talk_ticket if talk_ticket.is_speaker else target_talk_ticket,
             target_talk_ticket if talk_ticket.is_speaker else talk_ticket,
         )
-        print('talking room 作成')
-        print(TalkingRoom.objects.count())
+
         matched_rooms.append(talking_room)
         # トーク開始
         if talking_room:

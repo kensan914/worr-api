@@ -8,7 +8,8 @@ from chat.models import Room, TalkTicket, TalkStatus, TalkingRoom, MessageV2
 class TalkTicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = TalkTicket
-        fields = ['id', 'owner', 'worry', 'is_speaker', 'status', 'wait_start_time', 'can_talk_heterosexual', 'can_talk_different_job', 'room']
+        fields = ['id', 'owner', 'worry', 'is_speaker', 'status', 'wait_start_time',
+                  'can_talk_heterosexual', 'can_talk_different_job', 'room']
 
     owner = serializers.SerializerMethodField()
     worry = GenreOfWorriesSerializer()
@@ -34,8 +35,9 @@ class TalkTicketSerializer(serializers.ModelSerializer):
             return obj.wait_start_time.strftime('%Y/%m/%d %H:%M:%S')
 
     def get_room(self, obj):
-        if obj.status == TalkStatus.TALKING:
-            rooms = TalkingRoom.objects.filter(is_end=False).filter(Q(speaker_ticket=obj) | Q(listener_ticket=obj))
+        if obj.status == TalkStatus.TALKING or obj.status == TalkStatus.FINISHING:
+            rooms = TalkingRoom.objects.filter(
+                Q(speaker_ticket=obj) | Q(listener_ticket=obj))
             if rooms.exists():
                 return TalkingRoomSerializer(rooms.first(), context=self.context).data
         return None
@@ -44,14 +46,15 @@ class TalkTicketSerializer(serializers.ModelSerializer):
 class TalkTicketPatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = TalkTicket
-        fields = ['is_speaker', 'status', 'can_talk_heterosexual', 'can_talk_different_job']
-
+        fields = ['is_speaker', 'status',
+                  'can_talk_heterosexual', 'can_talk_different_job']
 
 
 class TalkingRoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = Room
-        fields = ['id', 'user', 'started_at', 'ended_at', 'is_alert', 'is_time_out']
+        fields = ['id', 'user', 'started_at',
+                  'ended_at', 'is_alert', 'is_time_out']
 
     user = serializers.SerializerMethodField()
     started_at = serializers.SerializerMethodField()

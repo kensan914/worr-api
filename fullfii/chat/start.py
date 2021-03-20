@@ -16,6 +16,14 @@ def start_talk(talking_room):
     talking_room.listener_ticket.status = TalkStatus.TALKING
     talking_room.listener_ticket.save()
 
+    # start talkの時点でtalked_accounts更新(トーク中にシャッフルするとtalked_accountにマッチする可能性が出るため)
+    speaker = talking_room.speaker_ticket.owner
+    listener = talking_room.listener_ticket.owner
+    speaker.talked_accounts.add(listener)
+    speaker.save()
+    listener.talked_accounts.add(speaker)
+    listener.save()
+
     send_talk_notification(
         recipient=talking_room.speaker_ticket.owner,
         context={'room_id': str(talking_room.id), 'status': 'start',
