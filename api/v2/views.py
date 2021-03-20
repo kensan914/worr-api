@@ -95,8 +95,8 @@ class TalkTicketAPIView(views.APIView):
         talk_ticket_id = self.kwargs.get('talk_ticket_id')
         talk_ticket = get_object_or_404(TalkTicket, id=talk_ticket_id)
 
-        # talkingへの変更は不可.
-        if request.data['status'] == TalkStatus.TALKING or request.data['status'] == TalkStatus.FINISHING:
+        # WAITING・STOPPING以外への変更は不可.
+        if request.data['status'] != TalkStatus.WAITING and request.data['status'] != TalkStatus.STOPPING:
             return Response(TalkTicketSerializer(talk_ticket, context={'me': request.user}).data, status=status.HTTP_409_CONFLICT)
 
         serializer = TalkTicketPatchSerializer(

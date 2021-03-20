@@ -16,11 +16,11 @@ def end_talk_v2(room, ender):
     room.save()
 
     speaker = room.speaker_ticket.owner
-    listener = room.listener_ticket.owner
-    speaker.talked_accounts.add(listener)
-    speaker.save()
-    listener.talked_accounts.add(speaker)
-    listener.save()
+    # listener = room.listener_ticket.owner
+    # speaker.talked_accounts.add(listener)
+    # speaker.save()
+    # listener.talked_accounts.add(speaker)
+    # listener.save()
 
     # 相手方(終了させられた方)のtalkticketをfinishing状態に
     should_finish_ticket = room.listener_ticket if speaker.id == ender.id else room.speaker_ticket

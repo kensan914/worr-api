@@ -31,7 +31,7 @@ class TalkTicketAdmin(admin.ModelAdmin):
             elif talk_status.name == 'STOPPING':
                 backgroundColor = 'salmon'
             elif talk_status.name == 'FINISHING':
-                backgroundColor = 'salmon'
+                backgroundColor = 'gold'
 
             return format_html('<div style="background-color: {}; text-align: center; border-radius: 8px; padding-left: 2px; padding-right: 2px;">{}</div>', backgroundColor, talk_status.label)
         else:
