@@ -1,6 +1,6 @@
 from channels.db import DatabaseSyncToAsync
 from django.db.models.query_utils import Q
-from chat.models import MessageV2, TalkTicket, TalkingRoom
+from chat.models import MessageV2, TalkStatus, TalkTicket, TalkingRoom
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import messaging
@@ -52,7 +52,10 @@ async def fcm_reducer(to_user, action):
         'badge': 0,
     }
     if action['type'] == 'SEND_MESSAGE':
-        # action {type, user, message}
+        # action {type, user, message, receiver_talk_ticket}
+        if action['receiver_talk_ticket'].status == TalkStatus.APPROVING:
+            # 相手方がトークを承認してなかった時, SEND_MESSAGE通知を送らない
+            return
         if not action['user'].username or not action['message']:
             return
         result['title'] = ''

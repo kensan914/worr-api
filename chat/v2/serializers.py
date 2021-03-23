@@ -35,7 +35,7 @@ class TalkTicketSerializer(serializers.ModelSerializer):
             return obj.wait_start_time.strftime('%Y/%m/%d %H:%M:%S')
 
     def get_room(self, obj):
-        if obj.status == TalkStatus.TALKING or obj.status == TalkStatus.FINISHING:
+        if obj.status == TalkStatus.TALKING or obj.status == TalkStatus.FINISHING or obj.status == TalkStatus.APPROVING:
             rooms = TalkingRoom.objects.filter(
                 Q(speaker_ticket=obj) | Q(listener_ticket=obj))
             if rooms.exists():

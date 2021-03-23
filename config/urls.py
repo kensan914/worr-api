@@ -20,6 +20,7 @@ from . import settings
 urlpatterns = [
     path('api/v1/', include('api.urls')),
     path('api/v2/', include('api.v2.urls')),
+    path('api/v3/', include('api.v3.urls')),
     path('', include('main.urls')),
 ]
 

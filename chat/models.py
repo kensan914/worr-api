@@ -8,6 +8,7 @@ class TalkStatus(models.TextChoices):
     WAITING = 'waiting', '待機中'
     STOPPING = 'stopping', '停止中'
     FINISHING = 'finishing', '終了中'
+    APPROVING = 'approving', '承認中'
 
 
 class TalkTicket(models.Model):

@@ -4,7 +4,7 @@ from chat.models import TalkTicket, TalkStatus, TalkingRoom
 from fullfii import create_talking_room, start_talk
 
 
-def start_matching():
+def start_matching(version=2):
     """
     マッチングシステム開始
     """
@@ -60,7 +60,7 @@ def start_matching():
         matched_rooms.append(talking_room)
         # トーク開始
         if talking_room:
-            start_talk(talking_room)
+            start_talk(talking_room, version)
 
 
 def search_target_talk_tickets(my_ticket):

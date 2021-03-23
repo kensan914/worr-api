@@ -4,16 +4,21 @@ from asgiref.sync import async_to_sync
 from fullfii.lib.firebase import send_fcm
 
 
-def start_talk(talking_room):
+def start_talk(talking_room, version=2):
     """
     talkの開始処理(talk_ticketのstatus変更, 双方にnotification送信)
     :param talking_room:
     :return:
     """
     from chat.v2.serializers import TalkTicketSerializer
-    talking_room.speaker_ticket.status = TalkStatus.TALKING
+    if version >= 3:
+        talking_room.speaker_ticket.status = TalkStatus.APPROVING
+        talking_room.listener_ticket.status = TalkStatus.APPROVING
+    else:
+        talking_room.speaker_ticket.status = TalkStatus.TALKING
+        talking_room.listener_ticket.status = TalkStatus.TALKING
+
     talking_room.speaker_ticket.save()
-    talking_room.listener_ticket.status = TalkStatus.TALKING
     talking_room.listener_ticket.save()
 
     # start talkの時点でtalked_accounts更新(トーク中にシャッフルするとtalked_accountにマッチする可能性が出るため)
