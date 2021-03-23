@@ -4,7 +4,7 @@ from api.v2.views import meV2APIView, profileParamsV2APIView, profileImageV2APIV
     talkTicketAPIView, closeTalkV2APIView, worryAPIView, genderAPIView
 from api.v3.views import talkTicketAPIView
 from api.views import usersAPIView, purchaseProductAPIView, noticeFromAppStoreAPIView, restoreProductAPIView, \
-    blockAPIView,
+    blockAPIView
 
 app_name = 'api_v3'
 
