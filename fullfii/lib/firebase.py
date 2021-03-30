@@ -40,7 +40,8 @@ async def send_fcm(to_user, action):
             response = messaging.send(message)
             print('Successfully sent message:', response)
         except:
-            traceback.print_exc()
+            # traceback.print_exc()
+            pass
     except:
         traceback.print_exc()
 
@@ -78,6 +79,18 @@ async def fcm_reducer(to_user, action):
             return
         result['title'] = ''
         result['body'] = '{}さんからありがとうをもらいました！'.format(action['user'].username)
+
+    elif action['type'] == 'END_TALK_ALERT':
+        # action {type}
+        result['title'] = ''
+        result['body'] = '【残り10分】返信してないルームは自動削除されちゃうよ！'
+
+    elif action['type'] == 'END_TALK':
+        # action {type, user}
+        if not action['user'].username:
+            return
+        result['title'] = ''
+        result['body'] = '{}さんとのトークが自動終了されました'.format(action['user'].username)
     else:
         return
 

@@ -4,7 +4,7 @@ from channels.db import database_sync_to_async
 import json
 from channels.layers import get_channel_layer
 from account.v2.serializers import MeV2Serializer
-from chat.v2.serializers import MessageV2Serializer
+from chat.v2.serializers import MessageV2Serializer, TalkTicketSerializer
 from main.consumers import JWTAsyncWebsocketConsumer
 from ..models import *
 import fullfii
@@ -101,9 +101,12 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
                     'sender_channel_name': self.channel_name,
                 })
 
-                # send fcm(SEND_MESSAGE)
                 room = await self.get_room()
                 if room:
+                    # 一度end talk alertが出た後もメッセージが送られれば消されない. また再びalertを出せるように
+                    await self.reset_is_alert(room)
+
+                    # send fcm(SEND_MESSAGE)
                     room_users = await self.get_room_users(room)
                     receiver = room_users['listener'] if room_users['speaker'].id == me.id else room_users['speaker']
                     receiver_talk_ticket = room.listener_ticket if room_users[
@@ -160,6 +163,12 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
 
     async def end_talk(self, event):
         try:
+            # fetch talkTicket
+            room = await self.get_room()
+            talk_ticket = await self.get_talk_ticket(room)
+            me = await self.get_user(self.me_id)
+            talk_ticket_data = await self.get_talk_ticket_data(talk_ticket, me)
+
             _type = None
             if event['alert']:
                 _type = 'end_talk_alert'
@@ -169,11 +178,11 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
                 if str(self.me_id) != event['sender_id']:
                     _type = 'end_talk'
             if _type is not None:
-                me = await self.get_user(self.me_id)
                 user_data = await self.get_me_data(me)
                 await self.send(text_data=json.dumps({
                     'type': _type,
                     'profile': user_data,
+                    'talk_ticket': talk_ticket_data,
                 }))
         except Exception as e:
             raise
@@ -205,6 +214,19 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
     @database_sync_to_async
     def get_room_users(self, room):
         return {'speaker': room.speaker_ticket.owner, 'listener': room.listener_ticket.owner}
+
+    @database_sync_to_async
+    def get_talk_ticket(self, room):
+        if self.is_speaker:
+            return room.speaker_ticket
+        else:
+            return room.listener_ticket
+
+    @database_sync_to_async
+    def reset_is_alert(self, room):
+        if room.is_alert:
+            room.is_alert = False
+            room.save()
 
     @database_sync_to_async
     def turn_on_read_all_messages(self, is_speaker, room_id):
@@ -288,3 +310,7 @@ class ChatConsumerV2(JWTAsyncWebsocketConsumer):
     @database_sync_to_async
     def get_me_data(self, user):
         return MeV2Serializer(user).data
+
+    @database_sync_to_async
+    def get_talk_ticket_data(self, talk_ticket, _me):
+        return TalkTicketSerializer(talk_ticket, context={'me': _me}).data

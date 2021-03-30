@@ -67,8 +67,8 @@ def start_matching(version=2):
 
     # Accountをclass(ログイン頻度)ごとに分割(大宮開成スタイル)
     # [(Aクラス: 最終アクセス2日以内), (Bクラス: 最終アクセス4~7日以内), (Cクラス: それ以外)]
-    loggedin_minutes_class = [2*24*60, 7*24*60, -1]
-    # loggedin_minutes_class = [1*24*60, 2*24*60, -1]
+    # loggedin_minutes_class = [2*24*60, 7*24*60, -1]
+    loggedin_minutes_class = [4*24*60, 7*24*60, -1]  # TODO:
     # [[(talkTicketA.pk), (talkTicketB.pk)], [(talkTicketC.pk), (talkTicketD.pk)], []]
     talk_ticket_ids_split_by_class = []
     for i in range(len(loggedin_minutes_class)):

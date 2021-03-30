@@ -36,30 +36,40 @@ class Command(BaseCommand):
         # })
 
         # loggedin_minutes_class = [2*24*60, 7*24*60, -1]
-        loggedin_minutes_class = [1*24*60, 2*24*60, -1]
-        talk_tickets_split_by_class = []
-        for i in range(len(loggedin_minutes_class)):
-            talk_tickets_split_by_class.append([])
+        # loggedin_minutes_class = [1*24*60, 2*24*60, -1]
+        # talk_tickets_split_by_class = []
+        # for i in range(len(loggedin_minutes_class)):
+        #     talk_tickets_split_by_class.append([])
 
-        for talk_ticket in TalkTicket.objects.all():
-            elapsed_seconds = (
-                timezone.now() - talk_ticket.owner.loggedin_at).total_seconds()
-            elapsed_minutes = elapsed_seconds / 60
+        # for talk_ticket in TalkTicket.objects.all():
+        #     elapsed_seconds = (
+        #         timezone.now() - talk_ticket.owner.loggedin_at).total_seconds()
+        #     elapsed_minutes = elapsed_seconds / 60
 
-            print(elapsed_minutes)
+        #     print(elapsed_minutes)
 
-            for i, loggedin_minutes in enumerate(loggedin_minutes_class):
-                if elapsed_minutes < loggedin_minutes:
-                    talk_tickets_split_by_class[i].append(talk_ticket.pk)
-                    break
-                elif loggedin_minutes == -1:
-                    talk_tickets_split_by_class[i].append(talk_ticket.pk)
-                    break
+        #     for i, loggedin_minutes in enumerate(loggedin_minutes_class):
+        #         if elapsed_minutes < loggedin_minutes:
+        #             talk_tickets_split_by_class[i].append(talk_ticket.pk)
+        #             break
+        #         elif loggedin_minutes == -1:
+        #             talk_tickets_split_by_class[i].append(talk_ticket.pk)
+        #             break
 
-        for talk_ticket_ids in talk_tickets_split_by_class:
-            talk_tickets = TalkTicket.objects.filter(pk__in=talk_ticket_ids)
-            print(
-                'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-            print(talk_tickets)
+        # for talk_ticket_ids in talk_tickets_split_by_class:
+        #     talk_tickets = TalkTicket.objects.filter(pk__in=talk_ticket_ids)
+        #     print(
+        #         'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+        #     print(talk_tickets)
 
         # fullfii.start_matching(version=3)
+
+        # トーク済みアカウントリセット
+        for account in Account.objects.all():
+            account.talked_accounts.clear()
+
+        # talking => waiting
+        # for talk_ticket in TalkTicket.objects.all():
+        #     if talk_ticket.status == TalkStatus.TALKING:
+        #         talk_ticket.status = TalkStatus.WAITING
+        #         talk_ticket.save()

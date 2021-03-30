@@ -4,7 +4,7 @@ from account.models import Status
 from chat.models import Room, TalkStatus
 
 
-def end_talk_v2(room, ender):
+def end_talk_v2(room, ender, is_time_out=False):
     """
     v2. トークを終了するときに1回だけ実行. set talked_accounts.
     :param room:
@@ -13,14 +13,13 @@ def end_talk_v2(room, ender):
     """
     room.is_end = True
     room.ended_at = timezone.now()
+    room.is_time_out = is_time_out
     room.save()
 
+    if not ender:
+        return
+
     speaker = room.speaker_ticket.owner
-    # listener = room.listener_ticket.owner
-    # speaker.talked_accounts.add(listener)
-    # speaker.save()
-    # listener.talked_accounts.add(speaker)
-    # listener.save()
 
     # 相手方(終了させられた方)のtalkticketをfinishing状態に
     should_finish_ticket = room.listener_ticket if speaker.id == ender.id else room.speaker_ticket
