@@ -61,6 +61,14 @@ class MeV2APIView(MeAPIView):
     Serializer = MeV2Serializer
     PatchSerializer = PatchMeV2Serializer
 
+    def get(self, request):
+        # ログイン処理(loggedin_atの更新)
+        request.user.loggedin_at = timezone.now()
+        request.user.save()
+
+        serializer = self.Serializer(request.user)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
 
 meV2APIView = MeV2APIView.as_view()
 
