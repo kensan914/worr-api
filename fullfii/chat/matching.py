@@ -31,7 +31,7 @@ def start_matching(version=2):
         return False
 
     def match_by_talk_tickets(talk_tickets_by_class):
-        for talk_ticket in talk_tickets_by_class.filter(status=TalkStatus.WAITING, is_active=True).order_by('-wait_start_time'):
+        for talk_ticket in talk_tickets_by_class.filter(status=TalkStatus.WAITING, is_active=True, owner__is_active=True).order_by('-wait_start_time'):
             if exists_matched_talk_tickets(talk_ticket):
                 continue
             if talk_ticket.status != TalkStatus.WAITING:
@@ -101,6 +101,7 @@ def search_target_talk_tickets(my_ticket, talk_tickets):
         is_speaker=(not my_ticket.is_speaker),
         status=my_ticket.status,
         is_active=True,
+        owner__is_active=True
     )
 
 
