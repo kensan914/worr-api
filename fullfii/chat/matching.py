@@ -62,13 +62,12 @@ def start_matching(version=2):
             matched_rooms.append(talking_room)
             # トーク開始
             if talking_room:
-                print('start talk: ', talk_ticket, target_talk_ticket)
                 start_talk(talking_room, version)
 
     # Accountをclass(ログイン頻度)ごとに分割(大宮開成スタイル)
     # [(Aクラス: 最終アクセス2日以内), (Bクラス: 最終アクセス4~7日以内), (Cクラス: それ以外)]
-    # loggedin_minutes_class = [2*24*60, 7*24*60, -1]
-    loggedin_minutes_class = [4*24*60, 7*24*60, -1]  # TODO:
+    loggedin_minutes_class = [2*24*60, 7*24*60, -1]
+    # loggedin_minutes_class = [4*24*60, 7*24*60, -1] # test
     # [[(talkTicketA.pk), (talkTicketB.pk)], [(talkTicketC.pk), (talkTicketD.pk)], []]
     talk_ticket_ids_split_by_class = []
     for i in range(len(loggedin_minutes_class)):

@@ -8,5 +8,5 @@ class Command(BaseCommand):
            '最終メッセージ後48時間経過10分前達したらアラートを出す'
 
     def handle(self, *args, **options):
-        # manage_talking_time(end_minutes=2*24*60, alert_minutes=2*24*60-10)
-        manage_talking_time(end_minutes=0.4, alert_minutes=0.1)  # TODO:
+        manage_talking_time(end_minutes=2*24*60, alert_minutes=2*24*60-10)
+        # manage_talking_time(end_minutes=0.4, alert_minutes=0.1) # test

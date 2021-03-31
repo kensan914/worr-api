@@ -73,3 +73,10 @@ class Command(BaseCommand):
         #     if talk_ticket.status == TalkStatus.TALKING:
         #         talk_ticket.status = TalkStatus.WAITING
         #         talk_ticket.save()
+
+        # topicランダム格納
+        # for talk_ticket in TalkTicket.objects.all():
+        #     if not talk_ticket.topic:
+        #         talk_ticket.topic = '{}-{}'.format(
+        #             talk_ticket.owner, talk_ticket.worry)
+        #         talk_ticket.save()

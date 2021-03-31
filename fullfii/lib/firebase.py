@@ -40,8 +40,7 @@ async def send_fcm(to_user, action):
             response = messaging.send(message)
             print('Successfully sent message:', response)
         except:
-            # traceback.print_exc()
-            pass
+            traceback.print_exc()
     except:
         traceback.print_exc()
 

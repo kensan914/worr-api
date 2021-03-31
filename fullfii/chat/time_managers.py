@@ -33,9 +33,6 @@ def manage_talking_time(end_minutes, alert_minutes):
             fullfii.end_talk_v2(talking_room, ender=None, is_time_out=True)
             fullfii.end_talk_ticket(talking_room.speaker_ticket)
             fullfii.end_talk_ticket(talking_room.listener_ticket)
-            print(talking_room.speaker_ticket)
-            print(talking_room.listener_ticket)
-            print('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
 
             # 通知
             fullfii.send_fcm(talking_room.speaker_ticket.owner, {
@@ -53,9 +50,6 @@ def manage_talking_time(end_minutes, alert_minutes):
 
         # alert end talk
         elif elapsed_minutes > alert_minutes:
-            print(talking_room.speaker_ticket)
-            print(talking_room.listener_ticket)
-            print('yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy')
             if not talking_room.is_alert:
                 talking_room.is_alert = True
                 upd_talking_rooms.append(talking_room)
