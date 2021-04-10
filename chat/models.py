@@ -8,6 +8,7 @@ class TalkStatus(models.TextChoices):
     WAITING = 'waiting', '待機中'
     STOPPING = 'stopping', '停止中'
     FINISHING = 'finishing', '終了中'
+    APPROVING = 'approving', '承認中'
 
 
 class TalkTicket(models.Model):
@@ -24,9 +25,11 @@ class TalkTicket(models.Model):
         'account.Account', verbose_name='所持者', on_delete=models.CASCADE)
     worry = models.ForeignKey('account.GenreOfWorries',
                               verbose_name='悩み', on_delete=models.CASCADE)
+    topic = models.CharField(
+        verbose_name='話題', max_length=250, blank=True)
     is_speaker = models.BooleanField(verbose_name='話し手希望', default=True)
     status = models.CharField(verbose_name='状態', max_length=100,
-                              choices=TalkStatus.choices, default=TalkStatus.WAITING)
+                              choices=TalkStatus.choices, default=TalkStatus.STOPPING)
     wait_start_time = models.DateTimeField(
         verbose_name='待機開始時間', default=timezone.now)
 

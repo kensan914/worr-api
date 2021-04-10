@@ -61,6 +61,14 @@ class MeV2APIView(MeAPIView):
     Serializer = MeV2Serializer
     PatchSerializer = PatchMeV2Serializer
 
+    def get(self, request):
+        # ログイン処理(loggedin_atの更新)
+        request.user.loggedin_at = timezone.now()
+        request.user.save()
+
+        serializer = self.Serializer(request.user)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
 
 meV2APIView = MeV2APIView.as_view()
 
@@ -95,8 +103,8 @@ class TalkTicketAPIView(views.APIView):
         talk_ticket_id = self.kwargs.get('talk_ticket_id')
         talk_ticket = get_object_or_404(TalkTicket, id=talk_ticket_id)
 
-        # talkingへの変更は不可.
-        if request.data['status'] == TalkStatus.TALKING or request.data['status'] == TalkStatus.FINISHING:
+        # WAITING・STOPPING以外への変更は不可.
+        if request.data['status'] != TalkStatus.WAITING and request.data['status'] != TalkStatus.STOPPING:
             return Response(TalkTicketSerializer(talk_ticket, context={'me': request.user}).data, status=status.HTTP_409_CONFLICT)
 
         serializer = TalkTicketPatchSerializer(
@@ -210,7 +218,7 @@ class WorryAPIView(views.APIView):
                 'added_talk_tickets': TalkTicketSerializer(added_talk_tickets, context={'me': request.user}, many=True).data,
                 'removed_talk_ticket_keys': removed_talk_ticket_keys,
             }
-            start_matching()
+            # start_matching()
             return Response(response_data, status.HTTP_200_OK)
 
         else:

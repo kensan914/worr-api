@@ -1,10 +1,11 @@
 from django.db.models import Q
 from account.models import Gender, Job
-from chat.models import TalkTicket, TalkStatus, TalkingRoom
+from chat.models import TalkTicket, TalkStatus
 from fullfii import create_talking_room, start_talk
+from django.utils import timezone
 
 
-def start_matching():
+def start_matching(version=2):
     """
     マッチングシステム開始
     """
@@ -29,51 +30,78 @@ def start_matching():
                 return True
         return False
 
-    for talk_ticket in TalkTicket.objects.filter(status=TalkStatus.WAITING, is_active=True).order_by('-wait_start_time'):
-        if exists_matched_talk_tickets(talk_ticket):
-            continue
-        if talk_ticket.status != TalkStatus.WAITING:
-            continue
-        target_talk_tickets = search_target_talk_tickets(
-            my_ticket=talk_ticket)  # 基本フィルタ
-        target_talk_tickets = filter_detail_target_talk_tickets(
-            my_ticket=talk_ticket, target_tickets=target_talk_tickets)  # 詳細フィルタ
-        if not target_talk_tickets.exists():
-            continue
+    def match_by_talk_tickets(talk_tickets_by_class):
+        for talk_ticket in talk_tickets_by_class.filter(status=TalkStatus.WAITING, is_active=True, owner__is_active=True).order_by('-wait_start_time'):
+            if exists_matched_talk_tickets(talk_ticket):
+                continue
+            if talk_ticket.status != TalkStatus.WAITING:
+                continue
+            target_talk_tickets = search_target_talk_tickets(
+                my_ticket=talk_ticket, talk_tickets=talk_tickets_by_class)  # 基本フィルタ
+            target_talk_tickets = filter_detail_target_talk_tickets(
+                my_ticket=talk_ticket, target_tickets=target_talk_tickets)  # 詳細フィルタ
+            if not target_talk_tickets.exists():
+                continue
 
-        # ↓マッチング↓
-        target_talk_ticket = target_talk_tickets.order_by(
-            '-wait_start_time').first()
-        if exists_matched_talk_tickets(target_talk_ticket):
-            continue
-        if exists_same_users_matching(talk_ticket, target_talk_ticket):
-            continue
-        matched_talk_tickets.append(talk_ticket)
-        matched_talk_tickets.append(target_talk_ticket)
+            # ↓マッチング↓
+            target_talk_ticket = target_talk_tickets.order_by(
+                '-wait_start_time').first()
+            if exists_matched_talk_tickets(target_talk_ticket):
+                continue
+            if exists_same_users_matching(talk_ticket, target_talk_ticket):
+                continue
+            matched_talk_tickets.append(talk_ticket)
+            matched_talk_tickets.append(target_talk_ticket)
 
-        # talking room 作成
-        talking_room = create_talking_room(
-            talk_ticket if talk_ticket.is_speaker else target_talk_ticket,
-            target_talk_ticket if talk_ticket.is_speaker else talk_ticket,
-        )
-        print('talking room 作成')
-        print(TalkingRoom.objects.count())
-        matched_rooms.append(talking_room)
-        # トーク開始
-        if talking_room:
-            start_talk(talking_room)
+            # talking room 作成
+            talking_room = create_talking_room(
+                talk_ticket if talk_ticket.is_speaker else target_talk_ticket,
+                target_talk_ticket if talk_ticket.is_speaker else talk_ticket,
+            )
+
+            matched_rooms.append(talking_room)
+            # トーク開始
+            if talking_room:
+                start_talk(talking_room, version)
+
+    # Accountをclass(ログイン頻度)ごとに分割(大宮開成スタイル)
+    # [(Aクラス: 最終アクセス2日以内), (Bクラス: 最終アクセス4~7日以内), (Cクラス: それ以外)]
+    loggedin_minutes_class = [2*24*60, 7*24*60, -1]
+    # loggedin_minutes_class = [4*24*60, 7*24*60, -1] # test
+    # [[(talkTicketA.pk), (talkTicketB.pk)], [(talkTicketC.pk), (talkTicketD.pk)], []]
+    talk_ticket_ids_split_by_class = []
+    for i in range(len(loggedin_minutes_class)):
+        talk_ticket_ids_split_by_class.append([])
+
+    for talk_ticket in TalkTicket.objects.all():
+        elapsed_seconds = (
+            timezone.now() - talk_ticket.owner.loggedin_at).total_seconds()
+        elapsed_minutes = elapsed_seconds / 60
+
+        for i, loggedin_minutes in enumerate(loggedin_minutes_class):
+            if elapsed_minutes < loggedin_minutes:
+                talk_ticket_ids_split_by_class[i].append(talk_ticket.pk)
+                break
+            elif loggedin_minutes == -1:
+                talk_ticket_ids_split_by_class[i].append(talk_ticket.pk)
+                break
+
+    for talk_ticket_ids in talk_ticket_ids_split_by_class:
+        talk_tickets = TalkTicket.objects.filter(pk__in=talk_ticket_ids)
+        match_by_talk_tickets(talk_tickets)
 
 
-def search_target_talk_tickets(my_ticket):
+def search_target_talk_tickets(my_ticket, talk_tickets):
     """
     条件に合うtarget_talk_ticketsを検索しクエリを返却
     基本フィルタ(worry, is_speaker)
     """
-    return TalkTicket.objects.exclude(owner=my_ticket.owner).filter(
+    return talk_tickets.exclude(owner=my_ticket.owner).filter(
         worry=my_ticket.worry,
         is_speaker=(not my_ticket.is_speaker),
         status=my_ticket.status,
         is_active=True,
+        owner__is_active=True
     )
 
 
