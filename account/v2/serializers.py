@@ -46,7 +46,7 @@ class MeV2Serializer(UserV2Serializer):
     class Meta:
         model = Account
         fields = ('id', 'name', 'gender', 'is_secret_gender', 'job', 'introduction', 'num_of_thunks',
-                  'date_joined', 'plan', 'genre_of_worries', 'image', 'me', 'can_talk_heterosexual', 'device_token')
+                  'date_joined', 'plan', 'genre_of_worries', 'image', 'me', 'can_talk_heterosexual', 'device_token', 'is_active')
 
     plan = serializers.SerializerMethodField()
     me = serializers.BooleanField(default=True)
