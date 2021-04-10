@@ -9,7 +9,7 @@ class TalkTicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = TalkTicket
         fields = ['id', 'owner', 'worry', 'is_speaker', 'status', 'wait_start_time',
-                  'can_talk_heterosexual', 'can_talk_different_job', 'room']
+                  'can_talk_heterosexual', 'can_talk_different_job', 'room', 'topic']
 
     owner = serializers.SerializerMethodField()
     worry = GenreOfWorriesSerializer()
@@ -35,7 +35,7 @@ class TalkTicketSerializer(serializers.ModelSerializer):
             return obj.wait_start_time.strftime('%Y/%m/%d %H:%M:%S')
 
     def get_room(self, obj):
-        if obj.status == TalkStatus.TALKING or obj.status == TalkStatus.FINISHING:
+        if obj.status == TalkStatus.TALKING or obj.status == TalkStatus.FINISHING or obj.status == TalkStatus.APPROVING:
             rooms = TalkingRoom.objects.filter(
                 Q(speaker_ticket=obj) | Q(listener_ticket=obj))
             if rooms.exists():
@@ -47,16 +47,17 @@ class TalkTicketPatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = TalkTicket
         fields = ['is_speaker', 'status',
-                  'can_talk_heterosexual', 'can_talk_different_job']
+                  'can_talk_heterosexual', 'can_talk_different_job', 'topic']
 
 
 class TalkingRoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = Room
         fields = ['id', 'user', 'started_at',
-                  'ended_at', 'is_alert', 'is_time_out']
+                  'ended_at', 'is_alert', 'is_time_out', 'user_topic']
 
     user = serializers.SerializerMethodField()
+    user_topic = serializers.SerializerMethodField()
     started_at = serializers.SerializerMethodField()
     ended_at = serializers.SerializerMethodField()
 
@@ -68,6 +69,12 @@ class TalkingRoomSerializer(serializers.ModelSerializer):
             return UserV2Serializer(obj.listener_ticket.owner).data
         else:
             return UserV2Serializer(obj.speaker_ticket.owner).data
+
+    def get_user_topic(self, obj):
+        if self.is_me_speaker(obj):
+            return obj.listener_ticket.topic if obj.listener_ticket.topic else ''
+        else:
+            return obj.speaker_ticket.topic if obj.speaker_ticket.topic else ''
 
     def get_started_at(self, obj):
         if obj.started_at:

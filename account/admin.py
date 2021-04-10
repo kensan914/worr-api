@@ -7,7 +7,7 @@ import fullfii
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
     list_display = ('username', 'format_gender', 'job', 'num_of_thunks',
-                    'format_genre_of_worries', 'introduction', 'is_active', 'date_joined')
+                    'format_genre_of_worries', 'introduction', 'is_active', 'loggedin_at', 'date_joined')
     list_display_links = ('username',)
     search_fields = ('username',)
     date_hierarchy = 'date_joined'

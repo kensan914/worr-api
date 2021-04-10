@@ -143,6 +143,9 @@ class Account(AbstractBaseUser):
 
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+
+    loggedin_at = models.DateTimeField(
+        verbose_name='最終ログイン', default=timezone.now)
     date_joined = models.DateTimeField(
         verbose_name='登録日', default=timezone.now)
 
