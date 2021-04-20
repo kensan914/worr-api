@@ -3,7 +3,7 @@ asgiref==3.2.7
 beautifulsoup4==4.9.0
 Django==3.0.6
 django-environ==0.4.5
-djangorestframework==3.11.0
+djangorestframework==3.11.2
 environ==1.0
 pytz==2020.1
 soupsieve==2.0.1
