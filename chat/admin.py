@@ -77,9 +77,12 @@ class TalkingRoomAdmin(admin.ModelAdmin):
 @admin.register(MessageV2)
 class MessageV2Admin(admin.ModelAdmin):
     list_display = ('format_to_detail', 'format_chat_composition',
-                    'time', 'is_stored_on_speaker', 'is_stored_on_listener', 'is_read_speaker', 'is_read_listener')
+                    'time', 'content', 'is_stored_on_speaker', 'is_stored_on_listener', 'is_read_speaker', 'is_read_listener')
     list_display_links = ('format_to_detail',)
     raw_id_fields = ('room', 'user')
+    search_fields = ('room__speaker_ticket__owner__username',
+                     'room__listener_ticket__owner__username',)
+    date_hierarchy = 'time'
 
     def format_to_detail(self, obj):
         return '詳細'
