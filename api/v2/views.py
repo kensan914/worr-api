@@ -69,6 +69,11 @@ class MeV2APIView(MeAPIView):
         serializer = self.Serializer(request.user)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
+    def delete(self, request):
+        request.user.is_active = False
+        request.user.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 meV2APIView = MeV2APIView.as_view()
 

@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'main.apps.MainConfig',
     'account.apps.AccountConfig',
     'chat.apps.ChatConfig',
+    'survey.apps.SurveyConfig',
     'rest_framework',
     'bootstrap4',
     'django_cleanup',
@@ -156,7 +157,8 @@ MEDIA_ROOT = '/var/www/{}/media'.format(PROJECT_NAME)
 # rest_framework
 DEFAULT_RENDERER_CLASSES_val = ['rest_framework.renderers.JSONRenderer']
 if DEBUG:
-    DEFAULT_RENDERER_CLASSES_val.append('rest_framework.renderers.BrowsableAPIRenderer')
+    DEFAULT_RENDERER_CLASSES_val.append(
+        'rest_framework.renderers.BrowsableAPIRenderer')
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': DEFAULT_RENDERER_CLASSES_val,
     'DEFAULT_PARSER_CLASSES': [
