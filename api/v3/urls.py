@@ -5,6 +5,7 @@ from api.v2.views import meV2APIView, profileParamsV2APIView, profileImageV2APIV
 from api.v3.views import talkTicketAPIView
 from api.views import usersAPIView, purchaseProductAPIView, noticeFromAppStoreAPIView, restoreProductAPIView, \
     blockAPIView
+from survey.views import accountDeleteSurveyAPIView
 
 app_name = 'api_v3'
 
@@ -24,4 +25,6 @@ urlpatterns = [
     path('products/<str:product_id>/purchase/', purchaseProductAPIView),
     path('products/<str:product_id>/restore/', restoreProductAPIView),
     path('products/notice/', noticeFromAppStoreAPIView),
+
+    path('survey/account-delete/', accountDeleteSurveyAPIView),
 ]
