@@ -1,6 +1,6 @@
 from django.db.models import Q
-from account.models import Gender, Job
-from chat.models import TalkTicket, TalkStatus
+from account.models import Gender, GenreOfWorries, Job
+from chat.models import TalkTicket, TalkStatus, Worry
 from fullfii import create_talking_room, start_talk
 from django.utils import timezone
 
@@ -95,14 +95,30 @@ def search_target_talk_tickets(my_ticket, talk_tickets):
     """
     条件に合うtarget_talk_ticketsを検索しクエリを返却
     基本フィルタ(worry, is_speaker)
+
+    (「悩み相談」・「ただ話したい」のジャンルを絞る施策)
+    ただ話したい => 同ジャンル(ただ話したい)とマッチ
+    それ以外(ex. 悩み相談, アルバイトの悩み) => ただ話したい以外とマッチ
     """
-    return talk_tickets.exclude(owner=my_ticket.owner).filter(
-        worry=my_ticket.worry,
+    query = talk_tickets.exclude(owner=my_ticket.owner).filter(
+        # worry=my_ticket.worry,
         is_speaker=(not my_ticket.is_speaker),
         status=my_ticket.status,
         is_active=True,
         owner__is_active=True
     )
+    try:
+        # 悩みの絞り込み
+        if my_ticket.worry.value == 'just_want_to_talk':
+            query = query.filter(worry=my_ticket.worry)
+        else:
+            just_want_to_talk = GenreOfWorries.objects.get(
+                value='just_want_to_talk')
+            query = query.exclude(worry=just_want_to_talk)
+    except:
+        query = query.filter(worry=my_ticket.worry)
+
+    return query
 
 
 def filter_detail_target_talk_tickets(my_ticket, target_tickets):

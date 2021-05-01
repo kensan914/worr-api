@@ -95,8 +95,12 @@ class TalkInfoV2APIView(views.APIView):
             context={'me': request.user}
         ).data
 
+        # length_participants
+        length_participants = fullfii.gene_length_participants()
+
         return Response({
             'talk_tickets': talking_tickets_data,
+            'length_participants': length_participants,
         }, status.HTTP_200_OK)
 
 
