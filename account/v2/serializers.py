@@ -40,6 +40,9 @@ class UserV2Serializer(serializers.ModelSerializer):
             else:
                 image_url = obj.image.picture.url
             return os.path.join(BASE_URL, image_url if image_url[0] != '/' else image_url[1:])
+        else:
+            # TODO: ここで空アイコンをreturn
+            return
 
 
 class MeV2Serializer(UserV2Serializer):
