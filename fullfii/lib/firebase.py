@@ -66,11 +66,11 @@ async def fcm_reducer(to_user, action):
 
     elif action['type'] == 'SEND_MESSAGE_V4':
         # action {type, sender, text}
-        if not action['sender'].username or not action['text']:
+        if not action['text']:
             return
         result['title'] = ''
         result['body'] = '{}さん：{}'.format(
-            action['sender'].username, action['text']
+            str(action['sender']), action['text']
         )
         result['badge'] = await fetch_total_unread_count_v4(to_user)
         print("SEND_MESSAGE_V4444444444444444444444444")
