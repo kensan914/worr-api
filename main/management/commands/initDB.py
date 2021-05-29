@@ -3,10 +3,7 @@ import fullfii
 
 
 class Command(BaseCommand):
-    help = 'Initialize database.' \
-           'memberList.txtに変更を加え、コマンドを実行すれば、変更箇所だけDBに反映されます。'
+    help = 'デフォルトルーム画像のinit'
 
     def handle(self, *args, **options):
-        # fullfii.InitFeature().init()
-        fullfii.InitGenreOfWorries().init()
-        # fullfii.InitScaleOfWorries().init()
+        fullfii.init_default_room_image()

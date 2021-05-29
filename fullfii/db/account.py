@@ -83,7 +83,7 @@ def update_iap(iap, original_transaction_id=None, transaction_id=None, user=None
     return iap
 
 
-def exists_profile_std_image(image_field):
+def exists_std_images(image_field):
     try:
         profile_image_num = calc_file_num(os.path.dirname(
             settings.BASE_DIR + image_field.url))

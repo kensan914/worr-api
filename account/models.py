@@ -118,10 +118,14 @@ class Account(AbstractBaseUser):
         ordering = ['-date_joined']
 
     def __str__(self):
-        return str(self.username)
+        if self.username:
+            return str(self.username)
+        else:
+            return '名無し'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    username = models.CharField(verbose_name='ユーザネーム', max_length=15)
+    username = models.CharField(
+        verbose_name='ユーザネーム', max_length=15, blank=True)
     gender = models.CharField(
         verbose_name='性別', max_length=100, choices=Gender.choices, default=Gender.NOTSET)
     is_secret_gender = models.BooleanField(verbose_name='性別内緒', default=False)
@@ -129,17 +133,14 @@ class Account(AbstractBaseUser):
                            choices=Job.choices, default=Job.SECRET)
     introduction = models.CharField(
         verbose_name='自己紹介', max_length=250, blank=True)
-    num_of_thunks = models.IntegerField(verbose_name='ありがとう', default=0)
     device_token = models.CharField(
         verbose_name='デバイストークン', max_length=200, null=True, blank=True)
     is_active = models.BooleanField(verbose_name='アクティブ状態', default=True)
 
-    genre_of_worries = models.ManyToManyField(
-        GenreOfWorries, verbose_name='悩み', blank=True)
-    blocked_accounts = models.ManyToManyField(
-        'self', verbose_name='ブロックアカウント', blank=True, symmetrical=False, related_name='block_me_accounts')
-    talked_accounts = models.ManyToManyField(
-        'self', verbose_name='トーク済みアカウント', blank=True, symmetrical=False, related_name='talked_me_accounts')
+    hidden_rooms = models.ManyToManyField(
+        'chat.RoomV4', verbose_name='非表示ルーム', blank=True, symmetrical=False, related_name='hide_rooms')
+    blocked_rooms = models.ManyToManyField(
+        'chat.RoomV4', verbose_name='ブロックルーム', blank=True, symmetrical=False, related_name='block_rooms')
 
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -150,6 +151,14 @@ class Account(AbstractBaseUser):
         verbose_name='登録日', default=timezone.now)
 
     ### not used ###
+    num_of_thunks = models.IntegerField(
+        verbose_name='(not used)ありがとう', default=0)
+    genre_of_worries = models.ManyToManyField(
+        GenreOfWorries, verbose_name='(not used)悩み', blank=True)
+    blocked_accounts = models.ManyToManyField(
+        'self', verbose_name='(not used)ブロックアカウント', blank=True, symmetrical=False, related_name='block_me_accounts')
+    talked_accounts = models.ManyToManyField(
+        'self', verbose_name='(not used)トーク済みアカウント', blank=True, symmetrical=False, related_name='talked_me_accounts')
     plan = models.CharField(
         verbose_name='(not used)プラン', max_length=100, choices=Plan.choices, default=Plan.FREE)
     email = models.EmailField(

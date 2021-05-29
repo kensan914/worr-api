@@ -17,8 +17,8 @@ paths:
     get:
       tags:
         - rooms
-      summary: 20単位でroomを取得. クエリパラメータ"page"でページ指定.
-      # description: Returns an array of User model
+      summary: 20単位でroomを取得
+      description: クエリパラメータ"page"でページ指定
       parameters:
         - name: page
           in: query
@@ -32,9 +32,15 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Room"
+                type: object
+                properties:
+                  rooms:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Room"
+                  has_more:
+                    type: boolean
+                    example: false
     post:
       tags:
         - rooms
@@ -47,14 +53,8 @@ paths:
           application/json:
             schema:
               properties:
-                id:
-                  type: string
                 name:
                   type: string
-                description:
-                  type: string
-                is_owner_speaker:
-                  type: boolean
                 is_exclude_different_gender:
                   type: boolean
       responses:
@@ -65,7 +65,41 @@ paths:
               schema:
                 type: object
                 $ref: "#/components/schemas/Room"
+  /rooms/{room_id}:
+    patch:
+      tags:
+        - rooms
+      summary: roomの編集
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                is_exclude_different_gender:
+                  type: boolean
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A JSON array of Room model
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/Room"
     delete:
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
       tags:
         - rooms
       summary: roomを削除
@@ -73,26 +107,43 @@ paths:
       responses:
         "204":
           description: No Content
-  /rooms/images:
+  /rooms/{room_id}/images:
     post:
       tags:
         - rooms
       summary: room imageをPOST
-      parameters: []
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                image:
+                  type: string
       responses:
-        "201":
-          description: CREATED
+        "200":
+          description: A JSON array of Room model
           content:
             application/json:
               schema:
                 type: object
                 $ref: "#/components/schemas/Room"
-  /rooms/participants:
+  /rooms/{room_id}/participants:
     post:
       tags:
         - rooms
       summary: roomへの参加
-      parameters: []
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -108,20 +159,118 @@ paths:
               schema:
                 type: object
                 $ref: "#/components/schemas/Room"
+  /rooms/{room_id}/left-members:
+    post:
+      tags:
+        - rooms
+      summary: メンバー(作成者含む)のroomからの退室
+      description: 退室の定義：トークをすることはできないが, フロントにroom情報は保持していてトークが完全に終了した状態ではない.
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                account_id:
+                  type: string
+                leave_message:
+                  type: string
+      responses:
+        "201":
+          description: CREATED
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/Room"
+  /rooms/{room_id}/closed-members:
+    post:
+      tags:
+        - rooms
+      summary: メンバー(作成者含む)のroomのクローズ
+      description: クローズの定義：フロントからroom情報を完全に削除して相談を完全に終了すること.
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                account_id:
+                  type: string
+      responses:
+        "201":
+          description: CREATED
   /me/hidden-rooms:
     patch:
       tags:
         - me
       summary: roomの非表示
       parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                room_id:
+                  type: string
       responses:
         "200":
-          description: A JSON array of Me model
+          description: No Content
+    delete:
+      tags:
+        - me
+      summary: room非表示の全取り消し
+      parameters: []
+      responses:
+        "204":
+          description: No Content
+  /me/blocked-rooms:
+    patch:
+      tags:
+        - me
+      summary: roomのブロック
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                room_id:
+                  type: string
+      responses:
+        "200":
+          description: No Content
+  /me/talk-info:
+    get:
+      tags:
+        - me
+      summary: talk info(参加ルーム・作成ルーム)の取得
+      parameters: []
+      responses:
+        "200":
+          description: No Content
           content:
             application/json:
               schema:
-                type: object
-                $ref: "#/components/schemas/Me"
+                properties:
+                  created_rooms:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Room"
+                  participating_rooms:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Room"
 
 components:
   schemas: # スキーマオブジェクトの定義
@@ -134,9 +283,6 @@ components:
         name:
           type: string
           example: 人間関係の悩み聞いてほしい。
-        description:
-          type: string
-          example: 職場の人間関係に関して悩みを持っています。聞いてくれる優しい方いますか？？
         image:
           type: string
           example: https://fullfii.com/media/profile_images/da3f2c91-6991-4a0f-99cc-89a39d33a734/avatar.jpg
@@ -147,18 +293,22 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Me"
+        left_members:
+          type: array
+          items:
+            $ref: "#/components/schemas/Me"
         max_num_participants:
           type: integer
           example: 1
-        is_owner_speaker:
-          type: boolean
-          example: true
         is_exclude_different_gender:
           type: boolean
           example: true
         created_at:
           type: string
           example: ""
+        is_end:
+          type: boolean
+          example: false
         is_active:
           type: boolean
           example: true
@@ -183,9 +333,6 @@ components:
         introduction:
           type: string
           example: こんにちは。よろしくお願いいたします。
-        num_of_thunks:
-          type: integer
-          example: 12
         date_joined:
           type: string
           example: ""
@@ -201,11 +348,6 @@ components:
         is_active:
           type: boolean
           example: true
-        hidden-rooms:
-          type: array
-          items:
-            type: string
-            example: b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
 
     Gender:
       type: object

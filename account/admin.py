@@ -6,14 +6,14 @@ import fullfii
 
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ('username', 'format_gender', 'job', 'num_of_thunks',
-                    'format_genre_of_worries', 'introduction', 'is_active', 'loggedin_at', 'date_joined')
+    list_display = ('username', 'format_gender', 'job',
+                    'introduction', 'is_active', 'loggedin_at', 'date_joined')
     list_display_links = ('username',)
     search_fields = ('username',)
     date_hierarchy = 'date_joined'
     list_filter = ('gender', 'is_secret_gender', 'job', 'is_active')
     filter_horizontal = ('genre_of_worries',
-                         'blocked_accounts', 'talked_accounts')
+                         'blocked_accounts', 'talked_accounts', 'hidden_rooms', 'blocked_rooms')
 
     def format_gender(self, obj):
         if obj.gender is not None and obj.is_secret_gender is not None:
@@ -23,13 +23,6 @@ class AccountAdmin(admin.ModelAdmin):
                 return Gender(obj.gender).label
     format_gender.short_description = '性別'
     format_gender.admin_order_field = 'gender'
-
-    def format_genre_of_worries(self, obj):
-        genre_of_worries_labels = [
-            gow.label for gow in obj.genre_of_worries.all()]
-        return '・'.join(genre_of_worries_labels)
-    format_genre_of_worries.short_description = '悩み'
-    format_genre_of_worries.admin_order_field = 'genre_of_worries'
 
 
 @admin.register(ProfileImage)
@@ -42,7 +35,7 @@ class ProfileImageAdmin(admin.ModelAdmin):
 
     def format_picture(self, obj):
         if obj.picture:
-            if fullfii.exists_profile_std_image(obj.picture):
+            if fullfii.exists_std_images(obj.picture):
                 img_src = obj.picture.thumbnail.url
             else:
                 img_src = obj.picture.url

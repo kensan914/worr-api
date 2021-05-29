@@ -1,6 +1,109 @@
 import uuid
 from django.db import models
 from django.utils import timezone
+from stdimage.models import StdImageField
+from random import choice
+
+
+class RoomV4(models.Model):
+    class Meta:
+        verbose_name = verbose_name_plural = 'ルーム'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        if self.name:
+            return f'{self.name}({self.owner})'
+        else:
+            return f'無名ルーム({self.owner})'
+
+    def get_upload_to(instance, filename):
+        media_dir_1 = str(instance.id)
+        return 'room_images/{0}/{1}'.format(media_dir_1, filename)
+
+    def get_default_image():
+        if DefaultRoomImage.objects.all().exists():
+            pks = DefaultRoomImage.objects.values_list('pk', flat=True)
+            random_pk = choice(pks)
+            return random_pk
+        else:
+            return
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    name = models.CharField(verbose_name='ルーム名',
+                            max_length=60, blank=True, default='')
+    image = StdImageField(verbose_name='ルーム画像', upload_to=get_upload_to, blank=True, null=True, variations={
+        'large': (600, 600, True),
+        'thumbnail': (100, 100, True),
+        'medium': (250, 250, True),
+    })
+    default_image = models.ForeignKey(
+        'chat.DefaultRoomImage', verbose_name='デフォルトルーム画像', on_delete=models.PROTECT, null=True, default=get_default_image)
+    owner = models.ForeignKey(
+        'account.Account', verbose_name='作成者', on_delete=models.CASCADE)
+    participants = models.ManyToManyField(
+        'account.Account', verbose_name='参加者', blank=True, symmetrical=False, related_name='room_participants')
+    left_members = models.ManyToManyField(
+        'account.Account', verbose_name='退室したメンバー(作成者含む)', blank=True, symmetrical=False, related_name='room_left_members')
+    closed_members = models.ManyToManyField(
+        'account.Account', verbose_name='クローズ(フロントから完全削除)したメンバー(作成者含む)', blank=True, symmetrical=False, related_name='room_closed_members')
+    max_num_participants = models.IntegerField(
+        verbose_name='可能参加者数', default=1)
+    is_exclude_different_gender = models.BooleanField(
+        verbose_name='異性を禁止', default=False)
+    created_at = models.DateTimeField(
+        verbose_name='作成時間', default=timezone.now)
+    is_end = models.BooleanField(
+        verbose_name='終了状態', default=False)  # 1人でも退室したらTrue
+    is_active = models.BooleanField(
+        verbose_name='アクティブ状態', default=True)  # 全員クローズしたらFalse
+
+
+class MessageV4(models.Model):
+    class Meta:
+        verbose_name = verbose_name_plural = 'メッセージ'
+        ordering = ['-time']
+
+    def __str__(self):
+        return '{}({})'.format(str(self.room), self.time)
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    room = models.ForeignKey(RoomV4, verbose_name='チャットルーム',
+                             related_name='message', on_delete=models.CASCADE)
+    sender = models.ForeignKey(
+        'account.Account', verbose_name='投稿者', on_delete=models.PROTECT)
+    stored_on_participants = models.ManyToManyField(
+        'account.Account', verbose_name='保存済み参加者', blank=True, symmetrical=False, related_name='message_stored_on_participants')
+    read_participants = models.ManyToManyField(
+        'account.Account', verbose_name='既読済み参加者', blank=True, symmetrical=False, related_name='message_read_participants')
+    text = models.TextField(
+        verbose_name='メッセージ内容', max_length=1000, blank=True)
+    time = models.DateTimeField(verbose_name='投稿時間', default=timezone.now)
+    is_leave_message = models.BooleanField(
+        verbose_name='退室メッセージ', default=False)
+
+
+class DefaultRoomImage(models.Model):
+    class Meta:
+        verbose_name = verbose_name_plural = 'デフォルトルーム画像'
+        ordering = ['file_name']
+
+    def __str__(self):
+        return f'{self.file_name}'
+
+    def get_upload_to(instance, filename):
+        media_dir_1 = str(instance.id)
+        return 'default_room_images/{0}/{1}'.format(media_dir_1, filename)
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    file_name = models.CharField(
+        verbose_name='ファイル名', max_length=100, blank=True, default='')
+    image = StdImageField(verbose_name='ルーム画像', upload_to=get_upload_to, blank=True, null=True, variations={
+        'large': (600, 600, True),
+        'thumbnail': (100, 100, True),
+        'medium': (250, 250, True),
+    })
+
+# not used
 
 
 class TalkStatus(models.TextChoices):
@@ -11,9 +114,10 @@ class TalkStatus(models.TextChoices):
     APPROVING = 'approving', '承認中'
 
 
+# not used
 class TalkTicket(models.Model):
     class Meta:
-        verbose_name = verbose_name_plural = 'トークチケット'
+        verbose_name = verbose_name_plural = '旧トークチケット'
         unique_together = ('owner', 'worry')
 
     def __str__(self):
@@ -40,9 +144,10 @@ class TalkTicket(models.Model):
     is_active = models.BooleanField(verbose_name='アクティブ状態', default=True)
 
 
+# not used
 class TalkingRoom(models.Model):
     class Meta:
-        verbose_name = verbose_name_plural = 'ルーム'
+        verbose_name = verbose_name_plural = '旧ルーム'
         ordering = ['-started_at']
 
     def __str__(self):
@@ -63,9 +168,10 @@ class TalkingRoom(models.Model):
         verbose_name='トーク終了理由(time out)', default=False)
 
 
+# not used
 class MessageV2(models.Model):
     class Meta:
-        verbose_name = verbose_name_plural = 'メッセージ'
+        verbose_name = verbose_name_plural = '旧メッセージ'
         ordering = ['-time']
 
     def __str__(self):
