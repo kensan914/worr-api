@@ -13,15 +13,23 @@ from chat.v4.consumers import ChatConsumer
 
 
 class TalkInfoAPIView(views.APIView):
-    def get(self, request, *args, **kwargs):
+    @classmethod
+    def get_created_rooms(cls, request_user):
         # created_rooms (is_endはTrueでもFalseでも含め, 既にクローズされていれば含めない)
-        created_rooms = RoomV4.objects.filter(
-            owner=request.user, is_active=True).exclude(closed_members=request.user)
+        return RoomV4.objects.filter(
+            owner=request_user, is_active=True).exclude(closed_members=request_user)
+
+    @classmethod
+    def get_participating_rooms(cls, request_user):
+        # participating_rooms (is_endはTrueでもFalseでも含め, 既にクローズされていれば含めない)
+        return RoomV4.objects.filter(
+            participants=request_user, is_active=True).exclude(closed_members=request_user)
+
+    def get(self, request, *args, **kwargs):
+        created_rooms = self.get_created_rooms(request.user)
         created_rooms_serializer = RoomSerializer(created_rooms, many=True)
 
-        # participating_rooms (is_endはTrueでもFalseでも含め, 既にクローズされていれば含めない)
-        participating_rooms = RoomV4.objects.filter(
-            participants=request.user, is_active=True).exclude(closed_members=request.user)
+        participating_rooms = self.get_participating_rooms(request.user)
         participating_rooms_serializer = RoomSerializer(
             participating_rooms, many=True)
 
@@ -46,7 +54,8 @@ class RoomsAPIView(views.APIView):
 
         rooms = RoomV4.objects.filter(
             is_active=True,
-            is_end=False
+            is_end=False,
+            owner__is_active=True,
         ).exclude(
             Q(owner=request.user) |
             Q(participants=request.user) |
@@ -71,6 +80,18 @@ class RoomsAPIView(views.APIView):
                 Q(owner__is_secret_gender=True) |
                 Q(owner__gender=Gender.NOTSET)
             )
+
+        # 自分と話しているユーザは非表示
+        talking_member_ids = []
+        created_rooms = TalkInfoAPIView.get_created_rooms(request.user)
+        for created_room in created_rooms:
+            talking_member_ids += created_room.participants.values_list(
+                'id', flat=True)
+        participating_rooms = TalkInfoAPIView.get_participating_rooms(
+            request.user)
+        talking_member_ids += [
+            participating_room.owner.id for participating_room in participating_rooms]
+        rooms = rooms.exclude(owner__in=talking_member_ids)
 
         # to create id_list will be faster
         id_list = list(rooms[self.paginate_by * (page - 1)

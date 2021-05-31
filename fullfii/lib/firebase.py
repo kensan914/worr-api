@@ -73,8 +73,6 @@ async def fcm_reducer(to_user, action):
             str(action['sender']), action['text']
         )
         result['badge'] = await fetch_total_unread_count_v4(to_user)
-        print("SEND_MESSAGE_V4444444444444444444444444")
-        print(result)
 
     elif action['type'] == 'MATCH_TALK':
         # action {type, genreOfWorry}
