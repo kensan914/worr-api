@@ -10,26 +10,15 @@ from chat.models import RoomV4
 from chat.serializers import RoomSerializer
 from chat.v4.serializers import RoomSerializer
 from chat.v4.consumers import ChatConsumer
+from fullfii.db.chat import get_created_rooms, get_participating_rooms
 
 
 class TalkInfoAPIView(views.APIView):
-    @classmethod
-    def get_created_rooms(cls, request_user):
-        # created_rooms (is_endはTrueでもFalseでも含め, 既にクローズされていれば含めない)
-        return RoomV4.objects.filter(
-            owner=request_user, is_active=True).exclude(closed_members=request_user)
-
-    @classmethod
-    def get_participating_rooms(cls, request_user):
-        # participating_rooms (is_endはTrueでもFalseでも含め, 既にクローズされていれば含めない)
-        return RoomV4.objects.filter(
-            participants=request_user, is_active=True).exclude(closed_members=request_user)
-
     def get(self, request, *args, **kwargs):
-        created_rooms = self.get_created_rooms(request.user)
+        created_rooms = get_created_rooms(request.user)
         created_rooms_serializer = RoomSerializer(created_rooms, many=True)
 
-        participating_rooms = self.get_participating_rooms(request.user)
+        participating_rooms = get_participating_rooms(request.user)
         participating_rooms_serializer = RoomSerializer(
             participating_rooms, many=True)
 
@@ -83,12 +72,11 @@ class RoomsAPIView(views.APIView):
 
         # 自分と話しているユーザは非表示
         talking_member_ids = []
-        created_rooms = TalkInfoAPIView.get_created_rooms(request.user)
+        created_rooms = get_created_rooms(request.user)
         for created_room in created_rooms:
             talking_member_ids += created_room.participants.values_list(
                 'id', flat=True)
-        participating_rooms = TalkInfoAPIView.get_participating_rooms(
-            request.user)
+        participating_rooms = get_participating_rooms(request.user)
         talking_member_ids += [
             participating_room.owner.id for participating_room in participating_rooms]
         rooms = rooms.exclude(owner__in=talking_member_ids)

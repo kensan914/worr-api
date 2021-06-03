@@ -1,3 +1,4 @@
+from fullfii.lib.authSupport import authenticate_jwt
 import traceback
 import uuid
 from asgiref.sync import async_to_sync
@@ -8,8 +9,8 @@ from django.utils import timezone
 
 from main.v4.consumers import JWTAsyncWebsocketConsumer
 from chat.models import RoomV4, MessageV4
-import fullfii
 from chat.v4.serializers import MessageSerializer, RoomSerializer
+from fullfii.lib.firebase import send_fcm
 
 
 class ChatConsumer(JWTAsyncWebsocketConsumer):
@@ -42,7 +43,7 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
             self.channel_name
         )
 
-        me = await fullfii.authenticate_jwt(received_data['token'], is_async=True)
+        me = await authenticate_jwt(received_data['token'], is_async=True)
         if me is None:
             # 401 Unauthorized
             await self.disconnect(4001)
@@ -110,7 +111,7 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
                     # send fcm(SEND_MESSAGE)
                     receiver_list = await self.get_receiver_list(sender=me, room=room)
                     for receiver in receiver_list:
-                        await fullfii.send_fcm(receiver, {
+                        await send_fcm(receiver, {
                             'type': 'SEND_MESSAGE_V4',
                             'sender': me,
                             'text': text,

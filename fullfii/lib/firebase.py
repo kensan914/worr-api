@@ -1,6 +1,7 @@
+from fullfii.db.chat import get_created_rooms, get_participating_rooms
 from channels.db import DatabaseSyncToAsync
 from django.db.models.query_utils import Q
-from chat.models import MessageV2, MessageV4, RoomV4, TalkStatus, TalkTicket, TalkingRoom
+from chat.models import MessageV2, MessageV4, TalkStatus, TalkTicket, TalkingRoom
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import messaging
@@ -137,12 +138,18 @@ def fetch_total_unread_count(to_user):
 @DatabaseSyncToAsync
 def fetch_total_unread_count_v4(receiver):
     total_unread_count = 0
-    talking_rooms = RoomV4.objects.filter(
-        Q(owner=receiver) | Q(participants=receiver.id))
+    created_rooms = get_created_rooms(receiver)
+    participating_rooms = get_participating_rooms(receiver)
 
-    for talking_room in talking_rooms:
-        messages = MessageV4.objects.filter(
-            room=talking_room).exclude(read_participants=receiver.id)
-        total_unread_count += messages.count()
+    def getUnreadMessageCount(_talking_rooms):
+        cnt = 0
+        for talking_room in _talking_rooms:
+            messages = MessageV4.objects.filter(
+                room=talking_room).exclude(read_participants=receiver.id)
+            cnt += messages.count()
+        return cnt
+
+    total_unread_count += getUnreadMessageCount(created_rooms)
+    total_unread_count += getUnreadMessageCount(participating_rooms)
 
     return total_unread_count
