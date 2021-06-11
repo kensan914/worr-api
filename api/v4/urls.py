@@ -5,7 +5,6 @@ from account.v4.views import (
     meAPIView,
     profileParamsAPIView,
     genderAPIView,
-    usersAPIView,
     hiddenRoomsAPIView,
     blockedRoomsAPIView,
 )
@@ -32,7 +31,6 @@ urlpatterns = [
     path("me/gender/", genderAPIView),
     path("me/hidden-rooms/", hiddenRoomsAPIView),
     path("me/blocked-rooms/", blockedRoomsAPIView),
-    path("users/<uuid:user_id>/", usersAPIView),  # TODO: いる？
     path("rooms/", roomsAPIView),
     path("rooms/<uuid:room_id>/", roomAPIView),
     path("rooms/<uuid:room_id>/images/", roomImagesAPIView),

@@ -223,7 +223,7 @@ roomImagesAPIView = RoomImagesAPIView.as_view()
 
 class RoomParticipantsAPIView(views.APIView):
     @classmethod
-    def validate_accout_id(cls, _account_id, request):
+    def validate_account_id(cls, _account_id, request):
         # ユーザが見つからない
         if not Account.objects.filter(id=_account_id).exists():
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -302,7 +302,7 @@ class RoomParticipantsAPIView(views.APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         account_id = request.data["account_id"]
 
-        validate_result = RoomParticipantsAPIView.validate_accout_id(
+        validate_result = RoomParticipantsAPIView.validate_account_id(
             account_id, request
         )
         if validate_result is not None:
@@ -366,7 +366,7 @@ class RoomLeftMembersAPIView(views.APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         account_id = request.data["account_id"]
 
-        validate_result_account_id = RoomParticipantsAPIView.validate_accout_id(
+        validate_result_account_id = RoomParticipantsAPIView.validate_account_id(
             account_id, request
         )
         if validate_result_account_id is not None:
@@ -419,7 +419,7 @@ class RoomClosedMembersAPIView(views.APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         account_id = request.data["account_id"]
 
-        validate_result_account_id = RoomParticipantsAPIView.validate_accout_id(
+        validate_result_account_id = RoomParticipantsAPIView.validate_account_id(
             account_id, request
         )
         if validate_result_account_id is not None:

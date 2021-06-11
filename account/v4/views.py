@@ -198,48 +198,6 @@ class GenderAPIView(views.APIView):
 genderAPIView = GenderAPIView.as_view()
 
 
-class UsersAPIView(views.APIView):
-    paginate_by = 10
-
-    def get(self, request, *args, **kwargs):
-        pass  # TODO: 必要性不明
-        # user_id = self.kwargs.get('user_id')
-
-        # if user_id:
-        #     users = get_all_accounts(me=request.user).filter(id=user_id)
-        #     if users.exists():
-        #         return Response(UserSerializer(users.first()).data, status=status.HTTP_200_OK)
-        #     else:
-        #         return Response({'error': 'not found user'}, status=status.HTTP_404_NOT_FOUND)
-        # else:
-        #     _page = self.request.GET.get('page')
-        #     page = int(_page) if _page is not None and _page.isdecimal() else 1
-        #     genre = self.request.GET.get('genre')
-        #     genre_of_worries = GenreOfWorries.objects.filter(value=genre)
-
-        #     viewable_users = fullfii.get_viewable_accounts(
-        #         request.user, is_exclude_me=True)
-        #     if genre_of_worries.exists():
-        #         users = viewable_users.filter(
-        #             genre_of_worries=genre_of_worries.first())
-        #     else:
-        #         users = viewable_users
-        #     users = users[self.paginate_by *
-        #                   (page - 1): self.paginate_by * page]
-        #     users_data = UserSerializer(users, many=True).data
-
-        #     # paginate_byをクライアントで管理しない手法, v2に見送り
-        #     # res_data = {
-        #     #     'has_more': len(users_data) >= self.paginate_by,
-        #     #     'users': users_data,
-        #     # }
-        #     # return Response(res_data, status=status.HTTP_200_OK)
-        #     return Response(users_data, status=status.HTTP_200_OK)
-
-
-usersAPIView = UsersAPIView.as_view()
-
-
 class BlockAPIView(views.APIView):
     def patch(self, request, *args, **kwargs):
         will_block_user_id = self.kwargs.get("user_id")
