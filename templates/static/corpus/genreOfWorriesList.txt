@@ -1,7 +1,0 @@
-a broken_heart 失恋の悩み
-b one_sided_love 片思いの悩み
-c part_time_job アルバイトの悩み
-d finding_employment 就職の悩み
-e dream_goal 夢・目標の悩み
-f human_relations 人間関係全般の悩み
-g just_want_to_talk ただ話したい
