@@ -36,11 +36,6 @@ class SignupAPIView(views.APIView):
             serializer.save()
             me = Account.objects.filter(id=serializer.data["id"]).first()
             if me is not None:
-                # # profile params更新
-                # _me = MeAPIView.patch_params(request.data, me)
-                # if _me is not None:
-                #     me = _me
-
                 email_serializer = AuthUpdateSerializer(
                     me, data={"email": "{}@fullfii.com".format(me.id)}, partial=True
                 )
