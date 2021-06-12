@@ -16,27 +16,27 @@ class AccountManager(BaseUserManager):
     def _create_user(self, **fields):
         # if not 'id' in fields:
         #     raise ValueError('The given id must be set')
-        if not 'password' in fields:
-            raise ValueError('The given password must be set')
+        if not "password" in fields:
+            raise ValueError("The given password must be set")
         # fields['email'] = self.normalize_email(fields['email'])
         user = self.model(**fields)
-        user.set_password(fields['password'])
+        user.set_password(fields["password"])
         user.save(using=self._db)
         return user
 
     def create_user(self, **fields):
-        fields.setdefault('is_staff', False)
-        fields.setdefault('is_superuser', False)
+        fields.setdefault("is_staff", False)
+        fields.setdefault("is_superuser", False)
         return self._create_user(**fields)
 
     def create_superuser(self, password, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
 
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff==True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser==True.')
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff==True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser==True.")
 
         return self._create_user(password=password, **extra_fields)
 
@@ -46,11 +46,10 @@ class ParamsModel(models.Model):
         abstract = True
 
     def __str__(self):
-        return '{}.{}'.format(self.key, self.label)
+        return "{}.{}".format(self.key, self.label)
 
-    key = models.CharField(
-        verbose_name='キー', max_length=30, unique=True, null=True)
-    label = models.CharField(verbose_name='ラベル', max_length=30, null=True)
+    key = models.CharField(verbose_name="キー", max_length=30, unique=True, null=True)
+    label = models.CharField(verbose_name="ラベル", max_length=30, null=True)
 
 
 class Feature(ParamsModel):
@@ -59,9 +58,9 @@ class Feature(ParamsModel):
 
 class GenreOfWorries(ParamsModel):
     class Meta:
-        verbose_name = verbose_name_plural = '悩みジャンル'
+        verbose_name = verbose_name_plural = "悩みジャンル"
 
-    value = models.CharField(verbose_name='バリュー', max_length=30, null=True)
+    value = models.CharField(verbose_name="バリュー", max_length=30, null=True)
 
 
 class ScaleOfWorries(ParamsModel):
@@ -69,44 +68,45 @@ class ScaleOfWorries(ParamsModel):
 
 
 class Status(models.TextChoices):
-    TALKING = 'talking', '会話中'
-    ONLINE = 'online', 'オンライン'
-    OFFLINE = 'offline', 'オフライン'
+    TALKING = "talking", "会話中"
+    ONLINE = "online", "オンライン"
+    OFFLINE = "offline", "オフライン"
 
 
 class StatusColor(models.TextChoices):
-    TALKING = 'talking', 'gold'
-    ONLINE = 'online', 'mediumseagreen'
-    OFFLINE = 'offline', 'indianred'
+    TALKING = "talking", "gold"
+    ONLINE = "online", "mediumseagreen"
+    OFFLINE = "offline", "indianred"
 
 
 class Plan(models.TextChoices):
     """
     ex) Plan(user.plan).name: 'NORMAL', Plan(user.plan).value: 'com.fullfii.fullfii.normal_plan', Plan(user.plan).label: 'ノーマル'
     """
-    NORMAL = 'com.fullfii.fullfii.normal_plan', 'ノーマル'
-    FREE = 'com.fullfii.fullfii.free_plan', '未加入'
+
+    NORMAL = "com.fullfii.fullfii.normal_plan", "ノーマル"
+    FREE = "com.fullfii.fullfii.free_plan", "未加入"
 
 
 class Gender(models.TextChoices):
-    MALE = 'male', '男性'
-    FEMALE = 'female', '女性'
-    NOTSET = 'notset', '未設定'
+    MALE = "male", "男性"
+    FEMALE = "female", "女性"
+    NOTSET = "notset", "未設定"
     # SECRET = 'secret', '内緒'
 
 
 class Job(models.TextChoices):
-    HS_STUDENT = 'hs-student', '高校生'
-    COLLEGE_STUDENT = 'college-student', '大学生'
-    HOUSEWIFE = 'housewife', '主婦'
-    FREETER = 'freeter', 'フリーター'
+    HS_STUDENT = "hs-student", "高校生"
+    COLLEGE_STUDENT = "college-student", "大学生"
+    HOUSEWIFE = "housewife", "主婦"
+    FREETER = "freeter", "フリーター"
     # SOCIETY = 'society', '社会人'
-    OTHER = 'other', 'その他'
-    SECRET = 'secret', '内緒'
+    OTHER = "other", "その他"
+    SECRET = "secret", "内緒"
 
 
 class IntroStep(models.Model):
-    key = models.CharField(verbose_name='キー', max_length=30)
+    key = models.CharField(verbose_name="キー", max_length=30)
 
     def __str__(self):
         return str(self.key)
@@ -114,72 +114,100 @@ class IntroStep(models.Model):
 
 class Account(AbstractBaseUser):
     class Meta:
-        verbose_name = verbose_name_plural = 'アカウント'
-        ordering = ['-date_joined']
+        verbose_name = verbose_name_plural = "アカウント"
+        ordering = ["-date_joined"]
 
     def __str__(self):
         if self.username:
             return str(self.username)
         else:
-            return '名無し'
+            return "名無し"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    username = models.CharField(
-        verbose_name='ユーザネーム', max_length=15, blank=True)
+    username = models.CharField(verbose_name="ユーザネーム", max_length=15, blank=True)
     gender = models.CharField(
-        verbose_name='性別', max_length=100, choices=Gender.choices, default=Gender.NOTSET)
-    is_secret_gender = models.BooleanField(verbose_name='性別内緒', default=False)
-    job = models.CharField(verbose_name='職業', max_length=100,
-                           choices=Job.choices, default=Job.SECRET)
-    introduction = models.CharField(
-        verbose_name='自己紹介', max_length=250, blank=True)
+        verbose_name="性別", max_length=100, choices=Gender.choices, default=Gender.NOTSET
+    )
+    is_secret_gender = models.BooleanField(verbose_name="性別内緒", default=False)
+    job = models.CharField(
+        verbose_name="職業", max_length=100, choices=Job.choices, default=Job.SECRET
+    )
+    introduction = models.CharField(verbose_name="自己紹介", max_length=250, blank=True)
     device_token = models.CharField(
-        verbose_name='デバイストークン', max_length=200, null=True, blank=True)
-    is_active = models.BooleanField(verbose_name='アクティブ状態', default=True)
+        verbose_name="デバイストークン", max_length=200, null=True, blank=True
+    )
+    is_active = models.BooleanField(verbose_name="アクティブ状態", default=True)
 
     hidden_rooms = models.ManyToManyField(
-        'chat.RoomV4', verbose_name='非表示ルーム', blank=True, symmetrical=False, related_name='hide_rooms')
+        "chat.RoomV4",
+        verbose_name="非表示ルーム",
+        blank=True,
+        symmetrical=False,
+        related_name="hide_rooms",
+    )
     blocked_rooms = models.ManyToManyField(
-        'chat.RoomV4', verbose_name='ブロックルーム', blank=True, symmetrical=False, related_name='block_rooms')
+        "chat.RoomV4",
+        verbose_name="ブロックルーム",
+        blank=True,
+        symmetrical=False,
+        related_name="block_rooms",
+    )
 
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
 
-    loggedin_at = models.DateTimeField(
-        verbose_name='最終ログイン', default=timezone.now)
-    date_joined = models.DateTimeField(
-        verbose_name='登録日', default=timezone.now)
+    loggedin_at = models.DateTimeField(verbose_name="最終ログイン", default=timezone.now)
+    date_joined = models.DateTimeField(verbose_name="登録日", default=timezone.now)
 
     ### not used ###
-    num_of_thunks = models.IntegerField(
-        verbose_name='(not used)ありがとう', default=0)
+    num_of_thunks = models.IntegerField(verbose_name="(not used)ありがとう", default=0)
     genre_of_worries = models.ManyToManyField(
-        GenreOfWorries, verbose_name='(not used)悩み', blank=True)
+        GenreOfWorries, verbose_name="(not used)悩み", blank=True
+    )
     blocked_accounts = models.ManyToManyField(
-        'self', verbose_name='(not used)ブロックアカウント', blank=True, symmetrical=False, related_name='block_me_accounts')
+        "self",
+        verbose_name="(not used)ブロックアカウント",
+        blank=True,
+        symmetrical=False,
+        related_name="block_me_accounts",
+    )
     talked_accounts = models.ManyToManyField(
-        'self', verbose_name='(not used)トーク済みアカウント', blank=True, symmetrical=False, related_name='talked_me_accounts')
+        "self",
+        verbose_name="(not used)トーク済みアカウント",
+        blank=True,
+        symmetrical=False,
+        related_name="talked_me_accounts",
+    )
     plan = models.CharField(
-        verbose_name='(not used)プラン', max_length=100, choices=Plan.choices, default=Plan.FREE)
+        verbose_name="(not used)プラン",
+        max_length=100,
+        choices=Plan.choices,
+        default=Plan.FREE,
+    )
     email = models.EmailField(
-        verbose_name='(not used)メールアドレス', max_length=255, null=True, unique=True)
-    features = models.ManyToManyField(
-        Feature, verbose_name='(not used)特徴', blank=True)
+        verbose_name="(not used)メールアドレス", max_length=255, null=True, unique=True
+    )
+    features = models.ManyToManyField(Feature, verbose_name="(not used)特徴", blank=True)
     scale_of_worries = models.ManyToManyField(
-        ScaleOfWorries, verbose_name='(not used)話せる悩みの大きさ', blank=True)
-    birthday = models.DateField(
-        verbose_name='(not used)生年月日', null=True, blank=True)
-    status = models.CharField(verbose_name='(not used)ステータス',
-                              max_length=100, choices=Status.choices, default=Status.OFFLINE)
-    is_online = models.BooleanField(
-        verbose_name='(not used)オンライン状況', default=False)
+        ScaleOfWorries, verbose_name="(not used)話せる悩みの大きさ", blank=True
+    )
+    birthday = models.DateField(verbose_name="(not used)生年月日", null=True, blank=True)
+    status = models.CharField(
+        verbose_name="(not used)ステータス",
+        max_length=100,
+        choices=Status.choices,
+        default=Status.OFFLINE,
+    )
+    is_online = models.BooleanField(verbose_name="(not used)オンライン状況", default=False)
     intro_step = models.ManyToManyField(
-        IntroStep, verbose_name='(not used)イントロステップ', blank=True)
+        IntroStep, verbose_name="(not used)イントロステップ", blank=True
+    )
     can_talk_heterosexual = models.BooleanField(
-        verbose_name='(not used)異性との相談を許可', default=False)
+        verbose_name="(not used)異性との相談を許可", default=False
+    )
     ### not used ###
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     def user_has_perm(user, perm, obj):
@@ -200,48 +228,63 @@ class Account(AbstractBaseUser):
 def get_upload_to(instance, filename):
     pass
     media_dir_1 = str(instance.user.id)
-    return 'profile_images/{0}/{1}'.format(media_dir_1, filename)
+    return "profile_images/{0}/{1}".format(media_dir_1, filename)
 
 
 class ProfileImage(models.Model):
     class Meta:
-        verbose_name = verbose_name_plural = 'プロフィ―ル画像'
+        verbose_name = verbose_name_plural = "プロフィ―ル画像"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     # picture = models.ImageField(verbose_name='イメージ(original)', upload_to=get_upload_to)
-    picture = StdImageField(verbose_name='画像', upload_to=get_upload_to, variations={
-        'large': (600, 400),
-        'thumbnail': (100, 100, True),
-        'medium': (250, 250),
-    })
+    picture = StdImageField(
+        verbose_name="画像",
+        upload_to=get_upload_to,
+        variations={
+            "large": (600, 400),
+            "thumbnail": (100, 100, True),
+            "medium": (250, 250),
+        },
+    )
     # picture_250x = models.CharField(verbose_name='イメージ(250x)', max_length=1024, null=True)
     # picture_500x = models.CharField(verbose_name='イメージ(500x)', max_length=1024, null=True)
-    upload_date = models.DateTimeField(
-        verbose_name='アップロード日', default=timezone.now)
-    user = models.OneToOneField(Account, verbose_name='ユーザ',
-                                on_delete=models.CASCADE, unique=True, related_name='image')
+    upload_date = models.DateTimeField(verbose_name="アップロード日", default=timezone.now)
+    user = models.OneToOneField(
+        Account,
+        verbose_name="ユーザ",
+        on_delete=models.CASCADE,
+        unique=True,
+        related_name="image",
+    )
 
     def __str__(self):
         return str(self.user)
 
 
 class IapStatus(models.TextChoices):
-    SUBSCRIPTION = 'subscription', '購読中'
-    FAILURE = 'failure', '自動更新失敗中'
-    EXPIRED = 'expired', '期限切れ'
+    SUBSCRIPTION = "subscription", "購読中"
+    FAILURE = "failure", "自動更新失敗中"
+    EXPIRED = "expired", "期限切れ"
 
 
 class Iap(models.Model):
     original_transaction_id = models.CharField(
-        verbose_name='オリジナルトランザクションID', max_length=255, unique=True, default='')
+        verbose_name="オリジナルトランザクションID", max_length=255, unique=True, default=""
+    )
     transaction_id = models.CharField(
-        verbose_name='最新トランザクションID', max_length=255, unique=True, default='')
+        verbose_name="最新トランザクションID", max_length=255, unique=True, default=""
+    )
     user = models.ForeignKey(
-        Account, verbose_name='対象ユーザ', on_delete=models.CASCADE, related_name='iap')
-    receipt = models.TextField(verbose_name='レシート', default='')
-    expires_date = models.DateTimeField(verbose_name='有効期限日時')
-    status = models.CharField(verbose_name='ステータス', max_length=100,
-                              choices=IapStatus.choices, default=IapStatus.SUBSCRIPTION)
+        Account, verbose_name="対象ユーザ", on_delete=models.CASCADE, related_name="iap"
+    )
+    receipt = models.TextField(verbose_name="レシート", default="")
+    expires_date = models.DateTimeField(verbose_name="有効期限日時")
+    status = models.CharField(
+        verbose_name="ステータス",
+        max_length=100,
+        choices=IapStatus.choices,
+        default=IapStatus.SUBSCRIPTION,
+    )
 
     def __str__(self):
         return str(self.user)

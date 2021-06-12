@@ -14,7 +14,7 @@ from fullfii.lib.authSupport import authenticate_jwt
 class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.group_name = ''
+        self.group_name = ""
         self.me_id = None
         self.is_authenticated = False
         # Consumerは寿命が長いため, selfで管理する変数は競合に注意する. 例えばAccountオブジェクトをselfで管理したとし, 外部で
@@ -30,10 +30,7 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code=None):
         await self._disconnect(close_code)
         if self.group_name:
-            await self.channel_layer.group_discard(
-                self.group_name,
-                self.channel_name
-            )
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
         await self.close(close_code)
 
     @abstractmethod
@@ -57,16 +54,17 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
             received_data = json.loads(text_data)
 
             # receive jwt token to authenticate
-            if 'type' in received_data and received_data['type'] == 'auth':
+            if "type" in received_data and received_data["type"] == "auth":
                 is_success = await self.receive_auth(received_data)
                 if is_success:
                     self.is_authenticated = True
             else:
                 if not self.is_authenticated:
-                    await self.send(text_data=json.dumps({
-                        'type': 'error',
-                        'message': 'Unauthorized error.'
-                    }))
+                    await self.send(
+                        text_data=json.dumps(
+                            {"type": "error", "message": "Unauthorized error."}
+                        )
+                    )
                     return
                 await self._receive(received_data)
 
@@ -92,7 +90,7 @@ class JWTAsyncWebsocketConsumer(AsyncWebsocketConsumer):
 class NotificationConsumer(JWTAsyncWebsocketConsumer):
     @classmethod
     def get_group_name(cls, _id):
-        return 'notification_{}'.format(str(_id))
+        return "notification_{}".format(str(_id))
 
     async def _disconnect(self, close_code):
         pass  # 切断時特別な処理はしない
@@ -106,24 +104,19 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
         }
         """
 
-        me = await authenticate_jwt(received_data['token'], is_async=True)
+        me = await authenticate_jwt(received_data["token"], is_async=True)
         if me is None:
             # 401 Unauthorized
             # NotificationConsumerではgroupを作成するのにme_idを用いるため、この瞬間groupが未作成であるため。
             await self.close(4001)
-            print('401 Unauthorized')
+            print("401 Unauthorized")
             return
         self.me_id = me.id
 
         self.group_name = self.get_group_name(self.me_id)
-        await self.channel_layer.group_add(
-            self.group_name,
-            self.channel_name
-        )
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
 
-        await self.send(text_data=json.dumps({
-            'type': 'auth'
-        }))
+        await self.send(text_data=json.dumps({"type": "auth"}))
         return True
 
     async def _receive(self, received_data):
@@ -131,23 +124,28 @@ class NotificationConsumer(JWTAsyncWebsocketConsumer):
 
     async def notice_talk(self, event):
         try:
-            appended_data = event['context']
-            data = {'type': 'notice_talk'}
+            appended_data = event["context"]
+            data = {"type": "notice_talk"}
             data.update(appended_data)
             await self.send(text_data=json.dumps(data))
         except Exception as e:
             traceback.print_exc()
 
     @classmethod
-    def send_notification_someone_participated(cls, owner_id, room_data, participant_id, should_start):
+    def send_notification_someone_participated(
+        cls, owner_id, room_data, participant_id, should_start
+    ):
         group_name = cls.get_group_name(owner_id)
         channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(group_name, {
-            'type': 'notice_talk',
-            'context': {
-                'status': 'SOMEONE_PARTICIPATED',
-                'room': room_data,
-                'participant_id': participant_id,
-                'should_start': should_start
-            }
-        })
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {
+                "type": "notice_talk",
+                "context": {
+                    "status": "SOMEONE_PARTICIPATED",
+                    "room": room_data,
+                    "participant_id": participant_id,
+                    "should_start": should_start,
+                },
+            },
+        )
