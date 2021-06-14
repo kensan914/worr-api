@@ -234,9 +234,9 @@ def get_upload_to(instance, filename):
 class ProfileImage(models.Model):
     class Meta:
         verbose_name = verbose_name_plural = "プロフィ―ル画像"
+        ordering = ("-upload_date",)
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # picture = models.ImageField(verbose_name='イメージ(original)', upload_to=get_upload_to)
     picture = StdImageField(
         verbose_name="画像",
         upload_to=get_upload_to,
@@ -246,8 +246,6 @@ class ProfileImage(models.Model):
             "medium": (250, 250),
         },
     )
-    # picture_250x = models.CharField(verbose_name='イメージ(250x)', max_length=1024, null=True)
-    # picture_500x = models.CharField(verbose_name='イメージ(500x)', max_length=1024, null=True)
     upload_date = models.DateTimeField(verbose_name="アップロード日", default=timezone.now)
     user = models.OneToOneField(
         Account,

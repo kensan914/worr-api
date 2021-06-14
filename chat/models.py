@@ -12,9 +12,9 @@ class RoomV4(models.Model):
 
     def __str__(self):
         if self.name:
-            return f"{self.name}({self.owner})"
+            return f"{self.name} ({self.owner})"
         else:
-            return f"無名ルーム({self.owner})"
+            return f"無名ルーム ({self.owner})"
 
     def get_upload_to(instance, filename):
         media_dir_1 = str(instance.id)
