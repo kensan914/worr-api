@@ -1,0 +1,385 @@
+openapi: 3.0.0
+
+info:
+  version: 3.0.0
+  title: Fullfii API
+  description: Used in the "Fullfii" IOS application
+  termsOfService: https://fullfii.com/terms-of-service/
+
+servers:
+  - url: http://192.168.11.46:8080/api/v4/
+    description: Development server
+  - url: https://fullfii.com/api/v4/
+    description: Production server
+
+paths:
+  /rooms:
+    get:
+      tags:
+        - rooms
+      summary: 20単位でroomを取得
+      description: クエリパラメータ"page"でページ指定
+      parameters:
+        - name: page
+          in: query
+          description: ページ（1からスタート）
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: A JSON array of Room model
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rooms:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Room"
+                  has_more:
+                    type: boolean
+                    example: false
+    post:
+      tags:
+        - rooms
+      summary: roomを作成
+      # description: Create a new User
+      parameters: []
+      requestBody:
+        # description: user to create
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                is_exclude_different_gender:
+                  type: boolean
+      responses:
+        "201":
+          description: CREATED
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/Room"
+  /rooms/{room_id}:
+    patch:
+      tags:
+        - rooms
+      summary: roomの編集
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                is_exclude_different_gender:
+                  type: boolean
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A JSON array of Room model
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/Room"
+    delete:
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
+      tags:
+        - rooms
+      summary: roomを削除
+      description: 実際はDBからは削除せずis_activeをFalseにする。
+      responses:
+        "204":
+          description: No Content
+  /rooms/{room_id}/images:
+    post:
+      tags:
+        - rooms
+      summary: room imageをPOST
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                image:
+                  type: string
+      responses:
+        "200":
+          description: A JSON array of Room model
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/Room"
+  /rooms/{room_id}/participants:
+    post:
+      tags:
+        - rooms
+      summary: roomへの参加
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                account_id:
+                  type: string
+      responses:
+        "201":
+          description: CREATED
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/Room"
+  /rooms/{room_id}/left-members:
+    post:
+      tags:
+        - rooms
+      summary: メンバー(作成者含む)のroomからの退室
+      description: 退室の定義：トークをすることはできないが, フロントにroom情報は保持していてトークが完全に終了した状態ではない.
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                account_id:
+                  type: string
+                leave_message:
+                  type: string
+      responses:
+        "201":
+          description: CREATED
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/Room"
+  /rooms/{room_id}/closed-members:
+    post:
+      tags:
+        - rooms
+      summary: メンバー(作成者含む)のroomのクローズ
+      description: クローズの定義：フロントからroom情報を完全に削除して相談を完全に終了すること.
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                account_id:
+                  type: string
+      responses:
+        "201":
+          description: CREATED
+  /me/hidden-rooms:
+    patch:
+      tags:
+        - me
+      summary: roomの非表示
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                room_id:
+                  type: string
+      responses:
+        "200":
+          description: No Content
+    delete:
+      tags:
+        - me
+      summary: room非表示の全取り消し
+      parameters: []
+      responses:
+        "204":
+          description: No Content
+  /me/blocked-rooms:
+    patch:
+      tags:
+        - me
+      summary: roomのブロック
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                room_id:
+                  type: string
+      responses:
+        "200":
+          description: No Content
+  /me/talk-info:
+    get:
+      tags:
+        - me
+      summary: talk info(参加ルーム・作成ルーム)の取得
+      parameters: []
+      responses:
+        "200":
+          description: No Content
+          content:
+            application/json:
+              schema:
+                properties:
+                  created_rooms:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Room"
+                  participating_rooms:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Room"
+
+components:
+  schemas: # スキーマオブジェクトの定義
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+          example: c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
+        name:
+          type: string
+          example: 人間関係の悩み聞いてほしい。
+        image:
+          type: string
+          example: https://fullfii.com/media/profile_images/da3f2c91-6991-4a0f-99cc-89a39d33a734/avatar.jpg
+        owner:
+          type: object
+          $ref: "#/components/schemas/Me"
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/Me"
+        left_members:
+          type: array
+          items:
+            $ref: "#/components/schemas/Me"
+        max_num_participants:
+          type: integer
+          example: 1
+        is_exclude_different_gender:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          example: ""
+        is_end:
+          type: boolean
+          example: false
+        is_active:
+          type: boolean
+          example: true
+    Me:
+      type: object
+      properties:
+        id:
+          type: string
+          example: a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
+        name:
+          type: string
+          example: ひな
+        gender:
+          type: object
+          $ref: "#/components/schemas/Gender"
+        is_secret_gender:
+          type: boolean
+          example: true
+        job:
+          type: object
+          $ref: "#/components/schemas/Job"
+        introduction:
+          type: string
+          example: こんにちは。よろしくお願いいたします。
+        date_joined:
+          type: string
+          example: ""
+        image:
+          type: string
+          example: https://fullfii.com/media/profile_images/da3f2c91-6991-4a0f-99cc-89a39d33a734/avatar.jpg
+        me:
+          type: boolean
+          example: true
+        device_token:
+          type: string
+          example: dzhBOUWyPU21s-aiBZNPxP:APA91bG2vusYK8tSISPR15kipcrH5DIhBv5hfJmI4uGkVOyinkno1SJj_CBPxCAcXj95AUSOCzmOOZqUp7MvWWz25SxbwxAj4jVQq1W_lJM5SlZQzx_vWBW--2Fn0u4SmMulZsd5tngA
+        is_active:
+          type: boolean
+          example: true
+
+    Gender:
+      type: object
+      properties:
+        key:
+          type: string
+          example: female
+        name:
+          type: string
+          example: FEMALE
+        label:
+          type: string
+          example: 女性
+    Job:
+      type: object
+      properties:
+        key:
+          type: string
+          example: hs-student
+        name:
+          type: string
+          example: HS_STUDENT
+        label:
+          type: string
+          example: 高校生
+
+tags:
+  - name: rooms
+    description: Access to Rooms
+  - name: me
+    description: Access to Me
+
+externalDocs:
+  description: App Store
+  url: https://apps.apple.com/jp/app/fullfii/id1533306689

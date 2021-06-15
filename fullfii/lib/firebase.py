@@ -1,6 +1,7 @@
+from fullfii.db.chat import get_created_rooms, get_participating_rooms
 from channels.db import DatabaseSyncToAsync
 from django.db.models.query_utils import Q
-from chat.models import MessageV2, TalkStatus, TalkTicket, TalkingRoom
+from chat.models import MessageV2, MessageV4, TalkStatus, TalkTicket, TalkingRoom
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import messaging
@@ -64,6 +65,16 @@ async def fcm_reducer(to_user, action):
         )
         result['badge'] = await fetch_total_unread_count(to_user)
 
+    elif action['type'] == 'SEND_MESSAGE_V4':
+        # action {type, sender, text}
+        if not action['text']:
+            return
+        result['title'] = ''
+        result['body'] = '{}さん：{}'.format(
+            str(action['sender']), action['text']
+        )
+        result['badge'] = await fetch_total_unread_count_v4(to_user)
+
     elif action['type'] == 'MATCH_TALK':
         # action {type, genreOfWorry}
         if not action['genreOfWorry'].label:
@@ -120,5 +131,25 @@ def fetch_total_unread_count(to_user):
                 room__id=talking_room.id).filter(is_read_listener=False)
 
         total_unread_count += messages.count()
+
+    return total_unread_count
+
+
+@DatabaseSyncToAsync
+def fetch_total_unread_count_v4(receiver):
+    total_unread_count = 0
+    created_rooms = get_created_rooms(receiver)
+    participating_rooms = get_participating_rooms(receiver)
+
+    def getUnreadMessageCount(_talking_rooms):
+        cnt = 0
+        for talking_room in _talking_rooms:
+            messages = MessageV4.objects.filter(
+                room=talking_room).exclude(read_participants=receiver.id)
+            cnt += messages.count()
+        return cnt
+
+    total_unread_count += getUnreadMessageCount(created_rooms)
+    total_unread_count += getUnreadMessageCount(participating_rooms)
 
     return total_unread_count
