@@ -191,3 +191,6 @@ CHANNEL_LAYERS = {
         },
     }
 }
+
+# Slack webhooks URL (git管理するとリジェクトされて使用禁止になるため.envで管理)
+SLACK_WEBHOOKS_FULLFII_BOT_URL = env("SLACK_WEBHOOKS_FULLFII_BOT_URL", default="")

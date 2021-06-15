@@ -12,7 +12,7 @@ class AccountFactory(DjangoModelFactory):
     class Meta:
         model = Account
 
-    id = uuid.uuid4()
+    id = factory.LazyFunction(uuid.uuid4)
     username = FuzzyText(length=15)
     gender = FuzzyChoice(Gender.choices)
     is_secret_gender = False

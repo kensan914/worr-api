@@ -12,13 +12,14 @@ class AccountAdmin(admin.ModelAdmin):
         "job",
         "introduction",
         "is_active",
+        "format_is_ban",
         "loggedin_at",
         "date_joined",
     )
     list_display_links = ("username",)
     search_fields = ("username",)
     date_hierarchy = "date_joined"
-    list_filter = ("gender", "is_secret_gender", "job", "is_active")
+    list_filter = ("gender", "is_secret_gender", "job", "is_active", "is_ban")
     filter_horizontal = (
         "genre_of_worries",
         "blocked_accounts",
@@ -36,6 +37,13 @@ class AccountAdmin(admin.ModelAdmin):
 
     format_gender.short_description = "性別"
     format_gender.admin_order_field = "gender"
+
+    def format_is_ban(self, obj):
+        return not obj.is_ban
+
+    format_is_ban.boolean = True
+    format_is_ban.short_description = "良アカ (凍結されていない)"
+    format_is_ban.admin_order_field = "is_ban"
 
 
 @admin.register(ProfileImage)

@@ -37,7 +37,7 @@ class RoomsAPIView(views.APIView):
 
     def get(self, request, *args, **kwargs):
         """
-        20単位でroomを取得. クエリパラメータ"page"でページ指定.
+        10単位でroomを取得. クエリパラメータ"page"でページ指定.
         """
         _page = self.request.GET.get("page")
         page = int(_page) if _page is not None and _page.isdecimal() else 1
@@ -81,6 +81,12 @@ class RoomsAPIView(views.APIView):
             participating_room.owner.id for participating_room in participating_rooms
         ]
         rooms = rooms.exclude(owner__in=talking_member_ids)
+
+        # 凍結されていたら, 女性は表示しない
+        if request.user.is_ban:
+            rooms = rooms.exclude(
+                owner__gender=Gender.FEMALE, owner__is_secret_gender=False
+            )
 
         # to create id_list will be faster
         id_list = list(
