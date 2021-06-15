@@ -13,7 +13,7 @@ class DefaultRoomImageFactory(DjangoModelFactory):
     class Meta:
         model = DefaultRoomImage
 
-    id = uuid.uuid4()
+    id = factory.LazyFunction(uuid.uuid4)
     file_name = FuzzyText(length=100)
     image = factory.django.ImageField()
 
@@ -22,7 +22,7 @@ class RoomV4Factory(DjangoModelFactory):
     class Meta:
         model = RoomV4
 
-    id = uuid.uuid4()
+    id = factory.LazyFunction(uuid.uuid4)
     name = FuzzyText(length=60)
     image = factory.django.ImageField()
     default_image = factory.SubFactory(DefaultRoomImageFactory)

@@ -137,6 +137,12 @@ class Account(AbstractBaseUser):
         verbose_name="デバイストークン", max_length=200, null=True, blank=True
     )
     is_active = models.BooleanField(verbose_name="アクティブ状態", default=True)
+    is_ban = models.BooleanField(
+        verbose_name="凍結状態 (凍結/凍結解除する際はここをTrue/Falseに)", default=False
+    )
+    is_innocent = models.BooleanField(
+        verbose_name="無実状態 (凍結解除する際はここをTrueに)", default=False
+    )
 
     hidden_rooms = models.ManyToManyField(
         "chat.RoomV4",

@@ -7,6 +7,7 @@ import json
 from channels.layers import get_channel_layer
 from django.utils import timezone
 
+from fullfii.lib.inappropriate_checker import InappropriateChecker, InappropriateType
 from main.v4.consumers import JWTAsyncWebsocketConsumer
 from chat.models import RoomV4, MessageV4
 from chat.v4.serializers import MessageSerializer, RoomSerializer
@@ -23,7 +24,10 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
             if "room_id" in self.scope["url_route"]["kwargs"]
             else ""
         )
-        # self.is_speaker = True
+        self.inappropriate_checker = None
+        self.inappropriate_words_csv_path = (
+            "fullfii/lib/inappropriate_checker/inappropriate_words.csv"
+        )
 
     @classmethod
     def get_group_name(cls, _id):
@@ -73,6 +77,12 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
                 auth_response_data["is_already_ended"] = is_already_ended
 
             auth_response_data["room"] = await self.get_room_data(room)
+
+            # 不適切チェッカー
+            self.inappropriate_checker = await self.create_inappropriate_checker(
+                me, room
+            )
+
         elif room == 0:
             # マッチング直後にchat wsコネクションを試みたとき(マッチング時にアプリを開いていた時)
             # roomをcreateした直後にself.get_room()した場合、roomがdoesNotExist判定になる(↓参考)
@@ -97,6 +107,14 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
                 time = timezone.datetime.now()
 
                 me = await self.get_user(self.me_id)
+
+                # 不適切チェック
+                if self.inappropriate_checker is not None:
+                    result = await self.check_inappropriate_word(text)
+                    # タブーだった場合, 凍結処理
+                    if result == InappropriateType.TABOO:
+                        print("xxxx")
+                        await self.ban_me(me)
 
                 await self.create_message(message_id, text, time, me)
                 await self.channel_layer.group_send(
@@ -189,6 +207,23 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
             return 0
         else:
             return
+
+    @database_sync_to_async
+    def ban_me(self, me):
+        me.is_ban = True
+        me.save()
+
+    @database_sync_to_async
+    def create_inappropriate_checker(self, me, room):
+        return InappropriateChecker.create(
+            self.inappropriate_words_csv_path,
+            sender=me,
+            room=room,
+        )
+
+    @database_sync_to_async
+    def check_inappropriate_word(self, text):
+        return self.inappropriate_checker.check(text, shouldSendSlack=True)
 
     @database_sync_to_async
     def get_room_data(self, room):

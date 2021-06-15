@@ -25,7 +25,7 @@ class RoomV4Admin(admin.ModelAdmin):
         "is_end",
         "is_active",
     )
-    raw_id_fields = ("owner",)
+    raw_id_fields = ("owner", "participants", "left_members", "closed_members")
 
     def format_participants(self, obj):
         participants_usernames = [
