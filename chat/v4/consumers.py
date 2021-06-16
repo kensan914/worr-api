@@ -113,10 +113,18 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
                     result = await self.check_inappropriate_word(text)
                     # タブーだった場合, 凍結処理
                     if result == InappropriateType.TABOO:
-                        print("xxxx")
+                        await self.send(
+                            text_data=json.dumps(
+                                {
+                                    "type": "chat_taboo_message",
+                                    "room_id": str(self.room_id),
+                                    "message_id": message_id,
+                                }
+                            )
+                        )
                         await self.ban_me(me)
+                        return
 
-                await self.create_message(message_id, text, time, me)
                 await self.channel_layer.group_send(
                     self.group_name,
                     {
@@ -127,6 +135,7 @@ class ChatConsumer(JWTAsyncWebsocketConsumer):
                         "time": time.strftime("%Y/%m/%d %H:%M:%S"),
                     },
                 )
+                await self.create_message(message_id, text, time, me)
 
                 room = await self.get_room()
                 if room:

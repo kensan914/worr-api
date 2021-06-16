@@ -17,7 +17,15 @@ class AuthSerializer(serializers.ModelSerializer):
 class SignupSerializer(AuthSerializer):
     class Meta:
         model = Account
-        fields = ("id", "username", "password", "gender", "is_secret_gender", "job")
+        fields = (
+            "id",
+            "username",
+            "password",
+            "gender",
+            "is_secret_gender",
+            "job",
+            "is_ban",
+        )
 
     def validate_password(self, data):
         validators.validate_password(password=data, user=Account)
@@ -121,6 +129,7 @@ class MeSerializer(UserSerializer):
             "me",
             "device_token",
             "is_active",
+            "is_ban",
         )
 
     me = serializers.BooleanField(default=True, read_only=True)
