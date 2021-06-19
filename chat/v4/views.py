@@ -88,6 +88,13 @@ class RoomsAPIView(views.APIView):
                 owner__gender=Gender.FEMALE, owner__is_secret_gender=False
             )
 
+        # 女性の場合, 凍結ユーザは表示されない
+        if (
+            request.user.gender == Gender.FEMALE
+            and request.user.is_secret_gender == False
+        ):
+            rooms = rooms.exclude(owner__is_ban=True)
+
         # ブロックしているユーザ, ブロックされているユーザを表示しない
         rooms = rooms.exclude(
             Q(owner__in=request.user.blocked_accounts.all())
