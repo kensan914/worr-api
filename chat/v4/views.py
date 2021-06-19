@@ -88,6 +88,12 @@ class RoomsAPIView(views.APIView):
                 owner__gender=Gender.FEMALE, owner__is_secret_gender=False
             )
 
+        # ブロックしているユーザ, ブロックされているユーザを表示しない
+        rooms = rooms.exclude(
+            Q(owner__in=request.user.blocked_accounts.all())
+            | Q(owner__in=request.user.block_me_accounts.all())
+        )
+
         # to create id_list will be faster
         id_list = list(
             rooms[self.paginate_by * (page - 1) : self.paginate_by * page].values_list(
