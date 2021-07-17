@@ -1,6 +1,5 @@
 import os
 from rest_framework import serializers
-
 from account.v4.serializers import UserSerializer
 from chat.models import MessageV4, RoomV4
 from account.models import Account
@@ -22,6 +21,7 @@ class RoomSerializer(serializers.ModelSerializer):
             "left_members",
             "max_num_participants",
             "is_exclude_different_gender",
+            "is_private",
             "created_at",
             "is_end",
             "is_active",
