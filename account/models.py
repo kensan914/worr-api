@@ -140,9 +140,6 @@ class Account(AbstractBaseUser):
     is_ban = models.BooleanField(
         verbose_name="凍結状態 (凍結/凍結解除する際はここをTrue/Falseに)", default=False
     )
-    is_innocent = models.BooleanField(
-        verbose_name="無実状態 (凍結解除する際はここをTrueに)", default=False
-    )
 
     hidden_rooms = models.ManyToManyField(
         "chat.RoomV4",
@@ -158,6 +155,13 @@ class Account(AbstractBaseUser):
         symmetrical=False,
         related_name="block_rooms",
     )
+    blocked_accounts = models.ManyToManyField(
+        "self",
+        verbose_name="ブロックアカウント",
+        blank=True,
+        symmetrical=False,
+        related_name="block_me_accounts",
+    )
 
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -169,13 +173,6 @@ class Account(AbstractBaseUser):
     num_of_thunks = models.IntegerField(verbose_name="(not used)ありがとう", default=0)
     genre_of_worries = models.ManyToManyField(
         GenreOfWorries, verbose_name="(not used)悩み", blank=True
-    )
-    blocked_accounts = models.ManyToManyField(
-        "self",
-        verbose_name="(not used)ブロックアカウント",
-        blank=True,
-        symmetrical=False,
-        related_name="block_me_accounts",
     )
     talked_accounts = models.ManyToManyField(
         "self",

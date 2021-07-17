@@ -78,11 +78,11 @@ class InappropriateAlertSlackSender(SlackSender):
         guide_attachment_field = {
             InappropriateType.TABOO: {
                 "title": "【凍結解除手順】",
-                "value": f"<{gene_account_admin_url(self.sender.id)}|アカウントページ>へアクセスし, 以下を実行\n1. :white_large_square:「凍結状態」のチェックを外す\n2. :ballot_box_with_check:「無実状態」にチェックを入れる\n3. :ok_hand:「保存」をクリック\n詳しいガイドは<{CONFLUENCE_URL_GUIDE_BAN}|こちら>から",
+                "value": f"<{gene_account_admin_url(self.sender.id)}|アカウントページ>へアクセスし, 以下を実行\n1. :white_large_square:「凍結状態」のチェックを外す\n2. :ok_hand:「保存」をクリック\n詳しいガイドは<{CONFLUENCE_URL_GUIDE_BAN}|こちら>から",
             },
             InappropriateType.WARNING: {
                 "title": "【凍結手順】",
-                "value": f"<{gene_account_admin_url(self.sender.id)}|アカウントページ>へアクセスし, 以下を実行\n1. :ballot_box_with_check:「凍結状態」にチェックを入れる\n3. :ok_hand:「保存」をクリック\n詳しいガイドは<{CONFLUENCE_URL_GUIDE_BAN}|こちら>から",
+                "value": f"<{gene_account_admin_url(self.sender.id)}|アカウントページ>へアクセスし, 以下を実行\n1. :ballot_box_with_check:「凍結状態」にチェックを入れる\n2. :ok_hand:「保存」をクリック\n詳しいガイドは<{CONFLUENCE_URL_GUIDE_BAN}|こちら>から",
             },
         }
         sender_serializer_data = UserSerializer(self.sender)

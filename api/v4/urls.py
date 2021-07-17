@@ -7,6 +7,7 @@ from account.v4.views import (
     genderAPIView,
     hiddenRoomsAPIView,
     blockedRoomsAPIView,
+    blockedAccountsAPIView,
 )
 from chat.v4.views import (
     talkInfoAPIView,
@@ -31,6 +32,7 @@ urlpatterns = [
     path("me/gender/", genderAPIView),
     path("me/hidden-rooms/", hiddenRoomsAPIView),
     path("me/blocked-rooms/", blockedRoomsAPIView),
+    path("me/blocked-accounts/", blockedAccountsAPIView),
     path("rooms/", roomsAPIView),
     path("rooms/<uuid:room_id>/", roomAPIView),
     path("rooms/<uuid:room_id>/images/", roomImagesAPIView),

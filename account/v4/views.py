@@ -265,3 +265,21 @@ class BlockedRoomsAPIView(views.APIView):
 
 
 blockedRoomsAPIView = BlockedRoomsAPIView.as_view()
+
+
+class BlockedAccountsAPIView(views.APIView):
+    def patch(self, request, *args, **kwargs):
+        """
+        accountのブロック
+        """
+        if not "account_id" in request.data:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        account_id = request.data["account_id"]
+        user = get_object_or_404(Account, id=account_id)
+
+        request.user.blocked_accounts.add(user.id)
+        request.user.save()
+        return Response(status=status.HTTP_200_OK)
+
+
+blockedAccountsAPIView = BlockedAccountsAPIView.as_view()
